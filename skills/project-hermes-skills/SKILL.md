@@ -62,6 +62,12 @@ Exception: if a skill is genuinely non-mutating and reads no files (pure prompt-
 - Keep the generated pack in `~/.hermes/skills/brain/`.
 - Skip extra explanation about projection mechanics inside the generated skill body.
 - The `tools:` frontmatter rewrite is not optional. Every projection pass checks it.
+- **Classifier-contract sections are verbatim, not paraphrasable.** Any section
+  marked `(CONTRACT — do not soften on re-projection)` in a source skill MUST
+  be copied byte-for-byte into the projection. Paraphrasing these sections has
+  produced live classifier failures (e.g. signal-detector returning 0 signals
+  on obvious originals material). Examples and negative examples carry semantic
+  weight — touching them changes behaviour.
 - **Do NOT rewrite `~/.hermes/skills/brain/run-project-hermes-skills/SKILL.md`.** That wrapper skill is Hermes-owned and frozen — it has no source in `~/gbrain-k2/skills/` and is not a projection target. The projection pass must skip it entirely. If it appears drifted or "improvable", leave it alone; any change belongs in a separate, explicit edit by the human, not inside this projection workflow.
 - Do NOT write anywhere under `/home/k/gbrain-k2/hermes-skills/`. That path is retired. The only projection output location is `~/.hermes/skills/brain/`.
 

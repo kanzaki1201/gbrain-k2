@@ -88,11 +88,40 @@ is a dead page.
 ### Phase 3: Signal Logging
 
 Always log a one-line summary:
-- `Signals: 0 ideas, 0 entities, 0 facts (skipped: operational)`
+- `Signals: 0 ideas, 0 entities, 0 facts (skipped: operational — <short reason>)`
 - `Signals: 1 idea (captured → concepts/x), 2 entities (enriched → people/y, companies/z)`
 - `Signals: 1 zettel noted (→ deferred to zettel-processor)`
 
+The one-line summary IS the output. Never write a markdown report file. Never
+invoke the `reports` skill for this log — the report skill is for cron briefings,
+not per-message ambient capture. The runtime posts this line to the signal-detector
+sink channel and the gateway log; anything else is pollution.
+
 This makes the ambient capture loop debuggable.
+
+## Classifier Rubric (CONTRACT — do not soften on re-projection)
+
+These examples are behavioural contract for how to classify inbound messages.
+Projections and edits MUST preserve them verbatim. Paraphrasing these softens
+the classifier and has produced 0-signal captures on obvious originals material.
+
+**Originals (capture, don't skip):**
+- User coining a term or framework ("I call this 說話模式 / the hollow-out trick / …")
+- User stating a thesis ("most people don't understand…", "the real problem is…")
+- User cross-referencing craft lineage (SillyTavern/NovelAI prompt craft, old
+  tools that solved the same thing, prior art)
+- User theorizing about AI/prompting/agents — meta-about-AI IS originals, not
+  operational. Domain of the thought ≠ operational status.
+
+**Operational (skip with reason):**
+- Bare acknowledgements: "ok", "thanks", "k", "got it", "nice"
+- Command invocations: "do it", "run this", "restart urself", "fix this bug"
+- Debug probes about Hermes/brain plumbing ("did the signal detector trigger?")
+- Pure mechanics with no idea content
+
+**Tiebreak:** when torn between originals and operational, prefer originals.
+Over-capture is cheap (one extra page); silent drop is irreversible (the
+thought is gone).
 
 ## Output Format
 
