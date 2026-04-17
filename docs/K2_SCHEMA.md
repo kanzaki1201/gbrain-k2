@@ -7,8 +7,31 @@
 Authoritative schema for the brain vault. Obsidian-first conventions,
 sources-preserving workflow, category set tuned for a creator/engineer.
 
-Philosophy, MECE principles, and compiled-truth-plus-timeline pattern are in
-`GBRAIN_RECOMMENDED_SCHEMA.md`.
+## Founding principles
+
+**1. Every piece of knowledge has a primary home (MECE directories).** Every
+page lands in exactly one category directory. No duplicated pages, no
+ambiguity about where something goes. This is the single most important
+structural decision — without it, knowledge bases rot, the same fact lives
+in three places, and the agent stops trusting the system.
+
+MECE applies to directories, not to reality. A real person is multi-faceted —
+the person page is their *primary home*, and typed cross-references surface
+their other facets (project lead, meeting attendee, etc.) without creating
+duplicate pages.
+
+**2. Compiled Truth + Timeline (two-layer pages).** Every wiki page has two
+sections separated by `---`. Above the line is Compiled Truth, rewritten on
+every update; below the line is the Timeline, append-only evidence log. If
+someone asks "what's the current state?" they read above; if someone asks
+"what happened?" they read below. The synthesis is pre-computed — unlike
+RAG, the cross-references and contradictions have already been flagged.
+
+**3. Enrichment fires on every signal.** The brain grows as a side effect of
+normal operations, not as a separate task the user remembers to do. Every
+new file in sources/ or human/ triggers downstream processing (zettel-processor
+for human zettels, signal-detector / ingest for other signals) that compiles
+and cross-references without human prompting beyond the initial capture.
 
 ---
 
@@ -419,16 +442,33 @@ that the schema may need a new category.
 
 ---
 
-## Compiled Truth + Timeline (unchanged from stock)
+## Compiled Truth + Timeline (full pattern)
 
-Every wiki page has two sections separated by `---`:
+Every wiki page has two layers separated by a horizontal rule (`---`):
 
-**Above the line — Compiled Truth.** Current state, rewritten on every update.
-Starts with a one-paragraph executive summary.
+**Above the line — Compiled Truth.** Always current, always rewritten when
+new information arrives. Starts with a one-paragraph executive summary. If
+you read only this, you know the state of play. Followed by structured State
+fields, Open Threads (active items — removed when resolved), a `## Sources`
+section citing contributing source files, and See Also (cross-links).
 
-**Below the line — Timeline.** Append-only evidence log. Dated entries, sourced.
+**Below the line — Timeline.** Append-only, never rewritten. Reverse-
+chronological evidence log. Each entry: date, source, what happened. When
+an open thread gets resolved, it moves here with its resolution.
 
-See `GBRAIN_RECOMMENDED_SCHEMA.md` for the full pattern.
+Query rules:
+- "What's the current state?" → read above the line.
+- "What happened?" → read below the line.
+- The top is the current summary. The bottom is the source log.
+
+The synthesis is pre-computed. Unlike RAG, where the LLM re-derives knowledge
+from scratch every query, the brain has already done the work. The cross-
+references are already there. The contradictions have already been flagged.
+
+Enforcement: compiled-truth sections are REWRITTEN (not appended to) as new
+information arrives. Timeline sections are APPENDED TO (never rewritten).
+Conflating these two update modes is the most common way wiki pages drift
+from reality.
 
 ---
 
