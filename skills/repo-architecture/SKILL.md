@@ -42,7 +42,10 @@ This skill guarantees:
    - About a physical location → `places/{name-slug}.md`
    - Active build with progress → `projects/{slug}.md`
    - Unexecuted possibility → `ideas/{slug}.md`
-   - Reusable mental model → `concepts/{slug}.md`
+   - User's own framework / hot take / synthesis / contrarian position (the
+     authorship test: user generated it, or it's user's unique synthesis of
+     someone else's work) → `originals/{user-exact-phrasing}.md`
+   - Reusable mental model coined by someone else → `concepts/{slug}.md`
    - Step-by-step process or troubleshoot → `how-to/{slug}.md`
    - Named software/hardware in use → `tools/{slug}.md`
    - Film/TV/anime/manga/game/book/podcast/doc/music → `media/{slug}.md` (set `media-type`)

@@ -1,4 +1,4 @@
-<!-- schema-version: k2-0.4.0 -->
+<!-- schema-version: k2-0.5.0 -->
 <!-- fork: kanzaki1201/gbrain-k2 -->
 <!-- base: garrytan/gbrain GBRAIN_RECOMMENDED_SCHEMA.md -->
 
@@ -177,7 +177,9 @@ brain-vault/
 ├── projects/             things the user is actively working on (tech, creative, life)
 ├── companies/            organizations (studios, labels, dev orgs)
 ├── ideas/                unexecuted creative/technical possibilities
-├── concepts/             mental models, frameworks, theory
+├── originals/            user's own thinking — frameworks, takes, syntheses
+│                          captured in the user's exact phrasing
+├── concepts/             mental models, frameworks, theory (world-authored)
 ├── how-to/               step-by-step process documentation (includes troubleshooting)
 ├── media/                films, TV, anime, manga, games, books, podcasts, documentaries, music
 ├── tools/                software/hardware/apps the user actively uses
@@ -219,7 +221,8 @@ When in doubt, file in `inbox/` and flag for human review.
 | `projects/` | Active builds with visible progress | Pure ideation without work started (→ ideas/); one-time tasks (stay in sources) |
 | `companies/` | Organizations relevant to the user | Tools the company makes (→ tools/, cross-link to company) |
 | `ideas/` | Unexecuted possibilities worth returning to | Fully-formed proposals (→ projects/ or writing/); thoughts with no action potential (stay in sources) |
-| `concepts/` | Reusable mental models, frameworks, theory you could teach | Specific tools (→ tools/); how-to steps (→ how-to/); private reflection (→ personal/) |
+| `originals/` | User's own frameworks, hot takes, syntheses, contrarian positions — captured verbatim in user's phrasing | World-authored concepts even if user likes them (→ concepts/); product/build ideas (→ ideas/); finalized prose (→ writing/) |
+| `concepts/` | Reusable mental models, frameworks, theory coined by someone else that the user references | User's own synthesis or take (→ originals/); specific tools (→ tools/); how-to steps (→ how-to/) |
 | `how-to/` | Process docs with concrete steps, troubleshooting fixes | Theory of why it works (→ concepts/, cross-link); one-off observations (stay in sources) |
 | `media/` | Films, TV, anime, manga, games, books, podcasts, documentaries, music | Theory about the medium (→ concepts/); reviews published as essays (→ writing/) |
 | `tools/` | Named software/hardware/apps actively in use | Abstract tool category theory (→ concepts/); companies that make the tool (→ companies/) |
@@ -244,7 +247,7 @@ global fields below. Category-specific fields are added as appropriate.
 ```yaml
 ---
 title: Page Title                       # Obsidian display name
-type: people|place|project|company|idea|concept|how-to|media|tool|meeting|decision|household|personal|org|writing
+type: people|place|project|company|idea|original|concept|how-to|media|tool|meeting|decision|household|personal|org|writing
 aliases: [Other Name, Alt Handle]       # alternative names (list, may be empty)
 tags: [tag1, tag2, tag3]                # cross-cutting labels (workflow domains, topics)
 created: 2026-04-16                     # ISO date, plain string
@@ -343,6 +346,23 @@ graduated-to: "[[project-slug]]"        # if status == graduated-to-project
 #### concepts/
 
 No category-specific fields required. Use `tags` for domain labels.
+
+#### originals/
+
+```yaml
+origin-type: framework|hot-take|synthesis|prediction|contrarian-position|pattern
+captured: "[[2026-04-16]]"              # when the thinking was first captured
+triggered-by: "[[meeting-slug]]"        # the conversation/article/moment that sparked it
+influences: ["[[person-slug]]", "[[book-slug]]"]  # what shaped it
+```
+
+**Naming rule:** slug IS the user's exact phrasing. `meatsuit-maintenance-tax`,
+not `biological-needs-maintenance-overhead`. Do not sanitize vivid language.
+
+**Body rule:** capture content verbatim in the user's own words. Never
+paraphrase. The raw phrasing is the intellectual artifact. Use the structure:
+`## The Idea` (verbatim) → `## Context` (what triggered it) → `## Connections`
+(cross-links to influences).
 
 #### how-to/
 
@@ -443,6 +463,9 @@ venue: blog-name-or-url
 
 When two categories could fit, the rule that resolves it:
 
+- **originals vs concepts** — The authorship test. User generated the framework, named it with their own phrasing, holds the contrarian position? → `originals/`. Someone else coined it and the user is just referencing or teaching it? → `concepts/`. User's synthesis of someone else's work IS original — goes in `originals/`, not `concepts/`.
+- **originals vs ideas** — The thing-vs-thought test. User wrote a product/business idea worth building? → `ideas/`. User wrote an observation, framework, or take with no build action? → `originals/`.
+- **originals naming** — Use the user's exact phrasing as the slug. `meatsuit-maintenance-tax`, not `biological-needs-maintenance-overhead`. The vividness IS the concept. Never sanitize into corporate-speak.
 - **concept vs how-to** — Concrete process with steps and verification → `how-to/`. Teachable framework or mental model → `concepts/`. A how-to page MAY link to a concept page explaining the why.
 - **project vs idea** — Anyone working on it right now? Yes → `projects/`. No → `ideas/`. Graduation is a promote operation, with `graduated-to` frontmatter on the idea.
 - **tool vs concept** — Specific named product/software → `tools/`. Theoretical approach to tooling → `concepts/`.
@@ -805,11 +828,13 @@ clicking navigates to the daily note.
    ambiguous output.
 8. If a source page doesn't have a clear category, the compiled page goes in
    `inbox/` with a flag for human review. Do not guess.
-9. There is no `originals/` category. User's original thinking compiles into
-   the K2 category matching its TYPE: concepts/ for frameworks, ideas/ for
-   unexecuted possibilities, writing/ for long-form prose, personal/ for
-   private reflection. Atomic thoughts that don't fit these stay in
-   `human/zettel/` as ongoing zettels.
+9. User's original thinking goes in `originals/` with the user's exact
+   phrasing as the slug and verbatim content capture — never sanitize or
+   paraphrase. Authorship test: user generated the framework or a unique
+   synthesis of someone else's? → `originals/`. World-authored concepts the
+   user references? → `concepts/`. Product/build ideas? → `ideas/`. See the
+   Disambiguation Rules section for the full boundary set. Upstream guide:
+   `docs/guides/originals-folder.md`.
 
 ---
 
@@ -830,6 +855,17 @@ clicking navigates to the daily note.
   - Inbox explicitly documented as shared agent/human zone (with agent
     discipline expected).
   - Originals/ absence explicitly documented in Enforcement rule 9.
+- **k2-0.5.0** (2026-04-16) — Restore `originals/` category per stock gbrain
+  convention (`docs/guides/originals-folder.md`). Earlier removal in
+  k2-0.3.0 conflated user's own thinking with world-authored concepts.
+  `originals/` holds user-generated frameworks, hot takes, contrarian
+  positions, and syntheses — captured in the user's exact phrasing.
+  `concepts/` narrowed to world-authored frameworks the user references.
+  Disambiguation rules added: originals-vs-concepts (authorship test),
+  originals-vs-ideas (thing-vs-thought test), naming rule (vividness IS
+  the concept, never sanitize). Enforcement rule 9 inverted from "no
+  originals/" to "originals/ with verbatim capture + authorship test".
+
 - **k2-0.4.0** (2026-04-16) — Three changes:
   - Archive destination relocated from `sources/human/archive/zettel/` to
     `archive/human/zettel/`. `sources/` is now strictly read-only for the
