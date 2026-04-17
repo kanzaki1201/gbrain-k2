@@ -27,6 +27,13 @@ mutating: true
 
 Periodic brain health checks and cleanup.
 
+> **Recommended cadence:** nightly semantic maintenance pass.
+
+> **Scheduled role in K2 cadence:**
+> - nightly job: `maintain`
+> - weekly deeper maintenance: `maintain` + `gbrain doctor --json` + `gbrain embed --stale`
+> - zettel compilation and zettel archival-candidate surfacing belong to `zettel-processor`
+
 ## Contract
 
 This skill guarantees:

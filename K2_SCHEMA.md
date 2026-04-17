@@ -144,9 +144,9 @@ etc.) that CITES the human source — the human source itself is untouched.
 **`sources/` is immutable reference material.** Imported legacy content (prior
 note tools, Obsidian export) and attachments live here. The agent reads from
 `sources/` freely and NEVER writes to it. Matured human content approved for
-archival goes to `archive/human/zettel/` — a separate top-level zone so that
-both `human/` and `sources/` stay strictly read-only for the agent (see
-Principle 5).
+archival goes to `human/zettel/archive/` so archived zettels remain visibly
+inside the human-owned zone while leaving the live zettel area (see Principle
+6).
 
 **Moving source pages OUT of `sources/` is also forbidden.** Even though the
 target folder is an agent-owned category, the move itself violates the
@@ -164,7 +164,7 @@ ground. Every agent-written inbox entry should be reviewable and actionable;
 flagged items for human attention are the typical case.
 
 Anti-pattern to avoid: moving human content into a category folder and calling
-it done. Human content stays in human/ (or archive/human/zettel/ once
+it done. Human content stays in human/ (or `human/zettel/archive/` once
 explicitly archived). The agent's job is to compile parallel wiki pages that
 cite the human sources.
 
@@ -184,7 +184,7 @@ signal. Partial-use is a valid steady state, not a schema failure.
 **The human owns completion and archival timing.** Wholesale-compiled + stable is
 an archival heuristic, not a source of authority. The human can keep a zettel
 active indefinitely, explicitly approve archival of a non-candidate zettel, or
-manually move a zettel into `archive/human/zettel/`. Human intent outranks the
+manually move a zettel into `human/zettel/archive/`. Human intent outranks the
 system's candidacy logic.
 
 **Zettels preserve compression-resistant thought.** The value is often in the
@@ -210,8 +210,12 @@ When a zettel in `human/zettel/` is processed by the zettel-processor skill:
    is stable (no recent edits), the zettel-processor marks it as an archival
    candidate and the maintenance skill surfaces a prompt to the human via the
    configured messaging channel.
-5. **Only when the human explicitly approves** does the agent move the zettel:
-   `human/zettel/foo.md` → `archive/human/zettel/foo.md`. Any wiki pages that
+5. Mature multi-target zettels can also become archival candidates during
+   maintenance when they are long, stable, and clearly functioning as mature
+   source reservoirs rather than active live writing. These are review
+   candidates only; human approval is still required.
+6. **Only when the human explicitly approves** does the agent move the zettel:
+   `human/zettel/foo.md` → `human/zettel/archive/foo.md`. Any wiki pages that
    cited the old path update their `## Sources` link to the new path.
 
 Markdown links referencing the zettel by path must be rewritten on archival move.
@@ -219,13 +223,14 @@ Obsidian wikilinks pointing at the zettel by basename (if any exist in human-
 authored content) continue to resolve after the move because Obsidian resolves
 by basename vault-wide.
 
-**Partial-use zettels never become archival candidates.** If a zettel
-contributes to multiple wiki pages as one source among many, or only partially
-compiles (some content not yet captured), it stays in `human/zettel/`
-indefinitely. No prompt fires. A human can still explicitly approve archival of
-a specific zettel, or manually move a zettel into `archive/human/zettel/`; in
-that case the agent treats the new path as authoritative and updates citations
-to match.
+**Partial-use zettels do not become automatic archival candidates just because
+they are multi-target.** If a zettel contributes to multiple wiki pages as one
+source among many, or only partially compiles (some content not yet captured),
+it usually stays in `human/zettel/`. Maintenance may still surface a mature,
+long, stable multi-target zettel as a human-review archival candidate. A human
+can also explicitly approve archival of a specific zettel, or manually move a
+zettel into `human/zettel/archive/`; in that case the agent treats the new path
+as authoritative and updates citations to match.
 
 **Updated zettels are re-processed.** The zettel-processor detects zettels that
 have been modified since last run and re-compiles the affected wiki pages.
@@ -235,7 +240,8 @@ human may keep developing the idea.
 **Dreaming and maintenance loops** actively scan `human/` to detect:
 - New zettels needing initial compile
 - Updated zettels needing re-compile
-- Archival candidates (stable + wholesale compiled)
+- Archival candidates (stable + wholesale compiled, plus mature multi-target
+  review candidates)
 - Orphan compiled pages (wiki page exists but source zettel was deleted)
 
 All findings surface via the maintenance messaging channel. None of them
@@ -289,15 +295,13 @@ only for the agent. `inbox/` is shared. All other categories are agent-writable.
 brain-vault/
 ├── human/                — SACRED: human writing, agent NEVER writes or modifies
 │   ├── zettel/           active atomic zettel destination (new writing lands here)
+│   │   └── archive/      archived zettels, still inside the human-owned zone
 │   └── <free structure>  any way the human organizes their own writing
 ├── sources/              immutable reference material, agent NEVER writes
 │   ├── assets/           image and file attachments
 │   └── imports/          legacy imports (dated snapshots from prior note tools)
 │       └── YYYY-MM-DD-*-import/
-├── archive/              retired content (agent-writable)
-│   └── human/zettel/     matured human content moved here after explicit
-│                          human approval via zettel-processor. Content is
-│                          preserved unchanged; only the path changes.
+├── archive/              retired agent-owned content (agent-writable)
 ├── inbox/                shared triage zone (agent and human both write here;
 │                          agent uses sparingly to avoid bloat)
 ├── people/               real humans (known + public figures referenced)
@@ -476,7 +480,7 @@ optionally with a one-line note:
 
 - [First tests with X](../human/zettel/2026-04-16-first-tests-with-X.md)
 - [Obsidian import — example-tool](../sources/imports/2026-04-16-obsidian-import/pages/example-tool.md)
-- [2026-02-04 rigging test](../archive/human/zettel/2026-02-04-some-rigging-test.md) — archived after wholesale compile
+- [2026-02-04 rigging test](../human/zettel/archive/2026-02-04-some-rigging-test.md) — archived after human approval
 ```
 
 Markdown links (not wikilinks) are used so that gbrain's `check-backlinks`
@@ -1011,7 +1015,7 @@ clicking navigates to the daily note.
    `sources/`. `sources/` is fully read-only. Moving a source page into a
    category folder is explicitly forbidden — compile a parallel wiki page
    that cites the source instead. The zettel archival move lands in
-   `archive/human/zettel/`, NOT `sources/`, and requires explicit human
+   `human/zettel/archive/`, NOT `sources/`, and requires explicit human
    approval via the maintenance messaging channel — the agent MUST NOT
    perform this move autonomously.
 4. The agent MUST emit frontmatter per this spec on every wiki page it creates
@@ -1072,9 +1076,9 @@ clicking navigates to the daily note.
 
 - **k2-0.4.0** (2026-04-16) — Three changes:
   - Archive destination relocated from `sources/human/archive/zettel/` to
-    `archive/human/zettel/`. `sources/` is now strictly read-only for the
-    agent — no gated write path. `archive/` hosts the zettel archive in a
-    clearly agent-writable zone.
+    `human/zettel/archive/`. `sources/` is now strictly read-only for the
+    agent, while archived zettels remain explicitly inside the human-owned
+    zettel zone.
   - Link syntax clarified: agent-written pages use markdown links
     `[Name](../category/slug.md)` for entity cross-refs so gbrain's CLI
     `check-backlinks` extractor picks them up. `[[YYYY-MM-DD]]` wikilinks

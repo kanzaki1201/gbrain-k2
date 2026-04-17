@@ -4,7 +4,7 @@ version: 2.0.0
 description: |
   Compile human zettels from human/zettel/ into wiki category pages. Detect
   archival candidates (wholesale + stable, plus mature multi-target review
-  cases) and surface them for human approval via the maintenance channel.
+  cases) and surface them for human approval in the zettel-processor pass.
   Execute archival moves to human/zettel/archive/ only on explicit approval.
   Never writes to or modifies human/ otherwise.
 triggers:
@@ -28,6 +28,9 @@ mutating: true
 Compile atomic human zettels into the wiki while keeping the zettels themselves
 sacred. The wiki compounds; the zettels stay intact as primary-source evidence.
 
+> **Recommended cadence:** waking-hours scheduled pass (commonly evening) so the
+> human can react to what was compiled.
+
 > **Filing rule:** Read `skills/_brain-filing-rules.md` before creating any new
 > page. Read `~/gbrain-k2/K2_SCHEMA.md` Operating Principle 5 for the zettel/archival
 > contract.
@@ -44,8 +47,9 @@ sacred. The wiki compounds; the zettels stay intact as primary-source evidence.
 - Every compiled wiki page cites its contributing zettel(s) in a `## Sources`
   body section with markdown links to current paths.
 - Updated zettels re-compile affected pages; stale compiled content is rewritten, not appended to.
-- Archival candidates are queued for `maintain` to surface via messaging. This
-  skill never messages the human directly in async mode.
+- Archival candidates are surfaced by the scheduled zettel-processor pass in
+  its own report/output. This skill owns zettel compilation and zettel-review
+  surfacing.
 
 ## Iron Law: Back-Linking (MANDATORY)
 
@@ -55,11 +59,11 @@ mention is a broken brain. See `skills/_brain-filing-rules.md` for format.
 
 ## When To Fire
 
-- New or updated file in `human/zettel/` detected by `maintain`
+- New or updated file in `human/zettel/` detected by the zettel-processor pass
 - User command: "process my zettels", "compile zettels"
 - User approval of a specific archival candidate: "archive zettel X"
 - Human explicitly says a non-candidate zettel can be archived
-- Human manually moved a zettel into `archive/human/zettel/`
+- Human manually moved a zettel into `human/zettel/archive/`
 
 Does NOT fire on wiki-page edits (that's `enrich`), on imported sources under
 `sources/` (that's bootstrap compile), or on low-notability captures like URL
@@ -100,9 +104,9 @@ For each zettel:
 
 ### 3. Queue archival candidates
 
-Candidates from Phase 1 are packaged for `maintain` with: zettel path,
-compiled-to path, stable-since date, one-sentence rationale. No move happens
-here.
+Candidates from Phase 1 are packaged into the zettel-processor pass output
+with: zettel path, compiled-to path, stable-since date, one-sentence rationale.
+No move happens here.
 
 ### 3.5 Respect explicit human archival intent
 
@@ -123,10 +127,10 @@ When the human approves a specific candidate:
 
 1. Re-verify candidacy — if the zettel has been edited since prompt emission,
    candidacy lapses; re-run Phase 3 next cycle.
-2. `mv human/zettel/{name}.md archive/human/zettel/{name}.md`.
+2. `mv human/zettel/{name}.md human/zettel/archive/{name}.md`.
 3. Rewrite markdown-link citations in affected wiki pages from the old path to
    the new path.
-4. Log the move in `maintain`'s report.
+4. Log the move in the zettel-processor report.
 
 If the human denies archival, record the denial and exclude from candidacy
 for a 30-day cooldown.

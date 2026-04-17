@@ -24,7 +24,7 @@ metadata:
     - search_files
   gbrain:
     blueprint_path: /home/k/gbrain-k2/skills/maintain/SKILL.md
-    blueprint_sha256: 53b78fa297eed4b2b52d33b5ddf6ff9c02412bedba3f8550da310559cdc666d8
+    blueprint_sha256: 7573d508cfda99b73de51a2c5e5b63ca7d751bcc7c6b62463b373396af207620
     generated_from: gbrain-k2/skills
 ---
 
@@ -62,8 +62,6 @@ Load this skill when work matches any of these blueprint triggers:
 
 This skill guarantees:
 - All health dimensions are checked (stale, orphan, dead links, cross-refs, backlinks, citations, filing, tags)
-- Changed human zettels are re-compiled into wiki pages as part of maintenance
-- Archival candidates are surfaced to the human; archival never happens autonomously
 - Each issue found has a specific fix action
 - Back-link iron law is enforced
 - Citation format is validated against the standard
@@ -72,11 +70,7 @@ This skill guarantees:
 ### Blueprint Phases
 
 1. **Run health check.** Check gbrain health to get the dashboard.
-2. **Re-compile changed zettels before judging downstream health.** Run the
-   zettel-processor workflow over new and updated `human/zettel/` files so the
-   wiki reflects the latest human writing before you assess stale compiled truth,
-   citations, and archival candidates.
-3. **Check each dimension:**
+2. **Check each dimension:**
 
 ### Stale pages
 Pages where compiled_truth is older than the latest timeline entry. The assessment hasn't been updated to reflect recent evidence.

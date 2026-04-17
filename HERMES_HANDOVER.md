@@ -83,6 +83,16 @@ Hermes config to load the external directory, archives any legacy local
 `~/.hermes/skills/brain` copy outside the active skills tree, and writes an
 audit report under `~/gbrain-k2/reports/hermes-skill-audits/`.
 
+How the projection is generated:
+- `generate-hermes-brain-skills.py` reads every source blueprint in `~/gbrain-k2/skills/*/SKILL.md`
+- it parses frontmatter plus key sections such as `Contract`, `Phases`, `Anti-Patterns`, `Output Format`, and `Tools Used`
+- it writes a Hermes-native `SKILL.md` with standardized sections: `When to Use`, `Quick Reference`, `Procedure`, `Pitfalls`, and `Verification`
+- it copies the original blueprint into `references/blueprint.md`
+- it stamps the generated skill with the source blueprint path and SHA-256 hash
+- `audit-hermes-brain-skills.py` then verifies the generated projection still matches the blueprint hash and required Hermes sections
+
+So the script is a deterministic doc-to-doc compiler, not an LLM writing pass. The human/agent work happens in the source blueprints under `skills/`; the projection layer stays mechanical so Hermes can load a stable, auditable skillpack.
+
 **Important:** rerun the sync script any time `~/gbrain-k2/skills/` changes.
 That keeps Hermes's generated `brain/*` projections aligned with the fork.
 
@@ -148,15 +158,8 @@ schedule mirrors upstream gbrain with k2-specific additions:
 | Daily (morning) | `brain/briefing` + `brain/daily-task-prep` | Prompt the human into wiki interaction: time-sensitive threads, open projects, stale docs, and one random non-source page |
 | Daily (evening / waking hours) | `brain/zettel-processor` | Re-compile changed zettels and surface archival candidates for human review |
 | Daily | `gbrain check-update --json` | Tell user if a k2 update is available; never auto-install |
-| Nightly | `brain/maintain` | Semantic maintenance pass: stale pages, stale threads, citation/backlink hygiene, and archival candidates |
+| Nightly | `brain/maintain` | Semantic maintenance pass: stale pages, stale threads, citation/backlink hygiene |
 | Weekly | `brain/maintain` full lint + `gbrain doctor --json` + `gbrain embed --stale` | Post a report |
-
-**NOT cron:**
-- `signal-detector` — always-on per-message hook, fires on every inbound
-  signal during active sessions. Configure as a message-level trigger, not
-  a scheduler.
-- `brain-ops` — per-request read/enrich/write loop. Invoked by other skills
-  when a brain interaction happens. Not a standalone cron.
 
 Cron design rules (from K2_SCHEMA.md operational pipeline):
 - Silent when nothing happens — no "nothing to report" noise

@@ -54,10 +54,7 @@ source page to `people/`. The source stays in `sources/` forever.
 
 ### `archive/` — retired content (agent-writable)
 
-- `archive/human/zettel/` — matured human zettels moved here after explicit
-  human approval via zettel-processor. Content is preserved unchanged; only
-  the path changes.
-- `archive/` also hosts retired agent-written pages (superseded entities,
+- `archive/` hosts retired agent-written pages (superseded entities,
   ended projects, deprecated tools) when the lint pass or the human flags
   them for archival.
 
@@ -70,7 +67,7 @@ ambiguous content. Every agent-written inbox entry should be actionable.
 ### Anti-pattern: relocation
 
 Moving a human source page into a category folder and calling it done is
-FORBIDDEN. Human content stays in human/ (or `archive/human/zettel/` once
+FORBIDDEN. Human content stays in human/ (or `human/zettel/archive/` once
 explicitly archived). The agent's job is to compile parallel wiki pages in
 category folders that CITE the human sources.
 
@@ -90,20 +87,25 @@ single wiki page) AND is stable (no recent edits), the zettel-processor skill
 marks it as an archival candidate. The maintenance skill surfaces the prompt
 to the human via the configured messaging channel.
 
+Maintenance can also surface a mature long multi-target zettel as a review
+candidate when it is stable and clearly functioning as a source reservoir,
+even though it is not a 1:1 wholesale compile.
+
 **Only when the human explicitly approves** does the agent move the zettel:
-`human/zettel/foo.md` → `archive/human/zettel/foo.md`.
+`human/zettel/foo.md` → `human/zettel/archive/foo.md`.
 
 Rules:
 
 - **Never autonomous.** The move requires explicit human approval. No
   threshold, no heuristic approval — explicit consent per zettel.
-- **1:1 wholesale only.** Partial-use zettels (contributing to multiple wiki
-  pages, or only partially compiled) are never archival candidates.
+- **1:1 wholesale is the strongest candidate signal.** Partial-use zettels can
+  still become human-review candidates when maintenance judges them mature,
+  long, stable, and source-like.
 - **Updated zettels stay.** A zettel with recent edits suggests the human is
   still developing the idea. Not an archival candidate.
 - **Update citations on move.** Any wiki page `## Sources` entry or timeline
   entry that referenced the old `human/zettel/...` path must be updated to
-  the new `archive/human/zettel/...` path after the move.
+  the new `human/zettel/archive/...` path after the move.
 - **Basename wikilinks (if present in human content) remain safe.** Obsidian
   resolves `[[zettel title]]` vault-wide, so wikilinks inside human-authored
   pages continue to resolve after the move. Agent-written pages use markdown

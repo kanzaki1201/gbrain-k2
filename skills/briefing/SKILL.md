@@ -16,7 +16,11 @@ mutating: false
 
 # Briefing Skill
 
-Compile a daily briefing from brain context.
+Compile daily briefing with meeting context, open threads, stale docs, and wiki-interaction prompts.
+
+> **Recommended cadence:** morning scheduled pass during waking hours.
+
+> **Scheduled role in K2 cadence:** morning briefing job. Pair with `daily-task-prep` when the install uses task prep in the same morning window.
 
 > **Filing rule:** When the briefing creates or updates brain pages,
 > follow `skills/_brain-filing-rules.md`.

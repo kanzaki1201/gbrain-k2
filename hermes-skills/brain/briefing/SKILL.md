@@ -12,7 +12,9 @@ metadata:
     - gbrain-k2
     - briefing
     related_skills:
+    - daily-task-prep
     - enrich
+    - install
     - query
     requires_tools:
     - terminal
@@ -20,7 +22,7 @@ metadata:
     - search_files
   gbrain:
     blueprint_path: /home/k/gbrain-k2/skills/briefing/SKILL.md
-    blueprint_sha256: bf195e21f2b3dfe0b01649179f430a6cf884556e7c77f9c681893f7b12a5ab7a
+    blueprint_sha256: 7fa31004a9dcb327cb36c88022a82c43bd13e161318d746f8493c34239856eae
     generated_from: gbrain-k2/skills
 ---
 

@@ -12,15 +12,20 @@ metadata:
     - gbrain-k2
     - cron-scheduler
     related_skills:
+    - briefing
+    - daily-task-prep
+    - install
+    - maintain
     - reports
     - testing
+    - zettel-processor
     requires_tools:
     - terminal
     - read_file
     - search_files
   gbrain:
     blueprint_path: /home/k/gbrain-k2/skills/cron-scheduler/SKILL.md
-    blueprint_sha256: 0965d16935720983ca64427821f6b89676907f1260fbd1722713677d6d8c96dd
+    blueprint_sha256: f9a620334cf3190f1b423accbb4dfd26bf73c32584b6f8e47b388680703d6b4f
     generated_from: gbrain-k2/skills
 ---
 
@@ -60,6 +65,7 @@ This skill guarantees:
 - Thin job prompts: jobs say "Read skills/X/SKILL.md and run it" (no inline 3000-word prompts)
 - Idempotency: jobs can run twice without duplicate side effects
 - Results saved as reports: `reports/{job-name}/{YYYY-MM-DD-HHMM}.md`
+- K2 baseline cadence stays coherent: morning briefing, waking-hours zettel processing, nightly maintain pass, weekly deeper maintenance
 
 ### Blueprint Phases
 

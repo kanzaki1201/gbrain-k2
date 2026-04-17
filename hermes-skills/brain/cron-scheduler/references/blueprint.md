@@ -28,6 +28,7 @@ This skill guarantees:
 - Thin job prompts: jobs say "Read skills/X/SKILL.md and run it" (no inline 3000-word prompts)
 - Idempotency: jobs can run twice without duplicate side effects
 - Results saved as reports: `reports/{job-name}/{YYYY-MM-DD-HHMM}.md`
+- K2 baseline cadence stays coherent: morning briefing, waking-hours zettel processing, nightly maintain pass, weekly deeper maintenance
 
 ## Phases
 
@@ -41,6 +42,21 @@ This skill guarantees:
    - Morning contact releases the backlog
 4. **Register with host scheduler.** OpenClaw cron, Railway cron, crontab, or process manager.
 5. **Write thin prompt.** Job prompt is one line: "Read skills/{name}/SKILL.md and run it."
+
+## K2 Baseline Jobs
+
+Document the standing cadence in the skills themselves so operators can inspect
+the intended schedule from inside the repo:
+
+| Window | Skill / action | Purpose |
+|---|---|---|
+| Morning | `briefing` (+ optional `daily-task-prep`) | prompt wiki interaction: time-sensitive threads, open projects, stale docs, random non-source page |
+| Waking hours / evening | `zettel-processor` | compile new or changed zettels and surface archival candidates for human review |
+| Daily | `gbrain check-update --json` | report update availability; never auto-install |
+| Nightly | `maintain` | stale pages, stale threads, citation hygiene, backlink hygiene, general semantic upkeep |
+| Weekly | `maintain` + `gbrain doctor --json` + `gbrain embed --stale` | deeper maintenance and substrate verification |
+
+Keep this table aligned with the live Hermes cron jobs and with `HERMES_HANDOVER.md`.
 
 ## Idempotency Requirement
 

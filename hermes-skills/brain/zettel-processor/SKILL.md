@@ -2,7 +2,7 @@
 name: zettel-processor
 description: Compile human zettels from human/zettel/ into wiki category pages. Detect
   archival candidates (wholesale + stable, plus mature multi-target review cases)
-  and surface them for human approval via the maintenance channel. Execute archival
+  and surface them for human approval in the zettel-processor pass. Execute archival
   moves to human/zettel/archive/ only on explicit approval. Never writes to or modifies
   human/ otherwise.
 version: 2.0.0
@@ -29,7 +29,7 @@ metadata:
     - search_files
   gbrain:
     blueprint_path: /home/k/gbrain-k2/skills/zettel-processor/SKILL.md
-    blueprint_sha256: d743636aed0186f855200eb0870c7d65ef9ab5c6238e53780dd3560eddca504e
+    blueprint_sha256: 43e9eed13c0f90a884053aebd111ced9bb1b99dfa0ed2c551fa8ac58efc720dd
     generated_from: gbrain-k2/skills
 ---
 
@@ -74,8 +74,9 @@ Load this skill when work matches any of these blueprint triggers:
 - Every compiled wiki page cites its contributing zettel(s) in a `## Sources`
   body section with markdown links to current paths.
 - Updated zettels re-compile affected pages; stale compiled content is rewritten, not appended to.
-- Archival candidates are queued for `maintain` to surface via messaging. This
-  skill never messages the human directly in async mode.
+- Archival candidates are surfaced by the scheduled zettel-processor pass in
+  its own report/output. This skill owns zettel compilation and zettel-review
+  surfacing.
 
 ### Blueprint Phases
 
@@ -112,9 +113,9 @@ For each zettel:
 
 ### 3. Queue archival candidates
 
-Candidates from Phase 1 are packaged for `maintain` with: zettel path,
-compiled-to path, stable-since date, one-sentence rationale. No move happens
-here.
+Candidates from Phase 1 are packaged into the zettel-processor pass output
+with: zettel path, compiled-to path, stable-since date, one-sentence rationale.
+No move happens here.
 
 ### 3.5 Respect explicit human archival intent
 
@@ -135,10 +136,10 @@ When the human approves a specific candidate:
 
 1. Re-verify candidacy — if the zettel has been edited since prompt emission,
    candidacy lapses; re-run Phase 3 next cycle.
-2. `mv human/zettel/{name}.md archive/human/zettel/{name}.md`.
+2. `mv human/zettel/{name}.md human/zettel/archive/{name}.md`.
 3. Rewrite markdown-link citations in affected wiki pages from the old path to
    the new path.
-4. Log the move in `maintain`'s report.
+4. Log the move in the zettel-processor report.
 
 If the human denies archival, record the denial and exclude from candidacy
 for a 30-day cooldown.

@@ -27,12 +27,17 @@ mutating: true
 
 Periodic brain health checks and cleanup.
 
+> **Recommended cadence:** nightly semantic maintenance pass.
+
+> **Scheduled role in K2 cadence:**
+> - nightly job: `maintain`
+> - weekly deeper maintenance: `maintain` + `gbrain doctor --json` + `gbrain embed --stale`
+> - zettel compilation and zettel archival-candidate surfacing belong to `zettel-processor`
+
 ## Contract
 
 This skill guarantees:
 - All health dimensions are checked (stale, orphan, dead links, cross-refs, backlinks, citations, filing, tags)
-- Changed human zettels are re-compiled into wiki pages as part of maintenance
-- Archival candidates are surfaced to the human; archival never happens autonomously
 - Each issue found has a specific fix action
 - Back-link iron law is enforced
 - Citation format is validated against the standard
@@ -41,11 +46,7 @@ This skill guarantees:
 ## Phases
 
 1. **Run health check.** Check gbrain health to get the dashboard.
-2. **Re-compile changed zettels before judging downstream health.** Run the
-   zettel-processor workflow over new and updated `human/zettel/` files so the
-   wiki reflects the latest human writing before you assess stale compiled truth,
-   citations, and archival candidates.
-3. **Check each dimension:**
+2. **Check each dimension:**
 
 ### Stale pages
 Pages where compiled_truth is older than the latest timeline entry. The assessment hasn't been updated to reflect recent evidence.
