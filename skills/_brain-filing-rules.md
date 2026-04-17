@@ -30,16 +30,18 @@ full k2 rules.
 
 `sources/` in this fork is the human's territory:
 
-- Imported legacy content (dated snapshot directories like `sources/2026-04-16-obsidian-import/`)
-- New human writing (zettels, long-form notes, captures)
+- Imported legacy content (dated snapshot directories like `sources/imports/2026-04-16-obsidian-import/`)
+- New human writing (`sources/zettel/` is the active atomic-note destination)
 - Attachments (images, PDFs, audio) under `sources/assets/`
+- Promoted zettels: `sources/promoted_zettel/` (frozen after 1:1 promotion, see below)
 - Quick captures from ingest pipelines before triage
 
-**The agent reads from `sources/` but NEVER writes to it.** This applies even
-when "re-filing" a source page that appears to belong in a category. Source
-pages are signals, not wiki pages. The agent's job is to produce compiled wiki
-pages in category folders (`people/`, `concepts/`, etc.) that cite sources —
-not to relocate sources.
+**The agent does not write new content to `sources/`, does not edit existing
+source files, and does not move source pages into category folders.** This
+applies even when "re-filing" a source page that appears to belong in a
+category. Source pages are signals, not wiki pages. The agent's job is to
+produce compiled wiki pages in category folders (`people/`, `concepts/`, etc.)
+that cite sources — not to relocate sources.
 
 The anti-pattern: moving a source page into a category folder and calling it
 done. This is forbidden. If a source page has a clear primary subject, the
@@ -48,8 +50,32 @@ correct action is:
 1. Leave the source page in place.
 2. Create or update the corresponding category page (`people/name.md`,
    `concepts/idea.md`, etc.).
-3. Cite the source page in the new wiki page's `sources` frontmatter field.
+3. Cite the source page in the new wiki page's `## Sources` body section
+   (NOT in frontmatter — sources list in frontmatter bloats during bootstrap).
 4. Add a timeline entry on the wiki page linking back to the source.
+
+### Narrow exception: zettel promotion
+
+When a zettel in `sources/zettel/` produces a single wiki page that covers its
+content entirely (the wiki page's Compiled Truth fully subsumes the zettel),
+the agent moves the zettel file from `sources/zettel/` to
+`sources/promoted_zettel/` as part of the promotion. Both directories are
+within `sources/`, so human ownership is preserved; this is a status
+transition, not a re-filing.
+
+Rules:
+
+- **1:1 wholesale only.** If the zettel contributes to multiple wiki pages, or
+  only a subset of its content is compiled, the zettel stays in `sources/zettel/`.
+- **Update citations.** Any wiki page `## Sources` entry or timeline entry that
+  referenced the old `sources/zettel/...` path must be updated to the new
+  `sources/promoted_zettel/...` path after the move.
+- **Wikilinks are safe.** Obsidian resolves `[[zettel title]]` by basename
+  vault-wide, so wikilinks inside other pages continue to resolve after the
+  move without rewriting.
+- **Promoted zettels are frozen.** If the human wants to add to a promoted
+  zettel, they start a new zettel in `sources/zettel/` that references the
+  promoted one.
 
 **Imported legacy tags, PARA fields, folder locations, and archive status are
 untrusted.** They are evidence of prior human categorization effort, not truth.

@@ -19,9 +19,9 @@ These override the stock gbrain filing rules where they conflict.
 
 ### 1. Sources is sacred. Human writing stays in sources/.
 
-`sources/` contains everything the human writes or captures. It is read-only for
-the agent. The agent NEVER writes to `sources/` — not even to "re-file" a page that
-looks like it belongs in a category.
+`sources/` contains everything the human writes or captures. The agent does NOT
+write new content to `sources/`, does NOT edit existing source files, and does
+NOT move source pages out of `sources/` into category folders.
 
 The anti-pattern to avoid: moving a source page into a category folder and calling
 it done. Source pages are not the wiki. The agent treats every source page as a
@@ -29,6 +29,37 @@ new signal, extracts what matters, and produces compiled truth in category folde
 
 Category folders (`people/`, `concepts/`, etc.) are entirely agent-owned. They are
 synthesis derived from sources, not a relocation of sources.
+
+**Narrow exception: zettel promotion.** Moving a file from
+`sources/zettel/` to `sources/promoted_zettel/` is allowed and expected when a
+zettel has been wholesale-promoted into a wiki page (see Principle 5 below).
+Both directories are within `sources/`, so human ownership is preserved; the
+move is a status transition, not a re-filing. No other source moves are allowed.
+
+### 5. Zettel promotion: 1:1 wholesale only.
+
+When a zettel in `sources/zettel/` produces a single wiki page that covers its
+content entirely (the wiki page's Compiled Truth fully subsumes the zettel),
+the agent:
+
+1. Creates the wiki page in the appropriate category folder.
+2. Cites the zettel in the wiki page's `## Sources` body section.
+3. Moves the zettel file from `sources/zettel/` to `sources/promoted_zettel/`.
+4. Updates any `## Sources` citations on other wiki pages that referenced the
+   old path to use the new `promoted_zettel/` path.
+
+Wikilinks inside the zettel's own body, and wikilinks from other pages pointing
+at this zettel by basename, continue to resolve after the move (Obsidian
+resolves by basename vault-wide).
+
+**Partial-use zettels stay in `sources/zettel/`.** If a zettel contributes to
+multiple wiki pages as one source among many, or contributes only a subset of
+its content (e.g. one sentence in a person's timeline), it does NOT promote.
+It stays available for future enrichment passes.
+
+**When the human wants to add to a promoted zettel,** they start a new zettel
+in `sources/zettel/` with a link back to the promoted one. Promoted zettels
+are frozen.
 
 ### 2. Existing tags and folder locations in imported sources are untrusted.
 
@@ -62,10 +93,12 @@ and `archive/` is agent-writable.
 
 ```
 brain-vault/
-├── sources/              human territory — agent reads, never writes
+├── sources/              human territory — agent reads, only writes during promotion
 │   ├── assets/           image and file attachments
 │   ├── YYYY-MM-DD-*-import/   imported legacy content (dated snapshot)
-│   └── <free structure>  any subdir the human creates for writing
+│   ├── zettel/           live atomic human writing (active zettel destination)
+│   ├── promoted_zettel/  zettels that have been wholesale-promoted into wiki (frozen)
+│   └── <free structure>  any other subdir the human creates for writing
 ├── people/               real humans (known + public figures referenced)
 ├── places/               physical locations (restaurants, homes, travel, landmarks)
 ├── projects/             things the user is actively working on (tech, creative, life)
@@ -144,9 +177,6 @@ aliases: [Other Name, Alt Handle]       # alternative names (list, may be empty)
 tags: [tag1, tag2, tag3]                # cross-cutting labels (workflow domains, topics)
 created: 2026-04-16                     # ISO date, plain string
 updated: 2026-04-16                     # ISO date, plain string
-sources:                                # paths into sources/
-  - sources/YYYY-MM-DD-*-import/path/to/source.md
-  - sources/zettel/2026-04-16-foo.md
 ---
 ```
 
@@ -157,13 +187,28 @@ sources:                                # paths into sources/
   `blender`, `rust`, `linux`, etc. This is how cross-cutting workflows are queried.
 - Obsidian auto-indexes `tags` for search and filter.
 
-**Notes on `sources`:**
+**Sources go in the page body, NOT frontmatter.**
 
-- Paths are relative to vault root.
-- Include every source that contributed a fact to this page (compiled from N sources
-  means N paths here).
-- When a source page is added to sources/, the agent detects the new signal on next
-  enrichment pass and updates the derived wiki page(s).
+Earlier k2 drafts had a `sources:` frontmatter field. This was removed because
+a wiki page compiled from many sources (common during bootstrap: a person page
+may cite 30+ zettels and import pages) creates an unwieldy frontmatter block
+that clutters Obsidian's Properties UI without offering queryable value.
+
+Sources instead live in the page body as a `## Sources` section at the end of
+the Compiled Truth block (before the `---` that separates Compiled Truth from
+Timeline). Each source is a wikilink, optionally with a one-line note:
+
+```markdown
+## Sources
+
+- [[sources/zettel/2026-04-16-first-tests-with-X|First tests with X]]
+- [[sources/imports/2026-04-16-obsidian-import/pages/example-tool]]
+- [[sources/promoted_zettel/2026-02-04-some-rigging-test]] — promoted into this page
+```
+
+This keeps frontmatter lean while preserving provenance. Obsidian resolves the
+wikilinks for backlinks. The timeline entries below the `---` still cite
+per-event sources inline.
 
 ### Per-category frontmatter additions
 
@@ -364,9 +409,6 @@ aliases: [ExampleApp]
 tags: [3d-rigging, blender, vtb]
 created: 2026-04-16
 updated: 2026-04-16
-sources:
-  - sources/2026-04-16-obsidian-import/pages/example-tool.md
-  - sources/zettel/2026-02-04-some-rigging-test.md
 tool-type: plugin
 usage: active
 stack: [3d-rigging, character-production]
@@ -375,7 +417,7 @@ stack: [3d-rigging, character-production]
 # Example Tool
 
 A Blender plugin for automatic humanoid rig generation, used extensively in
-character production pipelines. [Source: compiled from sources/zettel/2026-02-04-some-rigging-test.md, sources/2026-04-16-obsidian-import/pages/example-tool.md]
+character production pipelines.
 
 ## State
 
@@ -392,12 +434,17 @@ character production pipelines. [Source: compiled from sources/zettel/2026-02-04
 - [[blender]] — the host application
 - [[how-to/rig-a-character-in-blender]] — process using this tool
 
+## Sources
+
+- [[sources/imports/2026-04-16-obsidian-import/pages/example-tool]] — imported legacy page with accumulated notes and sub-tags
+- [[sources/zettel/2026-02-04-some-rigging-test]] — first hands-on test of the rigging workflow
+
 ---
 
 ## Timeline
 
-- **[[2026-02-04]]** | sources/zettel/2026-02-04-some-rigging-test.md — First hands-on test of the rigging workflow with this plugin.
-- **[[2026-04-16]]** | sources/2026-04-16-obsidian-import/pages/example-tool.md — Imported legacy page with accumulated notes and sub-tags.
+- **[[2026-02-04]]** | [[sources/zettel/2026-02-04-some-rigging-test]] — First hands-on test of the rigging workflow with this plugin.
+- **[[2026-04-16]]** | [[sources/imports/2026-04-16-obsidian-import/pages/example-tool]] — Imported legacy page with accumulated notes and sub-tags.
 ```
 
 ---
@@ -405,13 +452,18 @@ character production pipelines. [Source: compiled from sources/zettel/2026-02-04
 ## Enforcement
 
 1. The agent MUST read `docs/K2_SCHEMA.md` before creating any new wiki page.
-2. The agent MUST NOT write to `sources/` under any circumstance (including
-   "cleanup" or "re-filing" operations).
+2. The agent MUST NOT write new content to `sources/`, MUST NOT edit existing
+   source files, and MUST NOT move source pages into category folders. The only
+   allowed write to `sources/` is the zettel promotion move
+   (`sources/zettel/` → `sources/promoted_zettel/`) per Operating Principle 5.
 3. The agent MUST emit frontmatter per this spec on every wiki page it creates
    or updates. Missing required fields is a quality failure.
-4. The agent MUST NOT trust existing tags, PARA fields, folder location, or
+4. The agent MUST include a `## Sources` section in every wiki page body, with
+   wikilinks to all source files that contributed to the page. `sources:` in
+   frontmatter is NOT used (moved to body to avoid frontmatter bloat).
+5. The agent MUST NOT trust existing tags, PARA fields, folder location, or
    archive status in imported sources. Read each source as fresh signal.
-5. If a source page doesn't have a clear category, the compiled page goes in
+6. If a source page doesn't have a clear category, the compiled page goes in
    `inbox/` with a flag for human review. Do not guess.
 
 ---
@@ -419,3 +471,6 @@ character production pipelines. [Source: compiled from sources/zettel/2026-02-04
 ## Version History
 
 - **k2-0.1.0** (2026-04-16) — Initial k2 schema. Extends base GBRAIN_RECOMMENDED_SCHEMA.md.
+- **k2-0.2.0** (2026-04-16) — Sources moved from frontmatter to `## Sources` body section
+  (avoids frontmatter bloat when a page cites many sources). Added
+  `sources/promoted_zettel/` convention for 1:1 wholesale-promoted zettels.
