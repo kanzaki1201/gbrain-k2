@@ -1,18 +1,17 @@
 ---
 name: zettel-processor
-version: 1.0.0
+version: 2.0.0
 description: |
-  Process human zettels. Compiles zettels from human/zettel/ into wiki
-  category pages, detects archival candidates (1:1 wholesale + stable),
-  surfaces archival prompts via the maintenance messaging channel, and
-  performs human-approved moves to archive/human/zettel/. NEVER
-  writes to, modifies, or moves files in human/ except the approved archival
-  move. Fires during bootstrap AND on every maintenance cycle.
+  Compile human zettels from human/zettel/ into wiki category pages. Detect
+  archival candidates (wholesale + stable) and surface them for human approval
+  via the maintenance channel. Execute archival moves to archive/human/zettel/
+  only on explicit approval. Never writes to or modifies human/ otherwise.
 triggers:
   - "process zettels"
   - "compile zettels"
   - "check zettel archival candidates"
-  - new or updated file in human/zettel/ (during maintenance)
+  - "archive zettel"
+  - new or updated file in human/zettel/
 tools:
   - search
   - query
@@ -23,241 +22,116 @@ tools:
 mutating: true
 ---
 
-# Zettel Processor
+# Zettel Processor Skill
 
-Compiles human-authored atomic zettels into wiki category pages while keeping
-the zettels themselves sacred. Detects archival candidates and surfaces them
-for human approval via the maintenance messaging channel. Performs the
-archival move only when the human explicitly approves.
+Compile atomic human zettels into the wiki while keeping the zettels themselves
+sacred. The wiki compounds; the zettels stay intact as primary-source evidence.
 
-> **Read first:** `docs/K2_SCHEMA.md` (Operating Principle 5) and
-> `skills/_brain-filing-rules.md`. This skill is the one place in k2 that
-> writes to `sources/`, and even then only via human-approved archival.
+> **Filing rule:** Read `skills/_brain-filing-rules.md` before creating any new
+> page. Read `docs/K2_SCHEMA.md` Operating Principle 5 for the zettel/archival
+> contract.
 
 ## Contract
 
-This skill guarantees:
+- Zettels under `human/zettel/` are read-only. The only mutation permitted is
+  the archival move, gated on explicit human approval.
+- Every compiled zettel produces at least one artifact: a wiki page, a timeline
+  entry on an existing wiki page, or an inbox flag for unclear content.
+- Every compiled wiki page cites its contributing zettel(s) in a `## Sources`
+  body section with markdown links to current paths.
+- Updated zettels re-compile affected pages; stale compiled content is rewritten, not appended to.
+- Archival candidates are queued for `maintain` to surface via messaging. This
+  skill never messages the human directly in async mode.
 
-- Every zettel under `human/zettel/` is read-only from the agent's perspective
-  except during an explicitly human-approved archival move.
-- Every zettel produces or updates at least one compiled artifact: either a
-  wiki category page, or entity timeline entries on existing wiki pages, or
-  (for unclear content) an inbox flag for human review.
-- Every wiki page compiled from a zettel has a `## Sources` body section
-  citing the zettel by markdown link to the zettel's current path.
-- Archival candidates are surfaced via the maintenance messaging channel; the
-  agent NEVER performs the archival move autonomously.
-- Updated zettels trigger re-compile of affected wiki pages; stale compiled
-  content is replaced (never silently kept).
+## Iron Law: Back-Linking (MANDATORY)
 
-## Iron rules (non-negotiable)
+Every entity mentioned in a compiled zettel gets a back-link from that entity's
+page to the zettel (via the wiki page that cites it, transitively). An unlinked
+mention is a broken brain. See `skills/_brain-filing-rules.md` for format.
 
-- **Never write to `human/`** except the one archival move, which requires
-  explicit human approval and only moves files, never modifies content.
-- **Never edit a zettel's content** — period. If the zettel has bad content,
-  surface it to the human via maintenance channel, do NOT fix it.
-- **Never delete a zettel.** Archival is a MOVE to `archive/human/zettel/`,
-  not a deletion. The file content is preserved unchanged.
-- **Never infer archival approval.** The human must explicitly say "archive
-  zettel X" (or equivalent) via the maintenance channel. Heuristic approval
-  is forbidden.
+## When To Fire
 
-## When to fire
+- New or updated file in `human/zettel/` detected by `maintain`
+- User command: "process my zettels", "compile zettels"
+- User approval of a specific archival candidate: "archive zettel X"
 
-| Trigger | Mode | Prompt channel |
-|---------|------|----------------|
-| Bootstrap intake (initial compile) | Synchronous, interactive. Per zettel: compile → ask human "keep live in human/zettel/ or archive to archive/human/zettel/?" → act on answer. | Direct AskUserQuestion-style interaction in the intake session. |
-| Maintenance cron | Asynchronous. Scan `human/zettel/` for zettels with mtime > last-run timestamp. Compile new/updated zettels. Queue archival candidates (stable + 1:1 wholesale). | Batched prompts via the maintenance skill's messaging channel (telegram/etc.). Human replies trigger the archival execution on the next cycle. |
-| Human command: "process my zettels" | Synchronous. Same as maintenance cron but flushed immediately. | Interactive if in a session, messaging if not. |
-| Human command: "archive zettel X" | Synchronous. Verify candidacy, execute move, update citations. | N/A — direct command. |
-| Wiki page edited whose source was a zettel | No action from this skill. Normal enrich flow handles wiki-page changes. |
+Does NOT fire on wiki-page edits (that's `enrich`), on imported sources under
+`sources/` (that's bootstrap compile), or on low-notability captures like URL
+clippings (that's `idea-ingest` / `media-ingest`).
 
 ## Phases
 
-### Phase 1: Discovery
+### 1. Discover
 
-1. List zettels in `human/zettel/` recursively. For each zettel, determine:
-   - Is it NEW (no existing wiki page cites it)?
-   - Is it UPDATED (existing wiki pages cite it AND its mtime exceeds last
-     compile timestamp)?
-   - Is it STABLE (no recent edits — threshold: 7 days since last mtime)?
-2. Partition zettels into: `new`, `updated`, `stable-already-compiled`,
-   `stable-candidates-for-archival`.
+List zettels in `human/zettel/`. For each, classify as `new`, `updated`,
+`stable-compiled`, or `candidate-for-archival`:
 
-### Phase 2: Compile (for new and updated)
+- **New** — no existing wiki page cites this zettel.
+- **Updated** — wiki pages cite it AND mtime > last compile timestamp.
+- **Stable-compiled** — wiki pages cite it AND mtime is older than 7 days.
+- **Candidate** — stable-compiled AND exactly one wiki page cites it AND that
+  page's Compiled Truth fully subsumes the zettel content.
+
+### 2. Compile (new + updated)
 
 For each zettel:
 
-1. Read the zettel content.
-2. Apply `skills/_brain-filing-rules.md` + `skills/repo-architecture/SKILL.md`
-   decision tree to determine primary category + entities mentioned.
-3. Determine compile shape:
-   - **Wholesale compile:** the zettel's entire content maps to ONE wiki page
-     in one category (e.g., a "how to parent a rig" zettel → `how-to/parent-rig.md`).
-     Create or update that wiki page.
-   - **Partial / multi-target compile:** the zettel contributes to multiple
-     wiki pages (e.g., a zettel describing a meeting with Alice about project
-     X — contributes to `people/alice.md` timeline, `projects/x.md` timeline,
-     possibly a meeting page). Fan out to all affected pages.
-   - **Unclear:** cannot determine a clean category. Create an inbox entry
-     with a flag and a pointer to the zettel.
-4. For every affected wiki page:
-   - Add or update the `## Sources` body section with a markdown link to the
-     zettel at its `human/zettel/...` path (format:
-     `[short title](../human/zettel/YYYY-MM-DD-slug.md)`).
-   - Add a dated timeline entry citing the zettel.
-   - Cross-link to related entities bidirectionally (Iron Law).
-5. **Do NOT modify the zettel.** The zettel stays in `human/zettel/`
-   untouched, with its exact current mtime preserved.
+1. Read content. Apply `_brain-filing-rules.md` + `repo-architecture/SKILL.md`
+   decision tree to find primary category + entities.
+2. Decide shape:
+   - **Wholesale** — content maps 1:1 to one wiki page. Create or update that
+     page.
+   - **Multi-target** — contributes to multiple pages (person timeline,
+     project timeline, etc.). Fan out.
+   - **Unclear** — flag in `inbox/` with a reason; do not guess.
+3. For each affected wiki page: update `## Sources` with a markdown link to
+   the zettel, append a dated timeline entry, and cross-link entities per
+   Iron Law.
+4. Do NOT modify the zettel itself. Preserve its mtime.
 
-### Phase 3: Archival candidacy check
+### 3. Queue archival candidates
 
-For each zettel classified `stable-already-compiled` in Phase 1:
+Candidates from Phase 1 are packaged for `maintain` with: zettel path,
+compiled-to path, stable-since date, one-sentence rationale. No move happens
+here.
 
-1. Verify wholesale-compile status: exactly ONE wiki page cites this zettel,
-   AND that wiki page's Compiled Truth fully subsumes the zettel's content
-   (no material meaning left uncaptured).
-2. Verify stability: mtime > 7 days ago, AND no new citations added to other
-   wiki pages since last run.
-3. If both checks pass, the zettel is an archival candidate. Record:
-   - Zettel path
-   - Destination path (`archive/human/zettel/{basename}`)
-   - Single compiled wiki page
-   - Rationale (1-2 sentence summary of why this is a clean 1:1 promotion)
+### 4. Execute archival (only on explicit approval)
 
-Archival candidates are NOT moved in this phase. They are queued for the
-maintenance skill's prompt emission.
+When the human approves a specific candidate:
 
-### Phase 4: Prompt emission (mode depends on trigger)
+1. Re-verify candidacy — if the zettel has been edited since prompt emission,
+   candidacy lapses; re-run Phase 3 next cycle.
+2. `mv human/zettel/{name}.md archive/human/zettel/{name}.md`.
+3. Rewrite markdown-link citations in affected wiki pages from the old path to
+   the new path.
+4. Log the move in `maintain`'s report.
 
-**Bootstrap / interactive mode.** Ask the human directly, per zettel, as the
-compile happens:
-
-> Zettel `2026-02-04-some-rigging-test.md` compiled into
-> [[how-to/parent-rig-in-blender]]. The compile looks wholesale (single wiki
-> page covers the content).
->
-> Keep live in `human/zettel/`, or archive to `archive/human/zettel/`?
-
-Batch pragmatically — if a session has 100+ zettels to compile, group the
-archival questions every ~10-20 zettels rather than blocking on each
-individually. Ask: "Here are N zettels I compiled. Which should be archived
-vs kept live?"
-
-**Maintenance / async mode.** Return a structured result to the maintenance
-skill:
-
-```yaml
-zettel-processor-result:
-  run_at: 2026-04-16T18:00:00Z
-  new_compiled: N
-  updated_recompiled: M
-  inbox_flagged: K
-  archival_candidates:
-    - path: human/zettel/2026-02-04-some-rigging-test.md
-      compiled_to: how-to/parent-rig-in-blender.md
-      stable_since: 2026-04-01
-      rationale: "Zettel content fully captured in how-to page;
-                  no edits in 14 days; no other wiki pages cite it."
-    - path: human/zettel/2026-01-28-photopea-chroma-key.md
-      compiled_to: how-to/photopea-chroma-key.md
-      stable_since: 2026-03-20
-      rationale: "Zettel fully expanded into standalone how-to page."
-```
-
-The maintenance skill formats these for the configured messaging channel
-(telegram, email, etc.) and surfaces to the human. This skill does NOT
-directly message the human in async mode; that's maintenance's responsibility.
-
-### Phase 5: Archival execution (only on explicit human approval)
-
-When the human replies with approval for a specific zettel (e.g., "archive
-zettel 2026-02-04-some-rigging-test"), execute the move:
-
-1. Verify the zettel is still an archival candidate at the time of move
-   (content hasn't been re-edited since prompt emission; if it has, the
-   candidacy lapses — re-run Phase 3 on next cycle).
-2. `mv ~/brain-vault/human/zettel/{name}.md ~/brain-vault/archive/human/zettel/{name}.md`
-3. Update the citing wiki page's `## Sources` section and any timeline entries
-   to use the new `archive/human/zettel/` path.
-4. Grep for any other wiki pages that reference the old path and update them.
-   Agent-written pages use markdown links with explicit paths, so all such
-   references need rewriting. Basename wikilinks (if the human used them in
-   their own content) continue to resolve without rewriting since Obsidian
-   looks up by basename vault-wide.
-5. Log the move in the maintenance report for the human's confirmation.
-
-If the human explicitly DENIES archival ("no, keep it live"), record that
-denial in the zettel's record and exclude it from candidacy for a cooldown
-period (e.g., 30 days).
-
-## Interactions with other skills
-
-- `signal-detector` — does NOT touch zettels directly. If signal-detector
-  encounters a human zettel reference during stream processing, it notes it
-  as deferred to zettel-processor and moves on.
-- `enrich` — invoked by this skill to produce wiki pages when compile shape
-  requires richer page creation (people, companies pages).
-- `ingest` — routes low-notability inputs (clippings, quick URL captures);
-  does NOT process zettels. Zettels always go through zettel-processor.
-- `maintain` — invokes this skill on every cycle. Consumes the structured
-  result and emits prompts to the messaging channel.
-
-## Anti-Patterns
-
-- **Modifying a zettel's content.** Never. Not even to fix typos.
-- **Moving a zettel without explicit human approval.** Never. Archival is
-  human-gated.
-- **Classifying a partial-use zettel as archival candidate.** Multiple-page
-  citations or uncaptured content means the zettel stays live.
-- **Re-creating archived content.** If a zettel was archived, do NOT
-  re-create it in `human/zettel/`. If the human wants to extend the content,
-  they write a new zettel that references the archived one.
-- **Silent content drift.** If updated zettel content contradicts existing
-  wiki Compiled Truth, rewrite the Compiled Truth (never append conflicting
-  content silently). Note the divergence in the timeline with a reference to
-  the zettel's edit date.
-- **Bulk autonomous archival.** Archival decisions are per-zettel and per-
-  approval. No "archive all stable zettels" batch operation.
-- **Scanning outside `human/zettel/`.** This skill only looks at human-authored
-  zettels. Imported content (`sources/imports/`) is handled by standard
-  bootstrap compile, not zettel-processor.
+If the human denies archival, record the denial and exclude from candidacy
+for a 30-day cooldown.
 
 ## Output Format
 
-No direct visible output during compile phase — wiki pages are created/updated
-silently.
+- Per-run log line: `Zettels: N new, M updated, K inbox-flagged, C candidates`
+- Async mode: structured candidate list handed to `maintain` (fields: path,
+  compiled_to, stable_since, rationale)
 
-Per-run log line (same shape as signal-detector):
+## Interactions
 
-```
-Zettels: 3 new compiled, 2 updated recompiled, 1 inbox flagged, 5 archival candidates
-```
+- `signal-detector` — defers human zettels to this skill, does not touch them
+- `enrich` — invoked by this skill when a compile needs person/company page
+  creation
+- `maintain` — calls this skill every cycle, surfaces candidates via messaging
+- `ingest` — handles low-notability captures; zettels always route here
 
-Structured result for the maintenance skill (async mode only):
+## Anti-Patterns
 
-```yaml
-zettel-processor-result:
-  run_at: <ISO timestamp>
-  new_compiled: N
-  updated_recompiled: M
-  inbox_flagged: K
-  archival_candidates:
-    - path: human/zettel/<basename>.md
-      compiled_to: <category>/<slug>.md
-      stable_since: <ISO date>
-      rationale: <1-2 sentence summary>
-```
-
-Interactive bootstrap output is a series of AskUserQuestion prompts with the
-compile result and archive-or-keep question, processed in batches.
-
-## Tools Used
-
-- Filesystem read of `human/zettel/` — non-mutating inspection.
-- `search` — look for existing wiki pages citing a zettel.
-- `query` — semantic search across the corpus for related content.
-- `get_page` / `put_page` — read and write wiki pages.
-- `add_link` / `add_timeline_entry` — cross-reference and timeline
-  maintenance.
-- Filesystem move for the archival step — ONLY after explicit human approval.
+- Modifying a zettel's content. Never — not even typo fixes. Flag to human.
+- Moving a zettel without explicit approval. Archival is human-gated per zettel.
+- Classifying a multi-target or partially-compiled zettel as archival. Multiple
+  citations or uncaptured content means it stays live.
+- Bulk archival ("archive all stable zettels"). No batch operation exists.
+- Scanning outside `human/zettel/`. This skill's scope is human-authored
+  atomic zettels only.
+- Silent drift. If updated zettel content contradicts existing Compiled Truth,
+  rewrite the Compiled Truth and note the divergence in timeline — never
+  append conflicting content silently.
