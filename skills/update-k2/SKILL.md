@@ -64,7 +64,7 @@ fixes where they don't clash with k2 intent:
 
 - `HERMES_HANDOVER.md` — k2-only file, no upstream equivalent. Post-intake
   operator handover guide. Complements upstream `INSTALL_FOR_AGENTS.md`.
-- `docs/K2_SCHEMA.md` — no upstream equivalent. Upstream never writes here.
+- `K2_SCHEMA.md` — repo-root, no upstream equivalent. Upstream never writes here.
 - `docs/GBRAIN_RECOMMENDED_SCHEMA.md` — upstream file with a small pointer header. Preserve header on merge.
 - `skills/_brain-filing-rules.md` — sources-interpretation section is rewritten. Preserve local content; accept upstream additions to unrelated sections (citation format, back-link rules, raw preservation).
 - `skills/repo-architecture/SKILL.md` — decision tree rewritten with the local category set. Keep local version.
@@ -161,7 +161,7 @@ Bucket the upstream-changed files:
 
 - **K2-divergent files** (see list above): expect conflicts, plan to keep k2 version
 - **Skills (`skills/`)** other than divergent ones: usually safe to merge
-- **Docs (`docs/`)** other than K2_SCHEMA.md and GBRAIN_RECOMMENDED_SCHEMA.md: usually safe
+- **Docs (`docs/`)** other than GBRAIN_RECOMMENDED_SCHEMA.md: usually safe
 - **Source (`src/`)**: may conflict if k2 patches any TypeScript (so far k2 does not)
 - **Build/config** (`package.json`, `tsconfig*.json`, `bun.lock`): review needed
 - **Other**: tests, CI, etc.

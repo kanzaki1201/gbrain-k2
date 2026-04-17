@@ -28,7 +28,7 @@ Compile atomic human zettels into the wiki while keeping the zettels themselves
 sacred. The wiki compounds; the zettels stay intact as primary-source evidence.
 
 > **Filing rule:** Read `skills/_brain-filing-rules.md` before creating any new
-> page. Read `docs/K2_SCHEMA.md` Operating Principle 5 for the zettel/archival
+> page. Read `K2_SCHEMA.md` Operating Principle 5 for the zettel/archival
 > contract.
 
 ## Contract

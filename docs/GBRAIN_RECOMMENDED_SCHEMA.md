@@ -2,7 +2,7 @@
 <!-- source: https://raw.githubusercontent.com/garrytan/gbrain/master/docs/GBRAIN_RECOMMENDED_SCHEMA.md -->
 
 > **k2 fork note:** This is the upstream schema reference. The authoritative
-> schema for this fork is `docs/K2_SCHEMA.md`. Read K2_SCHEMA.md first; this
+> schema for this fork is `K2_SCHEMA.md` at the repo root. Read K2_SCHEMA.md first; this
 > file is retained for background and philosophical context.
 
 # Brain: The LLM-Maintained Knowledge Base

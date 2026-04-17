@@ -92,7 +92,7 @@ done
 
 Before any brain operations, read these three files:
 
-1. `~/gbrain-k2/docs/K2_SCHEMA.md` — authoritative schema (v0.4.0+)
+1. `~/gbrain-k2/K2_SCHEMA.md` — authoritative schema (v0.5.0+)
 2. `~/gbrain-k2/skills/_brain-filing-rules.md` — filing decisions
 3. `~/gbrain-k2/skills/RESOLVER.md` — skill dispatcher
 

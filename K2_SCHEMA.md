@@ -806,7 +806,8 @@ clicking navigates to the daily note.
 
 ## Enforcement
 
-1. The agent MUST read `docs/K2_SCHEMA.md` before creating any new wiki page.
+1. The agent MUST read `K2_SCHEMA.md` (this file, at the fork repo root)
+   before creating any new wiki page.
 2. The agent MUST NOT write to, edit, move into, or delete from `human/` under
    any circumstance. `human/` is sacred.
 3. The agent MUST NOT write to, move, edit, or delete any file under
@@ -855,6 +856,12 @@ clicking navigates to the daily note.
   - Inbox explicitly documented as shared agent/human zone (with agent
     discipline expected).
   - Originals/ absence explicitly documented in Enforcement rule 9.
+- **k2-0.5.1** (2026-04-16) — File relocated from `docs/K2_SCHEMA.md` to
+  repo-root `K2_SCHEMA.md`. Rationale: schema is the one doc Hermes must
+  read on every session; hoisting it to the repo root removes `docs/` from
+  Hermes's required-read set. `docs/` stays as upstream developer-facing
+  reference material. No schema content changed — path only.
+
 - **k2-0.5.0** (2026-04-16) — Restore `originals/` category per stock gbrain
   convention (`docs/guides/originals-folder.md`). Earlier removal in
   k2-0.3.0 conflated user's own thinking with world-authored concepts.

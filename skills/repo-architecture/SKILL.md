@@ -18,7 +18,7 @@ mutating: false
 
 # Repo Architecture — Filing Rules
 
-> **Authoritative schema:** See `docs/K2_SCHEMA.md` for the full category list,
+> **Authoritative schema:** See `K2_SCHEMA.md` for the full category list,
 > frontmatter spec, and disambiguation rules.
 >
 > **Filing rules:** See `skills/_brain-filing-rules.md` for source-preservation
@@ -35,7 +35,7 @@ This skill guarantees:
 ## Phases
 
 1. **Identify the primary subject.** What would you search for to find this page?
-2. **Read the K2 schema.** `docs/K2_SCHEMA.md` Category Resolvers table.
+2. **Read the K2 schema.** `K2_SCHEMA.md` Category Resolvers table.
 3. **Walk the decision tree** (first match wins):
    - About a specific human → `people/{name-slug}.md`
    - About an organization → `companies/{name-slug}.md`
