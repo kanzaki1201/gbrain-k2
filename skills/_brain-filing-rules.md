@@ -40,20 +40,26 @@ moves files in or out of `human/`, and NEVER deletes from `human/`.** One
 narrow exception: the zettel archival move (see below), and only after
 explicit human approval via the maintenance messaging channel.
 
-### `sources/` — immutable reference material
+### `sources/` — immutable reference material (agent NEVER writes)
 
 - `sources/imports/YYYY-MM-DD-*/` — legacy content from prior note tools
 - `sources/assets/` — image and file attachments
-- `sources/human/archive/zettel/` — matured human content approved for archival
 
-The agent reads `sources/` freely. The agent writes to `sources/` only via
-one gated path: the zettel archival move below.
+The agent reads `sources/` freely and NEVER writes to it. No exceptions.
 
 **Moves OUT of `sources/` are also forbidden.** Even into agent-owned category
 folders. If a source page is about a person, the agent creates `people/{name}.md`
 as a NEW parallel page that cites the source — the agent does NOT move the
-source page to `people/`. The source stays in `sources/` forever. This rule
-applies to all of sources/ including imports/, assets/, and human/archive/.
+source page to `people/`. The source stays in `sources/` forever.
+
+### `archive/` — retired content (agent-writable)
+
+- `archive/human/zettel/` — matured human zettels moved here after explicit
+  human approval via zettel-processor. Content is preserved unchanged; only
+  the path changes.
+- `archive/` also hosts retired agent-written pages (superseded entities,
+  ended projects, deprecated tools) when the lint pass or the human flags
+  them for archival.
 
 ### `inbox/` — shared triage zone
 
@@ -64,7 +70,7 @@ ambiguous content. Every agent-written inbox entry should be actionable.
 ### Anti-pattern: relocation
 
 Moving a human source page into a category folder and calling it done is
-FORBIDDEN. Human content stays in human/ (or sources/human/archive/zettel/ once
+FORBIDDEN. Human content stays in human/ (or `archive/human/zettel/` once
 explicitly archived). The agent's job is to compile parallel wiki pages in
 category folders that CITE the human sources.
 
@@ -85,7 +91,7 @@ marks it as an archival candidate. The maintenance skill surfaces the prompt
 to the human via the configured messaging channel.
 
 **Only when the human explicitly approves** does the agent move the zettel:
-`human/zettel/foo.md` → `sources/human/archive/zettel/foo.md`.
+`human/zettel/foo.md` → `archive/human/zettel/foo.md`.
 
 Rules:
 
@@ -97,10 +103,11 @@ Rules:
   still developing the idea. Not an archival candidate.
 - **Update citations on move.** Any wiki page `## Sources` entry or timeline
   entry that referenced the old `human/zettel/...` path must be updated to
-  the new `sources/human/archive/zettel/...` path after the move.
-- **Wikilinks are safe by basename.** Obsidian resolves `[[zettel title]]`
-  vault-wide, so wikilinks inside other pages continue to resolve after the
-  move without rewriting.
+  the new `archive/human/zettel/...` path after the move.
+- **Basename wikilinks (if present in human content) remain safe.** Obsidian
+  resolves `[[zettel title]]` vault-wide, so wikilinks inside human-authored
+  pages continue to resolve after the move. Agent-written pages use markdown
+  links, not wikilinks, so those do need path rewriting.
 
 **Imported legacy tags, PARA fields, folder locations, and archive status are
 untrusted.** They are evidence of prior human categorization effort, not truth.

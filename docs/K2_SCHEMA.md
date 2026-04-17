@@ -1,4 +1,4 @@
-<!-- schema-version: k2-0.1.0 -->
+<!-- schema-version: k2-0.4.0 -->
 <!-- fork: kanzaki1201/gbrain-k2 -->
 <!-- base: garrytan/gbrain GBRAIN_RECOMMENDED_SCHEMA.md -->
 
@@ -46,10 +46,11 @@ to record a derived fact, it goes in a compiled wiki page (people/, concepts/,
 etc.) that CITES the human source — the human source itself is untouched.
 
 **`sources/` is immutable reference material.** Imported legacy content (prior
-note tools, Obsidian export), attachments, and archived human content live
-here. The agent reads from `sources/` freely but only writes via one gated
-path: `sources/human/archive/zettel/` receives matured human content approved for
-archival (see Principle 5).
+note tools, Obsidian export) and attachments live here. The agent reads from
+`sources/` freely and NEVER writes to it. Matured human content approved for
+archival goes to `archive/human/zettel/` — a separate top-level zone so that
+both `human/` and `sources/` stay strictly read-only for the agent (see
+Principle 5).
 
 **Moving source pages OUT of `sources/` is also forbidden.** Even though the
 target folder is an agent-owned category, the move itself violates the
@@ -67,7 +68,7 @@ ground. Every agent-written inbox entry should be reviewable and actionable;
 flagged items for human attention are the typical case.
 
 Anti-pattern to avoid: moving human content into a category folder and calling
-it done. Human content stays in human/ (or sources/human/archive/zettel/ once
+it done. Human content stays in human/ (or archive/human/zettel/ once
 explicitly archived). The agent's job is to compile parallel wiki pages that
 cite the human sources.
 
@@ -85,11 +86,13 @@ When a zettel in `human/zettel/` is processed by the zettel-processor skill:
    candidate and the maintenance skill surfaces a prompt to the human via the
    configured messaging channel.
 5. **Only when the human explicitly approves** does the agent move the zettel:
-   `human/zettel/foo.md` → `sources/human/archive/zettel/foo.md`. Any wiki pages that
-   cited the old path update their `## Sources` wikilink to the new path.
+   `human/zettel/foo.md` → `archive/human/zettel/foo.md`. Any wiki pages that
+   cited the old path update their `## Sources` link to the new path.
 
-Wikilinks pointing at the zettel by basename continue to resolve after the
-move (Obsidian resolves by basename vault-wide).
+Markdown links referencing the zettel by path must be rewritten on archival move.
+Obsidian wikilinks pointing at the zettel by basename (if any exist in human-
+authored content) continue to resolve after the move because Obsidian resolves
+by basename vault-wide.
 
 **Partial-use zettels never become archival candidates.** If a zettel
 contributes to multiple wiki pages as one source among many, or only partially
@@ -120,38 +123,53 @@ it is evidence, not truth.
 
 ### 3. Obsidian is the primary reader.
 
-Frontmatter must be Obsidian-compatible. Dates should use Obsidian date-link
-syntax (`[[2026-04-16]]`) where the date represents a meaningful "when" (watched,
-started, visited, last-made) so Obsidian's graph view and backlinks panel surface
-the temporal connections. Plain ISO strings (`2026-04-16`) are acceptable for
-technical metadata (`created`, `updated`).
+Frontmatter must be Obsidian-compatible. Dates in agent-written page bodies
+use Obsidian date-link syntax (`[[2026-04-16]]`) where the date represents a
+meaningful "when" (watched, started, visited, last-made). This is the ONE
+place the agent emits wikilinks: clicking a date stub navigates to the daily
+note. Plain ISO strings (`2026-04-16`) are acceptable for technical metadata
+(`created`, `updated`).
 
-### 4. Wikilinks over markdown links inside sources/ are preserved on ingest.
+### 4. Agent writes markdown links; reserve wikilinks for date stubs.
 
-Source pages use Obsidian `[[Wikilink]]` syntax extensively. The agent preserves
-this when reading. Agent-written wiki pages SHOULD also use wikilinks where
-possible for graph view connectivity, but markdown links are acceptable when the
-target is not guaranteed to exist in the vault.
+Agent-written wiki pages use standard markdown link syntax for entity cross-
+references: `[Name](../people/foo.md)`, `[Blender](../tools/blender.md)`. This
+matches gbrain's CLI link extractor (`gbrain check-backlinks`), which scans for
+`[text](path/to/page.md)` patterns to populate the `links` table in PGLite and
+detect missing back-links. Wikilink syntax `[[foo]]` is invisible to that
+extractor, so agent-written pages must use markdown links to stay graph-
+indexed by the CLI.
+
+**The one exception — date stubs.** Agent-written pages use `[[YYYY-MM-DD]]`
+wikilinks for dates in timeline entries and semantic date fields (`started`,
+`consumed`, etc.). Obsidian resolves these to daily notes on click; gbrain
+correctly ignores them as non-entity edges.
+
+Content inside `human/` and `sources/` may use whatever link syntax the human
+or original source chose. The agent never rewrites wikilinks in those zones.
+When the agent cites a human or source file in its own `## Sources` section,
+it uses a markdown link to the file path.
 
 ---
 
 ## Categories
 
-The vault root directory structure. Every category except `sources/`, `inbox/`,
-and `archive/` is agent-writable.
+The vault root directory structure. `human/` and `sources/` are strictly read-
+only for the agent. `inbox/` is shared. All other categories are agent-writable.
 
 ```
 brain-vault/
 ├── human/                — SACRED: human writing, agent NEVER writes or modifies
 │   ├── zettel/           active atomic zettel destination (new writing lands here)
 │   └── <free structure>  any way the human organizes their own writing
-├── sources/              immutable reference material, read-only for agent
+├── sources/              immutable reference material, agent NEVER writes
 │   ├── assets/           image and file attachments
-│   ├── imports/          legacy imports (dated snapshots from prior note tools)
-│   │   └── YYYY-MM-DD-*-import/
-│   └── human/archive/    matured human content approved for archival
-│                          (only entry point for agent writes to sources/,
-│                           gated by explicit human approval)
+│   └── imports/          legacy imports (dated snapshots from prior note tools)
+│       └── YYYY-MM-DD-*-import/
+├── archive/              retired content (agent-writable)
+│   └── human/zettel/     matured human content moved here after explicit
+│                          human approval via zettel-processor. Content is
+│                          preserved unchanged; only the path changes.
 ├── inbox/                shared triage zone (agent and human both write here;
 │                          agent uses sparingly to avoid bloat)
 ├── people/               real humans (known + public figures referenced)
@@ -168,9 +186,7 @@ brain-vault/
 ├── household/            domestic ops — recipes, home maintenance, property, car
 ├── personal/             private reflections distilled from sources (health, habits, body)
 ├── org/                  institutional workstreams
-├── writing/              long-form prose — essays, drafts, civic/policy commentary
-├── inbox/                unsorted quick captures awaiting triage
-└── archive/              retired content
+└── writing/              long-form prose — essays, drafts, civic/policy commentary
 ```
 
 ### Category notes
@@ -252,19 +268,21 @@ that clutters Obsidian's Properties UI without offering queryable value.
 
 Sources instead live in the page body as a `## Sources` section at the end of
 the Compiled Truth block (before the `---` that separates Compiled Truth from
-Timeline). Each source is a wikilink, optionally with a one-line note:
+Timeline). Each source is a markdown link (path relative to the current page),
+optionally with a one-line note:
 
 ```markdown
 ## Sources
 
-- [[sources/zettel/2026-04-16-first-tests-with-X|First tests with X]]
-- [[sources/imports/2026-04-16-obsidian-import/pages/example-tool]]
-- [[sources/promoted_zettel/2026-02-04-some-rigging-test]] — promoted into this page
+- [First tests with X](../human/zettel/2026-04-16-first-tests-with-X.md)
+- [Obsidian import — example-tool](../sources/imports/2026-04-16-obsidian-import/pages/example-tool.md)
+- [2026-02-04 rigging test](../archive/human/zettel/2026-02-04-some-rigging-test.md) — archived after wholesale compile
 ```
 
-This keeps frontmatter lean while preserving provenance. Obsidian resolves the
-wikilinks for backlinks. The timeline entries below the `---` still cite
-per-event sources inline.
+Markdown links (not wikilinks) are used so that gbrain's `check-backlinks`
+extractor recognizes the reference and populates the `links` table. The
+timeline entries below the `---` still cite per-event sources inline using
+the same markdown-link format.
 
 ### Per-category frontmatter additions
 
@@ -472,6 +490,243 @@ from reality.
 
 ---
 
+## Operational Pipeline
+
+The schema defines where knowledge lives. The pipeline defines how knowledge
+arrives and compounds. This chapter is what makes the brain grow continuously
+instead of sitting static.
+
+### Enrichment fires on every signal
+
+Every time any signal touches an entity — a meeting, email, message, feed
+item, manual mention, a new zettel — the enrichment pipeline fires on every
+entity that signal mentions. The brain grows as a side effect of normal
+operations, not as a separate task the user remembers to do.
+
+This is the single most important operational pattern. If a new ingest
+pathway is added, its implementation MUST call enrich on every person,
+company, project, concept, tool, place, or media item it touches. If that
+call is missing, the brain stops compounding from that source.
+
+### Enrichment tiers
+
+Scale enrichment to the entity's relevance. Over-enriching every mention
+wastes API budget and creates bloated pages.
+
+- **Tier 1 — key entities.** Full pipeline. Inner circle humans, active
+  projects, primary tools, active places. Run all applicable data-source
+  skills. Update beliefs, state, cross-references.
+- **Tier 2 — notable entities.** Web search + social + brain cross-reference.
+  Occasional collaborators, tools under evaluation, media currently being
+  consumed.
+- **Tier 3 — minor mentions.** Extract signal from source only, append a
+  timeline entry. No API calls. Most entities start here and escalate
+  when interaction frequency warrants.
+
+**Tier escalation is signal-driven.** A Tier 3 entity that receives a second
+or third distinct signal escalates to Tier 2. A Tier 2 entity involved in an
+upcoming calendar event or an active project escalates to Tier 1 for the
+duration of that engagement.
+
+**Thin-and-real beats fat-and-generic.** A page with one real interaction
+timeline entry is more valuable than a page stuffed with boilerplate web-
+scraped facts. Don't waste enrichment on entities with no public presence.
+
+### Raw data sidecars
+
+When enrichment calls external APIs, the full API response is preserved
+separately from the distilled wiki page. In gbrain's PGLite schema this is
+the `raw_data` table keyed by page + source with a `fetched_at` timestamp.
+
+- **Wiki page** — distilled, readable. Current role, headline, top skills,
+  relationship state, beliefs with citations. Everything a reader benefits
+  from.
+- **Raw sidecar** — full API response body. Complete work history with
+  descriptions, platform-specific IDs, follower counts, every field the
+  provider returned.
+
+On re-enrichment, the sidecar row for a given source is REPLACED, not
+appended (the `UNIQUE(page_id, source)` constraint enforces this). The
+wiki page is rewritten in place.
+
+### Entry criteria — what gets a page
+
+Not every mention deserves a brain page. Scale page creation to relevance.
+
+**Always create a page for:**
+- Humans the user has had a 1:1 or small-group interaction with
+- Active collaborators, close friends, family, inner circle
+- Projects the user is actively building
+- Tools and media the user actively uses or is consuming now
+- Places the user visits or references with meaningful context
+
+**Create if signal exists:**
+- Entities mentioned by name with concrete context across 2+ distinct signals
+- Entities linked from an already-enriched page with a non-trivial relationship
+
+**Do NOT create:**
+- Bare name mentions with no identifying context
+- Mass event guest lists with no direct interaction
+- One-off references the user is unlikely to return to
+
+When in doubt: skip. A missing page can be created later when a second signal
+arrives. A junk page wastes attention and degrades search quality.
+
+### How enrich wires into everything
+
+Every ingest pathway terminates in a call to the enrich skill. Meeting
+ingestion creates the meeting page, then calls enrich for every attendee and
+every company/project/tool discussed. Email triage classifies the inbox, then
+calls enrich for every unfamiliar sender. Social monitoring detects notable
+engagement, then calls enrich on the engaging account. Manual capture in
+conversation extracts entities, then calls enrich on each.
+
+```
+Meeting ingest ───────┐
+Email triage ─────────┤
+Social radar ─────────┤        ENRICH
+Idea ingest ──────────┼──→   (orchestrator)   ──→   people/ companies/
+Media ingest ─────────┤                              projects/ tools/
+Manual mention ───────┤                              concepts/ places/
+Zettel processor ─────┘                              media/ how-to/
+```
+
+The enrich skill is the single orchestration point. Data-source skills (web
+search, social lookups, semantic search, etc.) are the leaves. Enrich
+decides which leaves to call based on tier. Every leaf is reusable — the
+same web-search skill is invoked whether the trigger was a meeting or a
+casual mention.
+
+### Cron jobs — the autonomous engine
+
+Without crons, the brain only grows when the user is actively engaging it.
+With crons wired to call enrich, the brain compounds 24/7.
+
+Recommended cadence for a creator/engineer setup:
+
+**High frequency (every 10–30 minutes):**
+- **Message monitor** — check key channels for unread items from important
+  contacts. Call enrich on senders if their page is thin.
+- **Feed radar** — scan RSS / reading-list / timeline feeds for items tagged
+  or referencing tracked entities.
+
+**Medium frequency (every 1–3 hours):**
+- **Social radar** — scan mentions and engagement on public social. Call
+  enrich on notable new accounts.
+- **Heartbeat** — the omnibus check. Calendar lookahead, open-threads sweep,
+  inbox scan. Post only if something needs attention.
+
+**Daily:**
+- **Morning briefing** — calendar + tasks + recent signals + brain state →
+  one concise notification.
+- **Zettel processor** — scan `human/zettel/` for new or updated zettels,
+  compile them, queue archival candidates. (See `skills/zettel-processor/`.)
+- **Meeting ingestion** — pull new meeting transcripts if any, create meeting
+  pages, propagate to entity pages.
+
+**Weekly:**
+- **Brain lint** — full maintenance pass: contradictions, stale pages,
+  orphans, missing cross-references, MECE filing violations, citation
+  coverage. Post a report.
+- **Enrichment sweep** — find pages last enriched 90+ days ago or with many
+  `[No data yet]` sections. Queue for re-enrichment.
+
+### Cron design rules
+
+1. **Silent when nothing happens.** No "nothing to report" messages. Noisy
+   crons get disabled. Produce output only when there's a real signal.
+2. **Post to the channel that matches the signal.** Mixing signals across
+   channels makes each channel less useful.
+3. **Idempotent and checkpoint-aware.** Each cron tracks what it has
+   processed (state file or DB row) so it doesn't redo work.
+4. **Respect quiet hours.** Don't post at night unless genuinely urgent.
+5. **Every ingest cron calls enrich.** Structural rule. A cron that processes
+   input but doesn't enrich the entities it touches is a bug.
+6. **Heavy work spawns sub-agents.** Keep the cron session lightweight; let
+   sub-agents fan out the per-entity work.
+
+### Ingest workflows
+
+Each ingest workflow terminates in enrich calls. The canonical shapes:
+
+**Meeting ingestion.** Pull transcript. Create `meetings/YYYY-MM-DD-slug.md`
+with the agent's own analysis above the line (not a copy of the AI summary —
+reframed through what the brain already knows about attendees and projects).
+Call enrich for every attendee. Call enrich for every project, company, or
+tool discussed. Extract action items to the task system. Commit.
+
+**Email ingestion.** Classify the inbox. For each non-routine email, extract
+the sender + any mentioned entities, call enrich. Note commitments and
+follow-ups on the sender's page timeline.
+
+**Social ingestion.** Capture public voice from accounts the user tracks —
+beliefs, projects, what they amplify. Call enrich to feed into the tracked
+entity's "What They Believe" and similar sections.
+
+**Idea / media / link ingest.** User shares a URL, article, video, or book
+reference. The ingest skill extracts the primary subject (the thing itself,
+the person behind it, the concept it illustrates) and calls enrich on each,
+then files the artifact in the matching category.
+
+**Zettel processing.** Scan `human/zettel/`. Compile new and updated zettels
+into the matching wiki category page. Surface archival candidates via the
+maintenance channel for explicit human approval. Never write to `human/`.
+
+**Manual mention.** When the user mentions an entity in conversation, that
+comment is a first-party high-confidence signal. Capture it to the entity's
+page immediately.
+
+### Maintenance (lint) — what `maintain` checks weekly
+
+- **Deduplication scan** — similar names, same email, same company across
+  pages. Merge when confirmed.
+- **Contradictions** — conflicting facts for the same field on the same
+  entity. Flag with both citations; don't silently resolve.
+- **Staleness** — State sections superseded by newer Timeline entries.
+- **Orphans** — pages with no inbound links.
+- **Open Threads** — items that appear resolved in recent timeline but
+  weren't moved out of the Open Threads list.
+- **Missing cross-references** — entity A mentions entity B but doesn't link
+  to B's page.
+- **Missing pages** — entities mentioned frequently with no page yet.
+- **MECE filing violations** — pages in the wrong directory.
+- **Unsourced claims** — high-value assertions (Beliefs, Assessments) without
+  `[Source: ...]` citations.
+- **Alias coverage** — name variants in recent inputs that aren't yet in any
+  page's `aliases` frontmatter.
+
+### Write hotspots and concurrency
+
+Once cron jobs, ingest jobs, and sub-agents all touch the brain repo in
+parallel, shared files (an index of pages, an append-only log) become merge-
+conflict magnets.
+
+- **Treat any index page as derived, not hand-maintained.** Rebuild it
+  periodically by scanning the directory tree; don't update it in every
+  ingest workflow.
+- **Make logs append-safe.** Each entry is a self-contained line with a
+  timestamp prefix; concurrent appends at EOL rarely conflict.
+- **Commit in batches.** An ingest job updating 10 entity pages commits once
+  at the end, not 10 times.
+- **Pull before push.** With append-only logs and per-entity pages, rebases
+  almost always auto-resolve.
+- **Entity pages rarely conflict** — two workflows updating the same person's
+  page at the same time is rare. The real conflict hotspots are shared
+  files, which is why those should be append-only or derived.
+
+### What distinguishes this from RAG
+
+- **Cross-references are pre-built.** You don't need the LLM to discover
+  that project X uses tool Y — that's already linked.
+- **Contradictions are pre-flagged.** When new data conflicts with old data,
+  it's resolved (or flagged) at ingest, not at query time.
+- **The compilation is persistent.** Each source ingested makes the brain
+  richer. Nothing is thrown away.
+- **The structure is a prompt.** Empty sections (`[No data yet]`) tell the
+  agent what to look for next time it encounters this entity.
+
+---
+
 ## Example Page (sanitized)
 
 ```markdown
@@ -496,7 +751,7 @@ character production pipelines.
 
 - **Purpose:** Automatic rig generation for humanoid models in Blender
 - **Usage:** Active — used in recent rigging workflow
-- **Companion tools:** See also [[blender]], [[cats-for-blender]]
+- **Companion tools:** See also [Blender](../tools/blender.md), [cats-for-blender](../tools/cats-for-blender.md)
 
 ## Open Threads
 
@@ -504,21 +759,25 @@ character production pipelines.
 
 ## See Also
 
-- [[blender]] — the host application
-- [[how-to/rig-a-character-in-blender]] — process using this tool
+- [Blender](../tools/blender.md) — the host application
+- [Rig a character in Blender](../how-to/rig-a-character-in-blender.md) — process using this tool
 
 ## Sources
 
-- [[sources/imports/2026-04-16-obsidian-import/pages/example-tool]] — imported legacy page with accumulated notes and sub-tags
-- [[human/zettel/2026-02-04-some-rigging-test]] — first hands-on test of the rigging workflow (still active — not yet archival candidate)
+- [Obsidian import — example-tool](../sources/imports/2026-04-16-obsidian-import/pages/example-tool.md) — imported legacy page with accumulated notes and sub-tags
+- [2026-02-04 rigging test](../human/zettel/2026-02-04-some-rigging-test.md) — first hands-on test (still active — not yet archival candidate)
 
 ---
 
 ## Timeline
 
-- **[[2026-02-04]]** | [[human/zettel/2026-02-04-some-rigging-test]] — First hands-on test of the rigging workflow with this plugin.
-- **[[2026-04-16]]** | [[sources/imports/2026-04-16-obsidian-import/pages/example-tool]] — Imported legacy page with accumulated notes and sub-tags.
+- **[[2026-02-04]]** | [first hands-on rigging test](../human/zettel/2026-02-04-some-rigging-test.md) — First hands-on test of the rigging workflow with this plugin.
+- **[[2026-04-16]]** | [Obsidian import](../sources/imports/2026-04-16-obsidian-import/pages/example-tool.md) — Imported legacy page with accumulated notes and sub-tags.
 ```
+
+Note the link syntax: entity cross-references use markdown links; only the
+date stubs `[[2026-02-04]]` / `[[2026-04-16]]` use Obsidian wikilinks so
+clicking navigates to the daily note.
 
 ---
 
@@ -527,13 +786,13 @@ character production pipelines.
 1. The agent MUST read `docs/K2_SCHEMA.md` before creating any new wiki page.
 2. The agent MUST NOT write to, edit, move into, or delete from `human/` under
    any circumstance. `human/` is sacred.
-3. The agent MUST NOT move, edit, or delete existing files under `sources/`.
-   The only agent WRITE to `sources/` is adding new files via the zettel
-   archival move (`human/zettel/foo.md` → `sources/human/archive/zettel/foo.md`)
-   AND only after explicit human approval via the maintenance messaging
-   channel. The agent MUST NOT perform this move autonomously. Moving a
-   source page into a category folder is explicitly forbidden — compile a
-   parallel wiki page that cites the source instead.
+3. The agent MUST NOT write to, move, edit, or delete any file under
+   `sources/`. `sources/` is fully read-only. Moving a source page into a
+   category folder is explicitly forbidden — compile a parallel wiki page
+   that cites the source instead. The zettel archival move lands in
+   `archive/human/zettel/`, NOT `sources/`, and requires explicit human
+   approval via the maintenance messaging channel — the agent MUST NOT
+   perform this move autonomously.
 4. The agent MUST emit frontmatter per this spec on every wiki page it creates
    or updates. Missing required fields is a quality failure.
 5. The agent MUST include a `## Sources` section in every wiki page body, with
@@ -571,3 +830,14 @@ character production pipelines.
   - Inbox explicitly documented as shared agent/human zone (with agent
     discipline expected).
   - Originals/ absence explicitly documented in Enforcement rule 9.
+- **k2-0.4.0** (2026-04-16) — Three changes:
+  - Archive destination relocated from `sources/human/archive/zettel/` to
+    `archive/human/zettel/`. `sources/` is now strictly read-only for the
+    agent — no gated write path. `archive/` hosts the zettel archive in a
+    clearly agent-writable zone.
+  - Link syntax clarified: agent-written pages use markdown links
+    `[Name](../category/slug.md)` for entity cross-refs so gbrain's CLI
+    `check-backlinks` extractor picks them up. `[[YYYY-MM-DD]]` wikilinks
+    are reserved for date stubs (Obsidian daily-note navigation).
+  - Operational pipeline chapter added inline so install agents reading only
+    this file get the full enrichment model without chasing upstream.

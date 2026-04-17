@@ -5,7 +5,7 @@ description: |
   Process human zettels. Compiles zettels from human/zettel/ into wiki
   category pages, detects archival candidates (1:1 wholesale + stable),
   surfaces archival prompts via the maintenance messaging channel, and
-  performs human-approved moves to sources/human/archive/zettel/. NEVER
+  performs human-approved moves to archive/human/zettel/. NEVER
   writes to, modifies, or moves files in human/ except the approved archival
   move. Fires during bootstrap AND on every maintenance cycle.
 triggers:
@@ -44,7 +44,7 @@ This skill guarantees:
   wiki category page, or entity timeline entries on existing wiki pages, or
   (for unclear content) an inbox flag for human review.
 - Every wiki page compiled from a zettel has a `## Sources` body section
-  citing the zettel by wikilink path.
+  citing the zettel by markdown link to the zettel's current path.
 - Archival candidates are surfaced via the maintenance messaging channel; the
   agent NEVER performs the archival move autonomously.
 - Updated zettels trigger re-compile of affected wiki pages; stale compiled
@@ -56,7 +56,7 @@ This skill guarantees:
   explicit human approval and only moves files, never modifies content.
 - **Never edit a zettel's content** — period. If the zettel has bad content,
   surface it to the human via maintenance channel, do NOT fix it.
-- **Never delete a zettel.** Archival is a MOVE to `sources/human/archive/zettel/`,
+- **Never delete a zettel.** Archival is a MOVE to `archive/human/zettel/`,
   not a deletion. The file content is preserved unchanged.
 - **Never infer archival approval.** The human must explicitly say "archive
   zettel X" (or equivalent) via the maintenance channel. Heuristic approval
@@ -66,7 +66,7 @@ This skill guarantees:
 
 | Trigger | Mode | Prompt channel |
 |---------|------|----------------|
-| Bootstrap intake (initial compile) | Synchronous, interactive. Per zettel: compile → ask human "keep live in human/zettel/ or archive to sources/human/archive/zettel/?" → act on answer. | Direct AskUserQuestion-style interaction in the intake session. |
+| Bootstrap intake (initial compile) | Synchronous, interactive. Per zettel: compile → ask human "keep live in human/zettel/ or archive to archive/human/zettel/?" → act on answer. | Direct AskUserQuestion-style interaction in the intake session. |
 | Maintenance cron | Asynchronous. Scan `human/zettel/` for zettels with mtime > last-run timestamp. Compile new/updated zettels. Queue archival candidates (stable + 1:1 wholesale). | Batched prompts via the maintenance skill's messaging channel (telegram/etc.). Human replies trigger the archival execution on the next cycle. |
 | Human command: "process my zettels" | Synchronous. Same as maintenance cron but flushed immediately. | Interactive if in a session, messaging if not. |
 | Human command: "archive zettel X" | Synchronous. Verify candidacy, execute move, update citations. | N/A — direct command. |
@@ -102,8 +102,9 @@ For each zettel:
    - **Unclear:** cannot determine a clean category. Create an inbox entry
      with a flag and a pointer to the zettel.
 4. For every affected wiki page:
-   - Add or update the `## Sources` body section with a wikilink to the zettel
-     at its `human/zettel/...` path.
+   - Add or update the `## Sources` body section with a markdown link to the
+     zettel at its `human/zettel/...` path (format:
+     `[short title](../human/zettel/YYYY-MM-DD-slug.md)`).
    - Add a dated timeline entry citing the zettel.
    - Cross-link to related entities bidirectionally (Iron Law).
 5. **Do NOT modify the zettel.** The zettel stays in `human/zettel/`
@@ -120,7 +121,7 @@ For each zettel classified `stable-already-compiled` in Phase 1:
    wiki pages since last run.
 3. If both checks pass, the zettel is an archival candidate. Record:
    - Zettel path
-   - Destination path (`sources/human/archive/zettel/{basename}`)
+   - Destination path (`archive/human/zettel/{basename}`)
    - Single compiled wiki page
    - Rationale (1-2 sentence summary of why this is a clean 1:1 promotion)
 
@@ -136,7 +137,7 @@ compile happens:
 > [[how-to/parent-rig-in-blender]]. The compile looks wholesale (single wiki
 > page covers the content).
 >
-> Keep live in `human/zettel/`, or archive to `sources/human/archive/zettel/`?
+> Keep live in `human/zettel/`, or archive to `archive/human/zettel/`?
 
 Batch pragmatically — if a session has 100+ zettels to compile, group the
 archival questions every ~10-20 zettels rather than blocking on each
@@ -176,12 +177,14 @@ zettel 2026-02-04-some-rigging-test"), execute the move:
 1. Verify the zettel is still an archival candidate at the time of move
    (content hasn't been re-edited since prompt emission; if it has, the
    candidacy lapses — re-run Phase 3 on next cycle).
-2. `mv ~/brain-vault/human/zettel/{name}.md ~/brain-vault/sources/human/archive/zettel/{name}.md`
+2. `mv ~/brain-vault/human/zettel/{name}.md ~/brain-vault/archive/human/zettel/{name}.md`
 3. Update the citing wiki page's `## Sources` section and any timeline entries
-   to use the new `sources/human/archive/zettel/` path.
-4. Grep for any other wiki pages that might reference the old path and update
-   them. (Obsidian basename-wikilinks continue to work without rewriting;
-   full-path references in `## Sources` sections need explicit update.)
+   to use the new `archive/human/zettel/` path.
+4. Grep for any other wiki pages that reference the old path and update them.
+   Agent-written pages use markdown links with explicit paths, so all such
+   references need rewriting. Basename wikilinks (if the human used them in
+   their own content) continue to resolve without rewriting since Obsidian
+   looks up by basename vault-wide.
 5. Log the move in the maintenance report for the human's confirmation.
 
 If the human explicitly DENIES archival ("no, keep it live"), record that

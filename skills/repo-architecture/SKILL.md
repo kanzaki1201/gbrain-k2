@@ -54,9 +54,10 @@ This skill guarantees:
    - Long-form prose essay → `writing/{slug}.md`
    - Unclear → `inbox/{slug}.md` with flag for human review
 4. **Cross-link.** Link from related categories and to related entities.
-5. **Cite sources.** Add a `## Sources` section in the page body with wikilinks
-   to every contributing source file (under `sources/` or `human/`). NOT in
-   frontmatter.
+5. **Cite sources.** Add a `## Sources` section in the page body with markdown
+   links to every contributing source file (under `sources/` or `human/`).
+   Format: `[short title](../sources/.../file.md)`. NOT in frontmatter. NOT
+   wikilinks — markdown links so gbrain's CLI link extractor picks them up.
 6. **Check notability.** See `skills/conventions/quality.md` notability gate.
 
 ## Output Format
