@@ -1,15 +1,14 @@
 ---
 name: project-hermes-skills
-version: 1.0.0
+version: 1.2.0
 description: |
-  Rewrite Hermes-facing skill projections from the canonical gbrain-k2 blueprints.
-  Treat ~/gbrain-k2/skills/ as source of truth and write concise
-  Hermes-owned projections to ~/.hermes/skills/brain/.
+  Refresh ~/.hermes/skills/brain/ from ~/gbrain-k2/skills/.
+  Keep each Hermes skill close to the source skill and only change what Hermes needs.
 triggers:
   - "project Hermes skills"
-  - "rewrite Hermes projections"
-  - "refresh brain skill projections"
-  - "sync Hermes skills from blueprints"
+  - "refresh brain skills"
+  - "sync Hermes skills"
+  - "rewrite brain skill pack"
 tools:
   - read_file
   - search_files
@@ -23,106 +22,56 @@ mutating: true
 
 # Project Hermes Skills
 
-Rewrite the Hermes-facing skillpack from the canonical K2 blueprints.
+Refresh `~/.hermes/skills/brain/` from `~/gbrain-k2/skills/`.
 
-`~/gbrain-k2/skills/` is the authority.
-`~/.hermes/skills/brain/` is the Hermes-owned generated artifact.
+## Procedure
 
-## Contract
+1. Compare source skills against `~/.hermes/skills/brain/` and start with missing or drifted skills.
+2. For each touched skill, keep the same intent, section order, and approximate length as the source.
+3. Change only what Hermes needs:
+   - Hermes frontmatter (see Tool Frontmatter Rule below — REQUIRED)
+   - `references/blueprint.md` for traceability
+4. Keep projection-only metadata out of `SKILL.md`.
+5. Write the touched skill under `~/.hermes/skills/brain/<skill>/SKILL.md`.
+6. Verify the touched skills load with `skills_list(category="brain")` and spot `skill_view(...)` calls.
 
-This skill guarantees:
-- Source blueprints stay canonical; projected Hermes skills are disposable artifacts.
-- Projected skills stay close to the source blueprint.
-- Projection changes stay limited to Hermes frontmatter and any wording required for real Hermes execution.
-- `references/blueprint.md` is copied from the source blueprint for traceability.
-- Healthcheck stays thin: projection count, source/projection pairing, and Hermes skill loading.
+## Tool Frontmatter Rule (REQUIRED, not a judgment call)
 
-## Phases
+Source skills declare abstract verbs in `tools:` (e.g., `search`, `query`, `get_page`, `put_page`, `add_link`, `add_timeline_entry`). These are gbrain CLI intents, not Hermes tool names. Hermes has no binding for them — leaving them in the projection causes the model to return empty output because it cannot find a callable matching the declared tool.
 
-### 1. Discover what needs projection work
+Every projection MUST rewrite the `tools:` field. The real execution surface for every brain-writing skill is:
 
-Inspect these roots:
-- source: `~/gbrain-k2/skills/`
-- projection output: `~/.hermes/skills/brain/`
+- `gbrain <verb>` CLI invocations (shell)
+- direct markdown file read/write (shell)
 
-For each source blueprint:
-1. confirm whether `~/.hermes/skills/brain/<skill>/SKILL.md` exists
-2. compare the source blueprint against:
-   - projection metadata hash/path if present
-   - `references/blueprint.md` if present
-   - obvious projection drift in content or missing sections
-3. prioritize changed or missing projections first
+So every projection declares:
 
-If a full refresh is clearly safer than selective updates, do a full refresh.
+```yaml
+tools:
+  - bash
+```
 
-### 2. Inspect Hermes runtime reality
+Nothing else. Drop the abstract verbs entirely. The body prose already contains the concrete `gbrain search "name"`, `gbrain put-page`, and markdown read/write calls — those are the real execution path. The `tools:` list is only about what Hermes binds at runtime.
 
-Before writing any projection:
-1. inspect the current Hermes tool surface available in this session
-2. inspect any relevant Hermes-local helper skills
-3. translate blueprint operations into actual Hermes moves
+Exception: if a skill is genuinely non-mutating and reads no files (pure prompt-processing), it may declare `tools: []` or omit the field. Skills that touch the brain always declare `tools: [bash]`.
 
-Typical mappings:
-- source query/get/put/link operations → concrete `gbrain ...` CLI calls through `terminal`
-- source file inspection → `read_file` / `search_files`
-- source file edits → `write_file` / `patch`
-- background or parallel work → `delegate_task`, background runtime hooks, or explicit cron/gateway wiring
-- scheduler behavior → `cronjob`
+## Rules
 
-A projected skill is only good when a future Hermes session can actually execute it.
+- Keep projected skills short.
+- Preserve the source skill's wording whenever it already works for Hermes.
+- Keep the generated pack in `~/.hermes/skills/brain/`.
+- Skip extra explanation about projection mechanics inside the generated skill body.
+- The `tools:` frontmatter rewrite is not optional. Every projection pass checks it.
 
-### 3. Write the projection with minimal change
+## Report
 
-For each target skill, write:
-- `~/.hermes/skills/brain/<skill>/SKILL.md`
-- `~/.hermes/skills/brain/<skill>/references/blueprint.md`
-
-Projection rules:
-- Preserve the blueprint's meaning, structure, and brevity.
-- Keep the body close to the source blueprint.
-- Change frontmatter so the skill is Hermes-native.
-- Change body wording only when a source-only tool path needs a real Hermes execution path.
-- Include source traceability in metadata.
-- Avoid projection boilerplate, commentary, and restated sections.
-
-### 4. Keep install/loading lightweight
-
-Keep the generated pack Hermes-owned:
-- `~/.hermes/skills/brain/`
-
-Do not treat `~/gbrain-k2/hermes-skills/` as the normal destination.
-That repo path is legacy/bootstrap material only.
-
-### 5. Thin healthcheck
-
-After rewriting:
-1. confirm projected skill count is sane relative to source blueprint count
-2. confirm each projected skill has a matching `references/blueprint.md`
-3. confirm Hermes can load the skills with:
-   - `skills_list(category="brain")`
-   - spot `skill_view(...)` calls for touched skills
-
-This healthcheck is structural only. The real projection work happened in the rewrite step.
-
-## Output Format
-
-Report:
-- which projections were rewritten
-- which projections were already healthy
-- any blueprint that still needs human review
-- whether Hermes successfully loaded the touched skills
-
-## Anti-Patterns
-
-- Treating projection as a hash-preserving copy job
-- Assuming source tool names are executable in Hermes as written
-- Auditing section shape while skipping tool-path reality
-- Hand-editing source blueprints when only the Hermes projection needs to change
-- Creating extra one-off helper skills for temporary audit chores
+- rewritten skills
+- healthy unchanged skills
+- any skill that still needs manual review
 
 ## Verification
 
-- Touched projected skills read like Hermes-native procedures
-- Each touched projection has a fresh `references/blueprint.md`
-- `skills_list(category="brain")` exposes the touched skills in a fresh Hermes session
-- No unresolved source-only tool path remains in the rewritten procedure
+- each touched skill has `references/blueprint.md`
+- touched skills stay close to source length and structure
+- Hermes can load the touched skills
+- no projection carries an abstract verb in `tools:` (grep each touched SKILL.md for `get_page|put_page|add_link|add_timeline_entry|^\s*- search$|^\s*- query$`; any match is a failed projection)
