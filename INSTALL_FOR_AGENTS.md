@@ -1,115 +1,218 @@
-# GBrain Installation Guide for AI Agents
+# K2 Brain Hermes Install Guide
 
-Read this entire file, then follow the steps. Ask the user for API keys when needed.
-Target: ~30 minutes to a fully working brain.
+Read this file end to end, then follow the steps. For Hermes (or any clawlike
+agent) taking over operational maintenance of `~/brain-vault/` after the
+initial Claude Code intake has completed.
 
-## Step 1: Install GBrain
+**Prerequisite:** The initial import and first-pass wiki compilation are
+already done by a separate Claude Code session (see `K2_BRAIN_INSTALL_CLAUDE.md`).
+This guide starts from a working, populated vault. If the vault is empty,
+STOP and run the Claude intake first.
+
+**Target:** ~30 min to a Hermes-managed vault with autopilot daemon running,
+skills discoverable, cron jobs wired, and identity configured.
+
+**Fork:** https://github.com/kanzaki1201/gbrain-k2 (never push to upstream)
+
+---
+
+## Pre-flight — verify the vault is already compiled
 
 ```bash
-git clone https://github.com/garrytan/gbrain.git ~/gbrain && cd ~/gbrain
+test -d ~/brain-vault && echo "vault OK"
+test -d ~/brain-vault/human && echo "human OK"
+test -d ~/brain-vault/sources && echo "sources OK"
+test -d ~/brain-vault/archive && echo "archive OK"
+ls ~/brain-vault/people/*.md 2>/dev/null | head -3 && echo "people pages OK" || echo "MISSING: no people pages — intake not done"
+ls ~/brain-vault/inbox/k2-install-report.md && echo "intake report OK"
+```
+
+If any fails, STOP and tell the user the Claude-side intake hasn't finished.
+Do not attempt to re-do it from Hermes.
+
+---
+
+## Step 1: Install the gbrain CLI from the k2 fork
+
+```bash
+test -d ~/gbrain-k2 || git clone https://github.com/kanzaki1201/gbrain-k2.git ~/gbrain-k2
+cd ~/gbrain-k2
 curl -fsSL https://bun.sh/install | bash
 export PATH="$HOME/.bun/bin:$PATH"
 bun install && bun link
+gbrain --version
 ```
 
-Verify: `gbrain --version` should print a version number. If `gbrain` is not found,
-restart the shell or add the PATH export to the shell profile.
+**Do NOT `bun install gbrain` inside `~/brain-vault/`.** The CLI must run from
+the fork via `bun link`. A vault-local npm install would shadow the fork's
+skills and schema, and `gbrain upgrade` would overwrite k2 mods.
 
-## Step 2: API Keys
+## Step 2: API keys
 
-Ask the user for these:
+Ask the user for:
 
 ```bash
 export OPENAI_API_KEY=sk-...          # required for vector search
-export ANTHROPIC_API_KEY=sk-ant-...   # optional, improves search quality
+export ANTHROPIC_API_KEY=sk-ant-...   # optional, improves query quality
 ```
 
-Save to shell profile or `.env`. Without OpenAI, keyword search still works.
-Without Anthropic, search works but skips query expansion.
+Save to shell profile or `~/.hermes/.env`. Without OpenAI, keyword search
+still works; vector search is disabled.
 
-## Step 3: Create the Brain
+## Step 3: Symlink k2 skills into Hermes's skill dir
+
+Hermes discovers skills from `~/.hermes/skills/<category>/<skill>/SKILL.md`.
+Expose the k2 fork's skills as the `brain` category:
 
 ```bash
-gbrain init                           # PGLite, no server needed
-gbrain doctor --json                  # verify all checks pass
+ln -s ~/gbrain-k2/skills ~/.hermes/skills/brain
+hermes skills list | grep ^brain/    # verify discovery
 ```
 
-The user's markdown files (notes, docs, brain repo) are SEPARATE from this tool repo.
-Ask the user where their files are, or create a new brain repo:
+All 27+ k2 skills now appear as `brain/brain-ops`, `brain/enrich`,
+`brain/zettel-processor`, etc. Because this is a symlink, any fork update
+(via `/update-k2` or direct edit) is live to Hermes on the next session.
+
+If `hermes skills list` misses the symlinked skills, some Hermes builds
+require explicit enable per skill — batch-enable with:
 
 ```bash
-mkdir -p ~/brain && cd ~/brain && git init
+for d in ~/.hermes/skills/brain/*/; do
+  name=$(basename "$d")
+  [ -f "$d/SKILL.md" ] && hermes skills enable "brain/$name"
+done
 ```
 
-Read `~/gbrain/docs/GBRAIN_RECOMMENDED_SCHEMA.md` and set up the MECE directory
-structure (people/, companies/, concepts/, etc.) inside the user's brain repo,
-NOT inside ~/gbrain.
+## Step 4: Read the K2 schema
 
-## Step 4: Import and Index
+Before any brain operations, read these three files:
+
+1. `~/gbrain-k2/docs/K2_SCHEMA.md` — authoritative schema (v0.4.0+)
+2. `~/gbrain-k2/skills/_brain-filing-rules.md` — filing decisions
+3. `~/gbrain-k2/skills/RESOLVER.md` — skill dispatcher
+
+Save RESOLVER.md to Hermes's persistent memory.
+
+Non-negotiables from K2_SCHEMA.md:
+
+- Never write to, modify, or move anything under `human/` except the zettel
+  archival move (`human/zettel/foo.md` → `archive/human/zettel/foo.md`),
+  which requires explicit human approval per zettel.
+- Never write to `sources/`. `sources/` is strictly immutable reference.
+- Entity cross-refs use markdown links `[Name](../category/slug.md)`, NOT
+  wikilinks. `[[YYYY-MM-DD]]` wikilinks are reserved for date stubs only.
+- Sources go in a `## Sources` body section, NOT frontmatter.
+- Imported tags, PARA fields, folder location are evidence, not truth.
+
+## Step 5: Sanity-check the brain
 
 ```bash
-gbrain import ~/brain/ --no-embed     # import markdown files
-gbrain embed --stale                  # generate vector embeddings
-gbrain query "key themes across these documents?"
+cd ~/brain-vault
+gbrain doctor --json              # health check
+gbrain query "who is the user"    # should return meaningful results
+gbrain import ~/brain-vault/ --no-embed    # pick up anything missed
+gbrain embed --stale              # re-embed any stale chunks
 ```
 
-## Step 5: Load Skills
+If `doctor` reports issues or `query` returns nothing, STOP and diagnose.
+The brain should be fully populated from the Claude-side intake.
 
-Read `~/gbrain/skills/RESOLVER.md`. This is the skill dispatcher. It tells you which
-skill to read for any task. Save this to your memory permanently.
+## Step 6: Start the autopilot daemon
 
-The three most important skills to adopt immediately:
+Autopilot is a code-only loop: sync → extract → embed → health check on an
+adaptive interval. Replaces the upstream "live sync every 15 min" cron.
+Keeps the DB consistent with the filesystem. No LLM cost.
 
-1. **Signal detector** (`skills/signal-detector/SKILL.md`) — fire this on EVERY
-   inbound message. It captures ideas and entities in parallel. The brain compounds.
-
-2. **Brain-ops** (`skills/brain-ops/SKILL.md`) — brain-first lookup on every response.
-   Check the brain before any external API call.
-
-3. **Conventions** (`skills/conventions/quality.md`) — citation format, back-linking
-   iron law, source attribution. These are non-negotiable quality rules.
-
-## Step 6: Identity (optional)
-
-Run the soul-audit skill to customize the agent's identity:
-
-```
-Read skills/soul-audit/SKILL.md and follow it.
+```bash
+gbrain autopilot --install --repo ~/brain-vault
+gbrain autopilot --status
 ```
 
-This generates SOUL.md (agent identity), USER.md (user profile), ACCESS_POLICY.md
-(who sees what), and HEARTBEAT.md (operational cadence) from the user's answers.
+Logs land in `~/.gbrain/autopilot.log`. Self-restarts on crash. On Linux
+installs as a systemd user unit; on macOS as a launchd job.
 
-If skipped, minimal defaults are installed automatically.
+> **Skipped:** soul-audit. Hermes already has its identity configured in
+> `~/.hermes/config.yaml`. Do not re-run identity setup.
 
-## Step 7: Recurring Jobs
+## Step 7: Wire the scheduled jobs
 
-Set up using your platform's scheduler (OpenClaw cron, Railway cron, crontab):
+Hermes's cron config lives in `~/.hermes/config.yaml` (or
+`~/.hermes/hermes-agent/cron/jobs.py` depending on version). The baseline
+schedule mirrors upstream gbrain with k2-specific additions:
 
-- **Live sync** (every 15 min): `gbrain sync --repo ~/brain && gbrain embed --stale`
-- **Auto-update** (daily): `gbrain check-update --json` (tell user, never auto-install)
-- **Dream cycle** (nightly): read `docs/guides/cron-schedule.md` for the full protocol.
-  Entity sweep, citation fixes, memory consolidation. This is what makes the brain
-  compound. Do not skip it.
-- **Weekly**: `gbrain doctor --json && gbrain embed --stale`
+| Cadence | Action | Notes |
+|---------|--------|-------|
+| Daily (morning) | `brain/briefing` + `brain/daily-task-prep` | User's morning channel |
+| Daily (evening) | `brain/zettel-processor` maintenance scan | Queues archival candidates; surfaces to user via messaging |
+| Daily | `gbrain check-update --json` | Tell user if a k2 update is available; never auto-install |
+| Nightly | Dream cycle | Entity sweep, citation fixes, memory consolidation. See `~/gbrain-k2/docs/guides/cron-schedule.md` for the full protocol. |
+| Weekly | `brain/maintain` full lint + `gbrain doctor --json` + `gbrain embed --stale` | Post a report |
 
-## Step 8: Integrations
+**NOT cron:**
+- `signal-detector` — always-on per-message hook, fires on every inbound
+  signal during active sessions. Configure as a message-level trigger, not
+  a scheduler.
+- `brain-ops` — per-request read/enrich/write loop. Invoked by other skills
+  when a brain interaction happens. Not a standalone cron.
 
-Run `gbrain integrations list`. Each recipe in `~/gbrain/recipes/` is a self-contained
-installer. It tells you what credentials to ask for, how to validate, and what cron
-to register. Ask the user which integrations they want (email, calendar, voice, Twitter).
+Cron design rules (from K2_SCHEMA.md operational pipeline):
+- Silent when nothing happens — no "nothing to report" noise
+- Respect quiet hours defined in HEARTBEAT.md (if present) or user prefs
+- Idempotent: each cron tracks what it has processed
+- Every ingest cron must call `enrich` on the entities it touches
 
-Verify: `gbrain integrations doctor` (after at least one is configured)
+## Step 8: Integrations (optional, per user need)
+
+```bash
+gbrain integrations list       # see available recipes
+gbrain integrations doctor     # check existing config
+```
+
+Each recipe in `~/gbrain-k2/recipes/` is a self-contained installer. Ask
+the user which they want (email, calendar, Telegram, X, etc.) — don't
+install all by default.
 
 ## Step 9: Verify
 
-Read `docs/GBRAIN_VERIFY.md` and run all 6 verification checks. Check #4 (live sync
-actually works) is the most important.
+- `gbrain doctor --json` — all checks pass
+- `gbrain autopilot --status` — daemon running, last cycle recent
+- `hermes skills list | grep ^brain/` — 27+ skills discoverable
+- A test message to the Telegram channel produces an expected reply
+- `gbrain query "recent themes"` returns coherent output
 
-## Upgrade
+Report status to the user. Flag anything that didn't verify cleanly.
+
+---
+
+## Upgrade the fork later
 
 ```bash
-cd ~/gbrain && git pull origin main && bun install
+cd ~/gbrain-k2
+git pull origin master   # upstream k2 mods
+# OR use the update-k2 skill for upstream gbrain merges:
+#   Read ~/gbrain-k2/skills/update-k2/SKILL.md and follow it
+bun install
+gbrain init              # idempotent schema migrations
 ```
 
-Then run `gbrain init` to apply any schema migrations (idempotent, safe to re-run).
+The skill symlink at `~/.hermes/skills/brain` auto-picks up skill changes.
+For CLI changes, the user may need to re-run `bun link` from `~/gbrain-k2`.
+
+## Non-goals for this install
+
+- **Initial wiki compilation** — done by Claude Code intake, not Hermes
+- **Rebuilding the Obsidian vault** — sources are immutable, wiki pages are
+  already compiled
+- **Fork maintenance** — push to upstream is forbidden; use `/update-k2` skill
+- **Obsidian base queries** — the user recreates those in Obsidian directly
+
+## Safety rails
+
+- Never write to `sources/`. Not metadata, not file moves, not deletions.
+- Never write to `human/` except the gated zettel archival move.
+- Never push any git remote other than `origin` on `~/gbrain-k2`. Upstream
+  (`garrytan/gbrain`) is not a PR target.
+- Unsure about a category decision → `inbox/` with `flagged: human-review`,
+  never a guess.
+- If `gbrain doctor` reports errors, STOP and ask the user before taking
+  corrective action.

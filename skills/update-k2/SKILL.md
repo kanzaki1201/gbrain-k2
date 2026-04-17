@@ -62,6 +62,10 @@ These files have significant k2 customizations. Expect conflicts here on most
 upstream merges — resolve by keeping the k2 version and integrating upstream
 fixes where they don't clash with k2 intent:
 
+- `INSTALL_FOR_AGENTS.md` — fully rewritten for the k2 Hermes handoff flow
+  (assumes Claude-side intake is already done; focuses on skill symlink,
+  autopilot, cron wiring). Upstream version is the generic gbrain install.
+  Keep k2 version on conflict.
 - `docs/K2_SCHEMA.md` — no upstream equivalent. Upstream never writes here.
 - `docs/GBRAIN_RECOMMENDED_SCHEMA.md` — upstream file with a small pointer header. Preserve header on merge.
 - `skills/_brain-filing-rules.md` — sources-interpretation section is rewritten. Preserve local content; accept upstream additions to unrelated sections (citation format, back-link rules, raw preservation).
