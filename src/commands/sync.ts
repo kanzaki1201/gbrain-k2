@@ -25,6 +25,7 @@ export interface SyncOpts {
   noPull?: boolean;
   noEmbed?: boolean;
   noExtract?: boolean;
+  commit?: boolean;
 }
 
 function git(repoPath: string, ...args: string[]): string {
@@ -58,6 +59,14 @@ export async function performSync(engine: BrainEngine, opts: SyncOpts): Promise<
         console.error(`Warning: git pull failed: ${msg.slice(0, 100)}`);
       }
     }
+  }
+
+  // Auto-commit uncommitted changes so the diff sees them
+  if (opts.commit) {
+    try {
+      git(repoPath, 'add', '-A');
+      git(repoPath, 'commit', '-m', 'chore: brain-vault auto-sync');
+    } catch { /* nothing to commit — fine */ }
   }
 
   // Get current HEAD
@@ -322,8 +331,9 @@ export async function runSync(engine: BrainEngine, args: string[]) {
   const full = args.includes('--full');
   const noPull = args.includes('--no-pull');
   const noEmbed = args.includes('--no-embed');
+  const commit = args.includes('--commit');
 
-  const opts: SyncOpts = { repoPath, dryRun, full, noPull, noEmbed };
+  const opts: SyncOpts = { repoPath, dryRun, full, noPull, noEmbed, commit };
 
   if (!watch) {
     const result = await performSync(engine, opts);

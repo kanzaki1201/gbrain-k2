@@ -105,7 +105,7 @@ export async function runAutopilot(engine: BrainEngine, args: string[]) {
     // 1. Sync
     try {
       const { performSync } = await import('./sync.ts');
-      const result = await performSync(engine, { repoPath, noEmbed: true });
+      const result = await performSync(engine, { repoPath, noEmbed: true, commit: true });
       if (result.status === 'synced') {
         console.log(`[sync] +${result.added} ~${result.modified} -${result.deleted}`);
       }
