@@ -23,15 +23,37 @@ not the source, not the skill that's running.
 | Reusable framework/thesis -> `sources/` | -> `concepts/` | It's a mental model |
 | Tweet thread about policy -> `media/` | -> `civic/` or `concepts/` | media/ is for content ops |
 
-## What `sources/` Is Actually For
+## What `sources/` Is Actually For (k2 fork)
 
-`sources/` is ONLY for:
-- Bulk data imports (API dumps, CSV exports, snapshots)
-- Raw data that feeds multiple brain pages (e.g., a guest export, contact sync)
-- Periodic captures (quarterly snapshots, sync exports)
+**This section diverges from stock gbrain.** See `docs/K2_SCHEMA.md` for the
+full k2 rules.
 
-If the content has a clear primary subject (a person, company, concept, policy
-issue), it does NOT go in sources/. Period.
+`sources/` in this fork is the human's territory:
+
+- Imported legacy content (dated snapshot directories like `sources/2026-04-16-obsidian-import/`)
+- New human writing (zettels, long-form notes, captures)
+- Attachments (images, PDFs, audio) under `sources/assets/`
+- Quick captures from ingest pipelines before triage
+
+**The agent reads from `sources/` but NEVER writes to it.** This applies even
+when "re-filing" a source page that appears to belong in a category. Source
+pages are signals, not wiki pages. The agent's job is to produce compiled wiki
+pages in category folders (`people/`, `concepts/`, etc.) that cite sources —
+not to relocate sources.
+
+The anti-pattern: moving a source page into a category folder and calling it
+done. This is forbidden. If a source page has a clear primary subject, the
+correct action is:
+
+1. Leave the source page in place.
+2. Create or update the corresponding category page (`people/name.md`,
+   `concepts/idea.md`, etc.).
+3. Cite the source page in the new wiki page's `sources` frontmatter field.
+4. Add a timeline entry on the wiki page linking back to the source.
+
+**Imported legacy tags, PARA fields, folder locations, and archive status are
+untrusted.** They are evidence of prior human categorization effort, not truth.
+Read each source as a fresh signal.
 
 ## Notability Gate
 

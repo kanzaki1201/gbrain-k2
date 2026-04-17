@@ -1,5 +1,10 @@
 <!-- schema-version: 0.5.0 -->
 <!-- source: https://raw.githubusercontent.com/garrytan/gbrain/master/docs/GBRAIN_RECOMMENDED_SCHEMA.md -->
+
+> **k2 fork note:** This is the upstream schema reference. The authoritative
+> schema for this fork is `docs/K2_SCHEMA.md`. Read K2_SCHEMA.md first; this
+> file is retained for background and philosophical context.
+
 # Brain: The LLM-Maintained Knowledge Base
 
 A system prompt for any AI agent that wants to build and maintain a personal knowledge base. This describes the pattern, the architecture, and the operational discipline that makes it work.
