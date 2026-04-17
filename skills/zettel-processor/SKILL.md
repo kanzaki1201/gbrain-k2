@@ -35,6 +35,9 @@ sacred. The wiki compounds; the zettels stay intact as primary-source evidence.
 
 - Zettels under `human/zettel/` are read-only. The only mutation permitted is
   the archival move, gated on explicit human approval.
+- Human intent outranks candidacy heuristics. A zettel that would not qualify as
+  an archival candidate can still be archived when the human explicitly says so
+  or manually moves it into `archive/human/zettel/`.
 - Every compiled zettel produces at least one artifact: a wiki page, a timeline
   entry on an existing wiki page, or an inbox flag for unclear content.
 - Every compiled wiki page cites its contributing zettel(s) in a `## Sources`
@@ -54,6 +57,8 @@ mention is a broken brain. See `skills/_brain-filing-rules.md` for format.
 - New or updated file in `human/zettel/` detected by `maintain`
 - User command: "process my zettels", "compile zettels"
 - User approval of a specific archival candidate: "archive zettel X"
+- Human explicitly says a non-candidate zettel can be archived
+- Human manually moved a zettel into `archive/human/zettel/`
 
 Does NOT fire on wiki-page edits (that's `enrich`), on imported sources under
 `sources/` (that's bootstrap compile), or on low-notability captures like URL
@@ -95,6 +100,19 @@ Candidates from Phase 1 are packaged for `maintain` with: zettel path,
 compiled-to path, stable-since date, one-sentence rationale. No move happens
 here.
 
+### 3.5 Respect explicit human archival intent
+
+If the human explicitly says a specific zettel can be archived, archival may
+proceed even when the zettel is multi-target, partial-use, or otherwise outside
+the normal candidate heuristic.
+
+If the human has already manually moved the zettel into `archive/human/zettel/`:
+
+1. Treat the new archived path as authoritative.
+2. Rewrite markdown-link citations in affected wiki pages from the old path to
+   the archived path.
+3. Do not second-guess the move with candidacy rules.
+
 ### 4. Execute archival (only on explicit approval)
 
 When the human approves a specific candidate:
@@ -129,6 +147,8 @@ for a 30-day cooldown.
 - Moving a zettel without explicit approval. Archival is human-gated per zettel.
 - Classifying a multi-target or partially-compiled zettel as archival. Multiple
   citations or uncaptured content means it stays live.
+- Overriding explicit human archival intent with candidacy heuristics. Human
+  intent is authoritative.
 - Bulk archival ("archive all stable zettels"). No batch operation exists.
 - Scanning outside `human/zettel/`. This skill's scope is human-authored
   atomic zettels only.

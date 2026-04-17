@@ -33,6 +33,102 @@ new file in sources/ or human/ triggers downstream processing (zettel-processor
 for human zettels, signal-detector / ingest for other signals) that compiles
 and cross-references without human prompting beyond the initial capture.
 
+Knowledge management stayed fragile for decades because the maintenance burden
+fell on humans. LLM agents change the economics. They do not get bored of
+updating cross-links, merging contradictory sources, or touching 50 files in
+one pass. The brain stays alive because the maintenance cost is near zero.
+
+## Wiring It Into The Agent
+
+The brain must be wired into the agent as an operating rule, not a suggestion.
+
+1. **Before creating any brain page → read the resolver.** The agent config
+   points to `RESOLVER.md`, and `RESOLVER.md` points to the relevant skill or
+   local filing rule.
+2. **Before answering any question about people, companies, projects,
+   decisions, or strategy → search the brain first.** File contents stay
+   current; the agent's memory of them decays.
+3. **Enrichment fires on every signal.** Meetings, zettels, imports, links,
+   and manual corrections all route into the enrichment / compile pipeline.
+4. **Corrections are highest-value data.** When the human corrects a fact,
+   routing, or framing, update the brain immediately.
+
+Chain of authority for this fork:
+
+- agent config / workspace instructions
+- `skills/RESOLVER.md`
+- `skills/_brain-filing-rules.md` and skill-specific contracts
+- `K2_SCHEMA.md`
+
+## Architecture
+
+Three layers:
+
+**Raw sources** — `human/` is the sacred human zone; `sources/` is immutable
+reference material. These are primary-source inputs. The agent reads them,
+derives from them, and preserves them.
+
+**The brain** — the agent-owned compiled wiki in category directories such as
+`people/`, `projects/`, `concepts/`, and `tools/`. This is where the agent
+maintains synthesized, linked, current state.
+
+**The schema** — this document plus `RESOLVER.md` and filing rules. The schema
+defines where knowledge lives, how pages are shaped, how evidence is preserved,
+and which workflows fire when new signals arrive.
+
+## The Database + Markdown Architecture
+
+The markdown wiki is the human-facing layer — the primary interface for humans
+and LLMs. It is the surface you read and edit against. Underneath it sits a
+structured layer that makes the system reliable at scale.
+
+### The Four Database Primitives
+
+**Entity registry** — canonical identity, aliases, and external IDs. This is
+the source of truth for “is this the same person/company/tool/place?” Identity
+resolution belongs here, not in ad hoc filename guessing.
+
+**Event ledger** — immutable events for every signal that touches the brain:
+meeting attended, zettel compiled, email received, link ingested, correction
+applied, archival approved. Timeline sections in markdown are generated from or
+aligned to this event stream.
+
+**Fact store** — structured claims with provenance. “Alice works at X” and
+“project Y is paused” are facts with sources, timestamps, and confidence. When
+sources disagree, the contradiction stays visible as data rather than getting
+flattened into accidental prose.
+
+**Relationship graph** — typed edges between entities: person→company,
+person→project, company→decision, concept→tool, meeting→attendee. This is what
+lets the brain answer graph-shaped questions instead of relying on grep luck.
+
+### Why This Matters
+
+- **Identity resolution becomes structural.** Merging two entities is a
+  registry-level operation, not a scavenger hunt across duplicate files.
+- **Contradictions become visible.** Competing facts can coexist with distinct
+  provenance until the human or agent resolves them.
+- **Concurrency gets safer.** Events append, facts upsert, markdown rewrites.
+  The system does not rely on one giant hand-maintained narrative.
+- **Graph queries become natural.** “Who do I know at this company?” and “what
+  tools connect to this workflow?” are relationship questions, not text-search
+  accidents.
+
+### File-Layer Conventions
+
+The markdown layer maps directly to those primitives:
+
+1. **Frontmatter stores queryable structure.** Put fields you want to filter or
+   reason over in frontmatter.
+2. **`## Sources` preserves provenance.** Evidence lives in body-level source
+   lists and inline citations, not in vague narrative memory.
+3. **Timeline is an event stream.** Dated, sourced, append-only evidence goes
+   below the `---` boundary.
+4. **Compiled Truth stays separate from evidence.** Above the line is synthesis;
+   below the line is evidence.
+5. **Canonical slugs stay stable.** Filenames are durable IDs for linking and
+   graph extraction.
+
 ---
 
 ## Operating Principles
@@ -72,7 +168,36 @@ it done. Human content stays in human/ (or archive/human/zettel/ once
 explicitly archived). The agent's job is to compile parallel wiki pages that
 cite the human sources.
 
-### 5. Zettel processing and archival: human-approved only.
+### 5. Zettel philosophy
+
+**Zettels are primary-source thought, not drafts waiting to be erased.**
+`human/zettel/` is where live human thinking lands in its original shape.
+Fragments, tensions, vivid phrasing, unresolved questions, and partial ideas all
+belong here. The wiki compiles from zettels; it does not replace their role as
+evidence of how the human was thinking.
+
+**A zettel can remain valuable without ever becoming a clean 1:1 wiki page.**
+Some zettels compile wholesale into one page. Some fan out into multiple pages.
+Some stay partial for a long time because they are still carrying unresolved
+signal. Partial-use is a valid steady state, not a schema failure.
+
+**The human owns completion and archival timing.** Wholesale-compiled + stable is
+an archival heuristic, not a source of authority. The human can keep a zettel
+active indefinitely, explicitly approve archival of a non-candidate zettel, or
+manually move a zettel into `archive/human/zettel/`. Human intent outranks the
+system's candidacy logic.
+
+**Zettels preserve compression-resistant thought.** The value is often in the
+exact phrasing, the awkward edge, the contradiction, or the unflattened note.
+The wiki's job is to synthesize, cross-link, and keep current state. The
+zettel's job is to preserve the raw shape of thought that led there.
+
+**Archival is a path transition, not a demotion.** An archived zettel remains a
+valid source. It simply leaves the active writing zone. Archival means "this no
+longer needs to sit in live human workspace," not "this thought has lost value"
+or "the wiki has fully replaced it in every sense."
+
+### 6. Zettel processing and archival: human-approved only.
 
 When a zettel in `human/zettel/` is processed by the zettel-processor skill:
 
@@ -97,7 +222,10 @@ by basename vault-wide.
 **Partial-use zettels never become archival candidates.** If a zettel
 contributes to multiple wiki pages as one source among many, or only partially
 compiles (some content not yet captured), it stays in `human/zettel/`
-indefinitely. No prompt fires.
+indefinitely. No prompt fires. A human can still explicitly approve archival of
+a specific zettel, or manually move a zettel into `archive/human/zettel/`; in
+that case the agent treats the new path as authoritative and updates citations
+to match.
 
 **Updated zettels are re-processed.** The zettel-processor detects zettels that
 have been modified since last run and re-compiles the affected wiki pages.
@@ -206,6 +334,75 @@ near-empty for long periods depending on the human's current activity.
 **Category list is the source of truth.** When an upstream gbrain change
 suggests a new category, route it through the `update-k2` skill flow — the
 category list here is authoritative for the fork.
+
+## Entity Identity and Deduplication
+
+In a system fed by zettels, meetings, imports, and enrichment APIs, identity is
+the first major failure mode. Without a canonical identity layer, the brain
+splits quietly: one page from a transcript, another from an import, a third
+from an alias.
+
+### Canonical slugs
+
+Every entity gets a canonical slug that acts as its stable ID.
+
+- People: `first-last.md`
+- Companies: `company-name.md`
+- Places: `place-name.md`
+- Tools / concepts / projects: short stable descriptive slugs
+
+When collisions happen, disambiguate rather than duplicating ambiguity:
+`david-liu-siat.md`, `david-liu-meta.md`.
+
+### Aliases
+
+Frontmatter `aliases` captures alternate names, misspellings, handles, and
+other variants. New variants extend aliases on the existing page; they do not
+create a second page.
+
+### Deduplication protocol
+
+Before creating a new page, the agent must:
+
+1. Search exact and fuzzy title matches.
+2. Search aliases and known handles.
+3. Check cited sources and linked entities for likely matches.
+4. Update an existing page when the match is clear.
+5. Use `inbox/` with `flagged: human-review` when identity remains ambiguous.
+
+### Merge protocol
+
+When two pages are discovered to be the same entity:
+
+1. Keep the more complete page as canonical.
+2. Merge aliases.
+3. Merge timeline evidence in chronological order.
+4. Update inbound links and `## Sources` references as needed.
+5. Retire the duplicate.
+
+Weekly maintenance should actively look for likely duplicates: similar names,
+shared handles, shared emails, same company plus overlapping timelines.
+
+## Key Disambiguation Rules
+
+The most common filing confusions:
+
+- **Concept vs idea** — teachable reusable model → `concepts/`; buildable
+  possibility → `ideas/`.
+- **Idea vs project** — work started with visible execution → `projects/`;
+  still speculative → `ideas/`.
+- **Original vs concept** — the user's phrasing and synthesis → `originals/`;
+  world-authored framework → `concepts/`.
+- **How-to vs concept** — concrete steps and troubleshooting → `how-to/`;
+  explanatory theory → `concepts/`.
+- **People vs companies** — the human being → `people/`; the organization →
+  `companies/`.
+- **Household vs personal** — operational domestic life → `household/`;
+  private body / habit / reflection material → `personal/`.
+- **Writing vs concepts** — developed prose artifact → `writing/`; distilled
+  reusable model → `concepts/`.
+- **Sources vs compiled wiki** — immutable evidence stays in `sources/` or
+  `human/`; synthesized interpretation lives in the category folders.
 
 ---
 

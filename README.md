@@ -73,6 +73,39 @@ claude mcp add gbrain -t http https://your-brain.ngrok.app/mcp -H "Authorization
 
 Per-client guides: [`docs/mcp/`](docs/mcp/DEPLOY.md). ChatGPT requires OAuth 2.1 (not yet implemented).
 
+## Skills + Hermes mirror
+
+`skills/` is the source of truth for GBrain skills.
+
+Hermes currently discovers these brain skills reliably when they exist as real
+directories under `~/.hermes/skills/brain/`. Keep the Hermes copy in sync with:
+
+```bash
+~/gbrain-k2/scripts/sync-hermes-brain-skills.sh
+```
+
+Run that script any time files under `skills/` change. Then start a new Hermes
+session so its available-skills prompt cache refreshes.
+
+## Brain repo git discipline
+
+`gbrain sync` reads committed git history from the brain repo. That repo needs
+to be both:
+
+1. a git repo, and
+2. actively committed over time
+
+Uncommitted edits do not appear in `gbrain sync`. Pick one maintenance pattern:
+
+- **Cron auto-commit** — recommended for agent-managed brains. Commit local
+  changes every 5-30 minutes, then run `gbrain sync --repo <path> --no-pull`.
+- **Git hook** — trigger commit or sync from a local workflow hook.
+- **Manual commits** — fine for slower setups, as long as commits happen before
+  expecting sync to ingest changes.
+
+For local-only personal brains, keep the repo local with no remotes. Git is the
+change journal; pushing is optional.
+
 ## The 25 Skills
 
 GBrain ships 25 skills organized by `skills/RESOLVER.md`. The resolver tells your agent which skill to read for any task.

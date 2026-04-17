@@ -64,29 +64,26 @@ export ANTHROPIC_API_KEY=sk-ant-...   # optional, improves query quality
 Save to shell profile or `~/.hermes/.env`. Without OpenAI, keyword search
 still works; vector search is disabled.
 
-## Step 3: Symlink k2 skills into Hermes's skill dir
+## Step 3: Mirror k2 skills into Hermes's skill dir
 
 Hermes discovers skills from `~/.hermes/skills/<category>/<skill>/SKILL.md`.
-Expose the k2 fork's skills as the `brain` category:
+Some Hermes builds skip symlinked skill directories during discovery, so keep a
+real mirrored copy of the k2 skills under the `brain` category:
 
 ```bash
-ln -s ~/gbrain-k2/skills ~/.hermes/skills/brain
-hermes skills list | grep ^brain/    # verify discovery
+~/gbrain-k2/scripts/sync-hermes-brain-skills.sh
+hermes skills list | grep brain    # verify discovery
 ```
 
-All 27+ k2 skills now appear as `brain/brain-ops`, `brain/enrich`,
-`brain/zettel-processor`, etc. Because this is a symlink, any fork update
-(via `/update-k2` or direct edit) is live to Hermes on the next session.
+This writes real directories under `~/.hermes/skills/brain/` for all k2 skills
+such as `brain/brain-ops`, `brain/enrich`, and `brain/zettel-processor`.
 
-If `hermes skills list` misses the symlinked skills, some Hermes builds
-require explicit enable per skill — batch-enable with:
+**Important:** rerun the sync script any time `~/gbrain-k2/skills/` changes.
+That keeps Hermes's mirrored `brain/*` skills aligned with the fork instead of
+letting them drift.
 
-```bash
-for d in ~/.hermes/skills/brain/*/; do
-  name=$(basename "$d")
-  [ -f "$d/SKILL.md" ] && hermes skills enable "brain/$name"
-done
-```
+**Important:** start a new Hermes session after syncing so the available-skills
+prompt cache refreshes.
 
 ## Step 4: Read the K2 schema
 

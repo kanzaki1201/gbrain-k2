@@ -45,6 +45,27 @@ Read `~/gbrain/docs/GBRAIN_RECOMMENDED_SCHEMA.md` and set up the MECE directory
 structure (people/, companies/, concepts/, etc.) inside the user's brain repo,
 NOT inside ~/gbrain.
 
+### Brain repo git discipline (required)
+
+`gbrain sync` reads committed git history. The brain repo therefore needs to be
+both:
+
+1. a git repo, and
+2. actively committed over time
+
+Uncommitted file edits are invisible to `gbrain sync`. That means the agent or
+user needs one of these maintenance patterns:
+
+- **Cron auto-commit** — recommended for agent-managed setups. Stage + commit local
+  changes every 5-30 minutes, then run `gbrain sync --repo <path> --no-pull`.
+- **Git hook** — commit or trigger sync from a local workflow hook when your
+  environment supports it.
+- **Manual commits** — acceptable for low-frequency setups, as long as the user
+  commits before expecting sync to pick up changes.
+
+For local-only personal brains, keep the repo local with no remotes. Git is the
+change journal; pushing is optional.
+
 ## Step 4: Import and Index
 
 ```bash

@@ -89,6 +89,7 @@ markdown files (tool-agnostic, work with both CLI and plugin contexts).
 - `skills/data-research/SKILL.md` — Structured data research: email-to-tracker pipeline with parameterized YAML recipes
 - `templates/` — SOUL.md, USER.md, ACCESS_POLICY.md, HEARTBEAT.md templates
 - `skills/migrations/` — Version migration files with feature_pitch YAML frontmatter
+- `scripts/sync-hermes-brain-skills.sh` — Mirror `skills/` into `~/.hermes/skills/brain/` as real directories for Hermes discovery
 - `src/commands/publish.ts` — Deterministic brain page publisher (code+skill pair, zero LLM calls)
 - `src/commands/backlinks.ts` — Back-link checker and fixer (enforces Iron Law)
 - `src/commands/lint.ts` — Page quality linter (catches LLM artifacts, placeholder dates)

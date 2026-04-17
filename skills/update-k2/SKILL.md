@@ -30,6 +30,7 @@ This skill guarantees:
 - Backup branch + tag created before any merge/rebase/cherry-pick
 - K2-divergent files preserve their k2 content during conflict resolution
 - Validation (bun install + build + test) after merge
+- Hermes brain-skill mirror refreshed after any `skills/` changes
 - Breaking-changes prompt if CHANGELOG entries mark [BREAKING]
 - Rollback instructions printed at the end of every run
 - Never pushes to upstream — push URL is a poison pill
@@ -95,6 +96,12 @@ upstream improvements.
 
 **Validation:** `bun install` and `bun run build` and `bun test` if
 configured.
+
+**Hermes mirror refresh:** if any files under `skills/` changed, run:
+```bash
+~/gbrain-k2/scripts/sync-hermes-brain-skills.sh
+```
+Then start a new Hermes session so the available-skills prompt cache refreshes.
 
 **Summary + rollback:** tag name, new HEAD, remaining diff, rollback
 command.
