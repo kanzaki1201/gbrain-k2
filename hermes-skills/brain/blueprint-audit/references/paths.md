@@ -1,0 +1,5 @@
+- Generator: `~/gbrain-k2/scripts/generate-hermes-brain-skills.py`
+- Audit: `~/gbrain-k2/scripts/audit-hermes-brain-skills.py`
+- Projection root: `~/gbrain-k2/hermes-skills/brain/`
+- Blueprint root: `~/gbrain-k2/skills/`
+- Reports: `~/gbrain-k2/reports/hermes-skill-audits/`

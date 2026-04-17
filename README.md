@@ -73,19 +73,31 @@ claude mcp add gbrain -t http https://your-brain.ngrok.app/mcp -H "Authorization
 
 Per-client guides: [`docs/mcp/`](docs/mcp/DEPLOY.md). ChatGPT requires OAuth 2.1 (not yet implemented).
 
-## Skills + Hermes mirror
+## Skills + Hermes projections
 
 `skills/` is the source of truth for GBrain skills.
 
-Hermes currently discovers these brain skills reliably when they exist as real
-directories under `~/.hermes/skills/brain/`. Keep the Hermes copy in sync with:
+Hermes consumes a generated projection pack at `~/gbrain-k2/hermes-skills/brain/`
+through `skills.external_dirs` in `~/.hermes/config.yaml`.
+
+Refresh the projections and audit them against the blueprints with:
 
 ```bash
 ~/gbrain-k2/scripts/sync-hermes-brain-skills.sh
 ```
 
-Run that script any time files under `skills/` change. Then start a new Hermes
-session so its available-skills prompt cache refreshes.
+That command regenerates the Hermes-native skills, updates Hermes config to load
+`~/gbrain-k2/hermes-skills`, archives any legacy local `~/.hermes/skills/brain`
+copy outside the active skills tree, and writes an audit report under
+`~/gbrain-k2/reports/hermes-skill-audits/`.
+
+Run the audit by itself with:
+
+```bash
+python ~/gbrain-k2/scripts/audit-hermes-brain-skills.py --write-report
+```
+
+Start a new Hermes session after regeneration so its available-skills prompt cache refreshes.
 
 ## Brain repo git discipline
 

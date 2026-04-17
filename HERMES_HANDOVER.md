@@ -64,25 +64,29 @@ export ANTHROPIC_API_KEY=sk-ant-...   # optional, improves query quality
 Save to shell profile or `~/.hermes/.env`. Without OpenAI, keyword search
 still works; vector search is disabled.
 
-## Step 3: Mirror k2 skills into Hermes's skill dir
+## Step 3: Generate Hermes skill projections
 
-Hermes discovers skills from `~/.hermes/skills/<category>/<skill>/SKILL.md`.
-Some Hermes builds skip symlinked skill directories during discovery, so keep a
-real mirrored copy of the k2 skills under the `brain` category:
+Hermes discovers skills from `~/.hermes/skills/<category>/<skill>/SKILL.md` and
+any configured external skill directories.
+
+For k2, the source of truth stays in `~/gbrain-k2/skills/`. Hermes should load
+a generated projection pack from `~/gbrain-k2/hermes-skills/` through
+`skills.external_dirs`.
 
 ```bash
 ~/gbrain-k2/scripts/sync-hermes-brain-skills.sh
 hermes skills list | grep brain    # verify discovery
 ```
 
-This writes real directories under `~/.hermes/skills/brain/` for all k2 skills
-such as `brain/brain-ops`, `brain/enrich`, and `brain/zettel-processor`.
+That workflow regenerates the Hermes-native `brain/*` projection pack, updates
+Hermes config to load the external directory, archives any legacy local
+`~/.hermes/skills/brain` copy outside the active skills tree, and writes an
+audit report under `~/gbrain-k2/reports/hermes-skill-audits/`.
 
 **Important:** rerun the sync script any time `~/gbrain-k2/skills/` changes.
-That keeps Hermes's mirrored `brain/*` skills aligned with the fork instead of
-letting them drift.
+That keeps Hermes's generated `brain/*` projections aligned with the fork.
 
-**Important:** start a new Hermes session after syncing so the available-skills
+**Important:** start a new Hermes session after regeneration so the available-skills
 prompt cache refreshes.
 
 ## Step 4: Read the K2 schema
@@ -98,7 +102,7 @@ Save RESOLVER.md to Hermes's persistent memory.
 Non-negotiables from K2_SCHEMA.md:
 
 - Never write to, modify, or move anything under `human/` except the zettel
-  archival move (`human/zettel/foo.md` → `archive/human/zettel/foo.md`),
+  archival move (`human/zettel/foo.md` → `human/zettel/archive/foo.md`),
   which requires explicit human approval per zettel.
 - Never write to `sources/`. `sources/` is strictly immutable reference.
 - Entity cross-refs use markdown links `[Name](../category/slug.md)`, NOT
@@ -141,10 +145,10 @@ schedule mirrors upstream gbrain with k2-specific additions:
 
 | Cadence | Action | Notes |
 |---------|--------|-------|
-| Daily (morning) | `brain/briefing` + `brain/daily-task-prep` | User's morning channel |
-| Daily (evening) | `brain/zettel-processor` maintenance scan | Queues archival candidates; surfaces to user via messaging |
+| Daily (morning) | `brain/briefing` + `brain/daily-task-prep` | Prompt the human into wiki interaction: time-sensitive threads, open projects, stale docs, and one random non-source page |
+| Daily (evening / waking hours) | `brain/zettel-processor` | Re-compile changed zettels and surface archival candidates for human review |
 | Daily | `gbrain check-update --json` | Tell user if a k2 update is available; never auto-install |
-| Nightly | Dream cycle | Entity sweep, citation fixes, memory consolidation. See `~/gbrain-k2/docs/guides/cron-schedule.md` for the full protocol. |
+| Nightly | `brain/maintain` | Semantic maintenance pass: stale pages, stale threads, citation/backlink hygiene, and archival candidates |
 | Weekly | `brain/maintain` full lint + `gbrain doctor --json` + `gbrain embed --stale` | Post a report |
 
 **NOT cron:**
@@ -194,7 +198,7 @@ bun install
 gbrain init              # idempotent schema migrations
 ```
 
-The skill symlink at `~/.hermes/skills/brain` auto-picks up skill changes.
+The generated projection pack at `~/gbrain-k2/hermes-skills/brain` tracks skill changes.
 For CLI changes, the user may need to re-run `bun link` from `~/gbrain-k2`.
 
 ## Non-goals for this install
