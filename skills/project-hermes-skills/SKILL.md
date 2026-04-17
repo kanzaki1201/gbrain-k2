@@ -33,7 +33,13 @@ Refresh `~/.hermes/skills/brain/` from `~/gbrain-k2/skills/`.
    - `references/blueprint.md` for traceability
 4. Keep projection-only metadata out of `SKILL.md`.
 5. Write the touched skill under `~/.hermes/skills/brain/<skill>/SKILL.md`.
-6. Verify the touched skills load with `skills_list(category="brain")` and spot `skill_view(...)` calls.
+6. **Copy shared reference dirs verbatim.** `skills/conventions/` and any other
+   non-skill directories referenced by SKILL.md files MUST be copied as-is to
+   `~/.hermes/skills/brain/`. These are not projectable (no SKILL.md to rewrite),
+   just plain file copies. Multiple SKILL.md files reference them by path — a
+   missing conventions/ dir silently breaks brain-first lookup, citation rules,
+   and cross-modal review.
+7. Verify the touched skills load with `skills_list(category="brain")` and spot `skill_view(...)` calls.
 
 ## Tool Frontmatter Rule (REQUIRED, not a judgment call)
 
