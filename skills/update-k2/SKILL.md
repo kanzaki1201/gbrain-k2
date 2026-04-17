@@ -98,17 +98,11 @@ upstream improvements.
 configured.
 
 **Hermes projection refresh:** if any files under `skills/` changed, run the
-projection workflow through the wrapper skill so Hermes rewrites the external
+projection workflow through the wrapper skill so Hermes rewrites the Hermes-owned
 pack with Hermes-native tool mappings:
 
 ```text
 /run-project-hermes-skills
-```
-
-The legacy sync script remains a bootstrap/repair fallback:
-
-```bash
-~/gbrain-k2/scripts/sync-hermes-brain-skills.sh
 ```
 
 Then start a new Hermes session so the available-skills prompt cache refreshes.

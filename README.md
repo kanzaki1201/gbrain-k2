@@ -95,11 +95,8 @@ projection pack under `~/.hermes/skills/brain/`, and run a thin
 healthcheck that the projected count is sane and Hermes can load the touched
 skills.
 
-The legacy helper script still exists for bootstrap/repair:
-
-```bash
-~/gbrain-k2/scripts/sync-hermes-brain-skills.sh
-```
+This is the current projection workflow. Keep docs, habits, and automation aligned
+around `/run-project-hermes-skills`.
 
 Start a new Hermes session after a projection refresh so its available-skills prompt cache refreshes.
 

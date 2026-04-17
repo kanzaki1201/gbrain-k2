@@ -3,9 +3,8 @@ name: project-hermes-skills
 version: 1.0.0
 description: |
   Rewrite Hermes-facing skill projections from the canonical gbrain-k2 blueprints.
-  Treat ~/gbrain-k2/skills/ as source of truth. Use LLM judgment to map blueprint
-  intent onto real Hermes tools and workflows, then write/update
-  ~/.hermes/skills/brain/.
+  Treat ~/gbrain-k2/skills/ as source of truth and write concise
+  Hermes-owned projections to ~/.hermes/skills/brain/.
 triggers:
   - "project Hermes skills"
   - "rewrite Hermes projections"
@@ -33,8 +32,8 @@ Rewrite the Hermes-facing skillpack from the canonical K2 blueprints.
 
 This skill guarantees:
 - Source blueprints stay canonical; projected Hermes skills are disposable artifacts.
-- Projection is semantic, not mechanical. Rewrite for Hermes runtime reality.
-- Tool mapping must be explicit. Source-only tool names do not survive without a concrete Hermes execution path.
+- Projected skills stay close to the source blueprint.
+- Projection changes stay limited to Hermes frontmatter and any wording required for real Hermes execution.
 - `references/blueprint.md` is copied from the source blueprint for traceability.
 - Healthcheck stays thin: projection count, source/projection pairing, and Hermes skill loading.
 
@@ -72,25 +71,19 @@ Typical mappings:
 
 A projected skill is only good when a future Hermes session can actually execute it.
 
-### 3. Rewrite the projection with LLM judgment
+### 3. Write the projection with minimal change
 
 For each target skill, write:
 - `~/.hermes/skills/brain/<skill>/SKILL.md`
 - `~/.hermes/skills/brain/<skill>/references/blueprint.md`
 
 Projection rules:
-- Preserve the blueprint's doctrine and behavioral contract.
-- Rewrite the procedure for Hermes-native execution.
-- Prefer concrete commands and explicit tool paths over abstract source verbs.
-- Use Hermes sections that are useful in practice:
-  - `When to Use`
-  - `Quick Reference`
-  - `Procedure`
-  - `Pitfalls`
-  - `Verification`
+- Preserve the blueprint's meaning, structure, and brevity.
+- Keep the body close to the source blueprint.
+- Change frontmatter so the skill is Hermes-native.
+- Change body wording only when a source-only tool path needs a real Hermes execution path.
 - Include source traceability in metadata.
-- Do not cargo-cult the source `tools:` list into the body.
-- Do not leave unresolved source-only verbs like `get_page`, `put_page`, `add_link`, `add_timeline_entry` unless you immediately explain the real Hermes execution path.
+- Avoid projection boilerplate, commentary, and restated sections.
 
 ### 4. Keep install/loading lightweight
 

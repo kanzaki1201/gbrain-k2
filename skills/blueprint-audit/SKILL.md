@@ -21,7 +21,7 @@ mutating: true
 
 Keep the Hermes-facing brain skillpack aligned with the canonical K2 skills.
 This workflow treats `~/gbrain-k2/skills/` as the source of truth and
-`~/gbrain-k2/hermes-skills/brain/` as the generated Hermes projection pack.
+`~/.hermes/skills/brain/` as the Hermes-owned projection pack.
 
 ## Contract
 
@@ -35,27 +35,24 @@ This skill guarantees:
 ## Phases
 
 1. **Mechanical parity audit**
-   - Run:
-     ```bash
-     python ~/gbrain-k2/scripts/audit-hermes-brain-skills.py --write-report
-     ```
-   - Read the report path and note missing projections, extra projections, hash mismatches, and missing Hermes sections.
+   - Compare `~/gbrain-k2/skills/` against `~/.hermes/skills/brain/` with Hermes file tools.
+   - Check for missing projections, extra projections, stale `references/blueprint.md`, and obvious body drift.
 
 2. **Regenerate when drift exists**
-   - If the audit reports drift, run:
-     ```bash
-     python ~/gbrain-k2/scripts/audit-hermes-brain-skills.py --fix --write-report
+   - If the audit reports drift, refresh the projections through Hermes:
+     ```text
+     /run-project-hermes-skills
      ```
-   - This rebuilds the Hermes projection pack from the current source blueprints.
+   - This asks Hermes to read the canonical blueprint and rewrite the Hermes-owned projection pack.
 
 3. **Hermes runtime health check**
-   - Confirm Hermes is loading the generated pack from `skills.external_dirs`.
+   - Confirm Hermes can load the refreshed pack from `~/.hermes/skills/brain/`.
    - Run a runtime check with Hermes tools:
      - `skills_list(category="brain")`
      - `skill_view("brain-ops")`
      - `skill_view("signal-detector")`
      - `skill_view("blueprint-audit")`
-   - Confirm those resolve to `~/gbrain-k2/hermes-skills/brain/...`.
+   - Confirm those resolve under `~/.hermes/skills/brain/...`.
 
 4. **Interpret the result**
    - Mechanical parity clean + runtime discovery clean = healthy
@@ -63,15 +60,15 @@ This skill guarantees:
    - Mechanical drift + runtime drift = regenerate first, then re-check
 
 5. **Document the outcome**
-   - Keep the markdown report in `~/gbrain-k2/reports/hermes-skill-audits/`
-   - For cron runs, deliver locally and keep the final human-facing note short
+   - Keep the final note short and local unless the user asked for a fuller report.
+   - For cron runs, deliver locally.
 
 ## Output Format
 
-- Audit status: `clean` or `drift`
-- Report path under `~/gbrain-k2/reports/hermes-skill-audits/`
-- If drift exists: bullet list of mismatches
-- If runtime discovery fails: bullet list of missing or misloaded skills
+- Touched projected skills read like Hermes-native procedures
+- Each touched projection has a fresh `references/blueprint.md`
+- `skills_list(category="brain")` exposes the touched skills in a fresh Hermes session
+- No unresolved source-only tool path remains in the rewritten procedure
 
 ## Anti-Patterns
 

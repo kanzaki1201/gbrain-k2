@@ -93,15 +93,14 @@ The thin healthcheck after rewrite should confirm:
 - each touched projection has `references/blueprint.md`
 - Hermes can load the touched skills
 
-Legacy bootstrap/repair helper:
+Runtime check after a projection refresh:
 
 ```bash
-~/gbrain-k2/scripts/sync-hermes-brain-skills.sh
 hermes skills list | grep brain
 ```
 
-That legacy path remains only as compatibility scaffolding until Hermes-owned
-projections fully replace the old external-dir pack.
+Keep the projection workflow centered on `/run-project-hermes-skills` so Hermes
+reads the source blueprint and rewrites the Hermes-owned projection pack.
 
 **Important:** rerun the projection workflow any time `~/gbrain-k2/skills/` changes.
 Use `/run-project-hermes-skills` or let the scheduled projection cron handle it.
@@ -211,7 +210,7 @@ bun install
 gbrain init              # idempotent schema migrations
 ```
 
-The generated projection pack at `~/gbrain-k2/hermes-skills/brain` tracks skill changes.
+Hermes owns the generated projection pack at `~/.hermes/skills/brain/`.
 For CLI changes, the user may need to re-run `bun link` from `~/gbrain-k2`.
 
 ## Non-goals for this install
