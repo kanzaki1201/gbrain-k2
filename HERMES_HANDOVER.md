@@ -69,34 +69,44 @@ still works; vector search is disabled.
 Hermes discovers skills from `~/.hermes/skills/<category>/<skill>/SKILL.md` and
 any configured external skill directories.
 
-For k2, the source of truth stays in `~/gbrain-k2/skills/`. Hermes should load
-a generated projection pack from `~/gbrain-k2/hermes-skills/` through
-`skills.external_dirs`.
+For k2, the source of truth stays in `~/gbrain-k2/skills/`. Hermes should own
+its generated projection pack under `~/.hermes/skills/brain/`.
+
+Preferred workflow:
+
+```text
+/run-project-hermes-skills
+```
+
+That wrapper skill tells Hermes to read the canonical blueprint at:
+
+- `~/gbrain-k2/skills/project-hermes-skills/SKILL.md`
+
+and rewrite the Hermes-owned projection pack under:
+
+- `~/.hermes/skills/brain/`
+
+using Hermes-native tool paths and an LLM rewrite pass.
+
+The thin healthcheck after rewrite should confirm:
+- source/projection counts are sane
+- each touched projection has `references/blueprint.md`
+- Hermes can load the touched skills
+
+Legacy bootstrap/repair helper:
 
 ```bash
 ~/gbrain-k2/scripts/sync-hermes-brain-skills.sh
-hermes skills list | grep brain    # verify discovery
+hermes skills list | grep brain
 ```
 
-That workflow regenerates the Hermes-native `brain/*` projection pack, updates
-Hermes config to load the external directory, archives any legacy local
-`~/.hermes/skills/brain` copy outside the active skills tree, and writes an
-audit report under `~/gbrain-k2/reports/hermes-skill-audits/`.
+That legacy path remains only as compatibility scaffolding until Hermes-owned
+projections fully replace the old external-dir pack.
 
-How the projection is generated:
-- `generate-hermes-brain-skills.py` reads every source blueprint in `~/gbrain-k2/skills/*/SKILL.md`
-- it parses frontmatter plus key sections such as `Contract`, `Phases`, `Anti-Patterns`, `Output Format`, and `Tools Used`
-- it writes a Hermes-native `SKILL.md` with standardized sections: `When to Use`, `Quick Reference`, `Procedure`, `Pitfalls`, and `Verification`
-- it copies the original blueprint into `references/blueprint.md`
-- it stamps the generated skill with the source blueprint path and SHA-256 hash
-- `audit-hermes-brain-skills.py` then verifies the generated projection still matches the blueprint hash and required Hermes sections
+**Important:** rerun the projection workflow any time `~/gbrain-k2/skills/` changes.
+Use `/run-project-hermes-skills` or let the scheduled projection cron handle it.
 
-So the script is a deterministic doc-to-doc compiler, not an LLM writing pass. The human/agent work happens in the source blueprints under `skills/`; the projection layer stays mechanical so Hermes can load a stable, auditable skillpack.
-
-**Important:** rerun the sync script any time `~/gbrain-k2/skills/` changes.
-That keeps Hermes's generated `brain/*` projections aligned with the fork.
-
-**Important:** start a new Hermes session after regeneration so the available-skills
+**Important:** start a new Hermes session after projection refresh so the available-skills
 prompt cache refreshes.
 
 ## Step 4: Read the K2 schema

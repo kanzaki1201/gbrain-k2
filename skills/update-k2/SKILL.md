@@ -97,11 +97,20 @@ upstream improvements.
 **Validation:** `bun install` and `bun run build` and `bun test` if
 configured.
 
-**Hermes projection refresh:** if any files under `skills/` changed, run:
+**Hermes projection refresh:** if any files under `skills/` changed, run the
+projection workflow through the wrapper skill so Hermes rewrites the external
+pack with Hermes-native tool mappings:
+
+```text
+/run-project-hermes-skills
+```
+
+The legacy sync script remains a bootstrap/repair fallback:
+
 ```bash
 ~/gbrain-k2/scripts/sync-hermes-brain-skills.sh
 ```
-This regenerates the Hermes-native projections, refreshes `skills.external_dirs`, and writes an audit report.
+
 Then start a new Hermes session so the available-skills prompt cache refreshes.
 
 **Summary + rollback:** tag name, new HEAD, remaining diff, rollback

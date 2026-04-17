@@ -67,6 +67,7 @@ This is the dispatcher. Skills are the implementation. **Read the skill file bef
 | "Set up autopilot", "run brain maintenance", "keep brain updated" | Run `gbrain autopilot --install --repo ~/brain` |
 | Agent identity, "who am I", customize agent | `skills/soul-audit/SKILL.md` |
 | "Pull upstream gbrain", "update k2", sync with upstream | `skills/update-k2/SKILL.md` |
+| "Project Hermes skills", "rewrite Hermes projections", refresh Hermes skillpack | `skills/project-hermes-skills/SKILL.md` |
 
 ## K2-specific
 

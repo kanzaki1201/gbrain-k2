@@ -77,27 +77,31 @@ Per-client guides: [`docs/mcp/`](docs/mcp/DEPLOY.md). ChatGPT requires OAuth 2.1
 
 `skills/` is the source of truth for GBrain skills.
 
-Hermes consumes a generated projection pack at `~/gbrain-k2/hermes-skills/brain/`
-through `skills.external_dirs` in `~/.hermes/config.yaml`.
+Hermes should own its generated projection pack under `~/.hermes/skills/brain/`.
 
-Refresh the projections and audit them against the blueprints with:
+Hermes should refresh that pack through the source-of-truth blueprint skill:
+
+- canonical blueprint: `~/gbrain-k2/skills/project-hermes-skills/SKILL.md`
+- Hermes wrapper skill: `run-project-hermes-skills`
+
+Manual trigger from Hermes:
+
+```text
+/run-project-hermes-skills
+```
+
+That workflow asks Hermes to read the canonical blueprint, rewrite the Hermes-owned
+projection pack under `~/.hermes/skills/brain/`, and run a thin
+healthcheck that the projected count is sane and Hermes can load the touched
+skills.
+
+The legacy helper script still exists for bootstrap/repair:
 
 ```bash
 ~/gbrain-k2/scripts/sync-hermes-brain-skills.sh
 ```
 
-That command regenerates the Hermes-native skills, updates Hermes config to load
-`~/gbrain-k2/hermes-skills`, archives any legacy local `~/.hermes/skills/brain`
-copy outside the active skills tree, and writes an audit report under
-`~/gbrain-k2/reports/hermes-skill-audits/`.
-
-Run the audit by itself with:
-
-```bash
-python ~/gbrain-k2/scripts/audit-hermes-brain-skills.py --write-report
-```
-
-Start a new Hermes session after regeneration so its available-skills prompt cache refreshes.
+Start a new Hermes session after a projection refresh so its available-skills prompt cache refreshes.
 
 ## Brain repo git discipline
 
