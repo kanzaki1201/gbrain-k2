@@ -1,6 +1,6 @@
 ---
 name: project-hermes-skills
-version: 1.2.0
+version: 1.3.0
 description: |
   Refresh ~/.hermes/skills/brain/ from ~/gbrain-k2/skills/.
   Keep each Hermes skill close to the source skill and only change what Hermes needs.
@@ -62,6 +62,8 @@ Exception: if a skill is genuinely non-mutating and reads no files (pure prompt-
 - Keep the generated pack in `~/.hermes/skills/brain/`.
 - Skip extra explanation about projection mechanics inside the generated skill body.
 - The `tools:` frontmatter rewrite is not optional. Every projection pass checks it.
+- **Do NOT rewrite `~/.hermes/skills/brain/run-project-hermes-skills/SKILL.md`.** That wrapper skill is Hermes-owned and frozen — it has no source in `~/gbrain-k2/skills/` and is not a projection target. The projection pass must skip it entirely. If it appears drifted or "improvable", leave it alone; any change belongs in a separate, explicit edit by the human, not inside this projection workflow.
+- Do NOT write anywhere under `/home/k/gbrain-k2/hermes-skills/`. That path is retired. The only projection output location is `~/.hermes/skills/brain/`.
 
 ## Report
 
@@ -75,3 +77,5 @@ Exception: if a skill is genuinely non-mutating and reads no files (pure prompt-
 - touched skills stay close to source length and structure
 - Hermes can load the touched skills
 - no projection carries an abstract verb in `tools:` (grep each touched SKILL.md for `get_page|put_page|add_link|add_timeline_entry|^\s*- search$|^\s*- query$`; any match is a failed projection)
+- `~/.hermes/skills/brain/run-project-hermes-skills/SKILL.md` is byte-unchanged after the projection pass
+- no files exist under `/home/k/gbrain-k2/hermes-skills/`
