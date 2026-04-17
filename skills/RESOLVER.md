@@ -66,6 +66,13 @@ This is the dispatcher. Skills are the implementation. **Read the skill file bef
 | "Brain health", "what features am I missing", "brain score" | Run `gbrain features --json` |
 | "Set up autopilot", "run brain maintenance", "keep brain updated" | Run `gbrain autopilot --install --repo ~/brain` |
 | Agent identity, "who am I", customize agent | `skills/soul-audit/SKILL.md` |
+| "Pull upstream gbrain", "update k2", sync with upstream | `skills/update-k2/SKILL.md` |
+
+## K2-specific
+
+| Trigger | Skill |
+|---------|-------|
+| New or updated file in `human/zettel/`, "process my zettels", "compile zettels", archival decisions | `skills/zettel-processor/SKILL.md` |
 
 ## Identity & access (always-on)
 

@@ -1,15 +1,50 @@
 ---
 name: update-k2
-description: Pull upstream gbrain changes into the k2 fork safely, preserving k2 customizations. Preview, selective cherry-pick, backup, conflict resolution, validation. Never pushes to upstream.
+version: 1.0.0
+description: |
+  Pull upstream gbrain changes into the k2 fork safely, preserving k2
+  customizations. Preview, selective cherry-pick, backup, conflict resolution,
+  validation. Never pushes to upstream.
+triggers:
+  - "update k2"
+  - "pull upstream gbrain"
+  - "merge upstream"
+  - "sync with gbrain"
+tools:
+  - bash
+mutating: true
 ---
 
-# About
+# Update K2
 
 The k2 fork (`kanzaki1201/gbrain-k2`) drifts from upstream
 (`garrytan/gbrain`) as k2-specific customizations accumulate. This skill pulls
 upstream changes into the fork without losing k2 mods.
 
 Run `/update-k2` in Claude Code from inside `~/gbrain-k2/`.
+
+## Contract
+
+This skill guarantees:
+- Clean worktree check and upstream fetch-only remote before any operation
+- Backup branch + tag created before any merge/rebase/cherry-pick
+- K2-divergent files preserve their k2 content during conflict resolution
+- Validation (bun install + build + test) after merge
+- Breaking-changes prompt if CHANGELOG entries mark [BREAKING]
+- Rollback instructions printed at the end of every run
+- Never pushes to upstream — push URL is a poison pill
+
+## Phases
+
+See the full step-by-step workflow below under Step 0 through Step 7.
+
+## Output Format
+
+- Printed diff summary (bucketed by file area)
+- Printed list of conflicts resolved
+- Printed list of breaking changes + skills invoked
+- Rollback tag name + command
+- Remaining local diff vs upstream
 
 ## Safety invariants (non-negotiable)
 

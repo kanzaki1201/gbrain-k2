@@ -220,7 +220,36 @@ period (e.g., 30 days).
   zettels. Imported content (`sources/imports/`) is handled by standard
   bootstrap compile, not zettel-processor.
 
-## Tools used
+## Output Format
+
+No direct visible output during compile phase — wiki pages are created/updated
+silently.
+
+Per-run log line (same shape as signal-detector):
+
+```
+Zettels: 3 new compiled, 2 updated recompiled, 1 inbox flagged, 5 archival candidates
+```
+
+Structured result for the maintenance skill (async mode only):
+
+```yaml
+zettel-processor-result:
+  run_at: <ISO timestamp>
+  new_compiled: N
+  updated_recompiled: M
+  inbox_flagged: K
+  archival_candidates:
+    - path: human/zettel/<basename>.md
+      compiled_to: <category>/<slug>.md
+      stable_since: <ISO date>
+      rationale: <1-2 sentence summary>
+```
+
+Interactive bootstrap output is a series of AskUserQuestion prompts with the
+compile result and archive-or-keep question, processed in batches.
+
+## Tools Used
 
 - Filesystem read of `human/zettel/` — non-mutating inspection.
 - `search` — look for existing wiki pages citing a zettel.

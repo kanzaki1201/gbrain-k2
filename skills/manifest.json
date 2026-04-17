@@ -128,6 +128,16 @@
       "name": "data-research",
       "path": "data-research/SKILL.md",
       "description": "Structured data research: search, extract, archive, deduplicate, track. Parameterized YAML recipes for investor updates, donations, company metrics."
+    },
+    {
+      "name": "zettel-processor",
+      "path": "zettel-processor/SKILL.md",
+      "description": "K2: process human zettels. Compile into wiki pages, detect archival candidates, execute human-approved archival moves. Never writes to human/ except the approved archival move."
+    },
+    {
+      "name": "update-k2",
+      "path": "update-k2/SKILL.md",
+      "description": "K2: pull upstream gbrain changes into the k2 fork safely. Backup, preview, conflict resolution, validation. Never pushes to upstream."
     }
   ],
   "dependencies": {
