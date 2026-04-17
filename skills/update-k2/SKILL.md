@@ -30,7 +30,7 @@ This skill guarantees:
 - Backup branch + tag created before any merge/rebase/cherry-pick
 - K2-divergent files preserve their k2 content during conflict resolution
 - Validation (bun install + build + test) after merge
-- Hermes brain-skill projections regenerated and audited after any `skills/` changes
+- Hermes brain-skill projections refreshed via `/run-project-hermes-skills` after any `skills/` changes
 - Breaking-changes prompt if CHANGELOG entries mark [BREAKING]
 - Rollback instructions printed at the end of every run
 - Never pushes to upstream — push URL is a poison pill
