@@ -25,7 +25,7 @@ not the source, not the skill that's running.
 
 ## Zones: human/, sources/, inbox/
 
-See `K2_SCHEMA.md` for the full schema. This section is the shortcut
+See `~/gbrain-k2/K2_SCHEMA.md` for the full schema. This section is the shortcut
 reference for filing decisions.
 
 Human ownership is split into two tiers with different permission levels:
