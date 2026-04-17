@@ -200,7 +200,7 @@ period (e.g., 30 days).
 - `maintain` — invokes this skill on every cycle. Consumes the structured
   result and emits prompts to the messaging channel.
 
-## Anti-patterns
+## Anti-Patterns
 
 - **Modifying a zettel's content.** Never. Not even to fix typos.
 - **Moving a zettel without explicit human approval.** Never. Archival is

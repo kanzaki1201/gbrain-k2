@@ -294,7 +294,7 @@ To push the updated fork to origin (never upstream):
 Only open files with actual conflicts. `git log`, `git diff`, `git status`
 cover everything else. Do not scan or refactor unrelated code.
 
-## Anti-patterns
+## Anti-Patterns
 
 - Pushing to `upstream` (never — the push URL is the poison-pill guard)
 - Overwriting k2-divergent files with upstream versions without reviewing
