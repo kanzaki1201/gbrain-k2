@@ -11,3 +11,4 @@ bin/
 supabase/.temp/
 .claude/skills/
 .idea
+reports/hermes-skill-audits/
