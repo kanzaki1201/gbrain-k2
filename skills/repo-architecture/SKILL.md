@@ -1,10 +1,9 @@
 ---
 name: repo-architecture
-version: 1.0.0-k2
+version: 1.0.0
 description: |
   Where new brain files go. Decision protocol for filing brain pages by primary
   subject, not by format or source. Reference for all brain-writing skills.
-  K2 fork: categories adjusted for creator/engineer workflow, not VC partner.
 triggers:
   - "where does this go"
   - "filing rules"
@@ -17,7 +16,7 @@ tools:
 mutating: false
 ---
 
-# Repo Architecture — Filing Rules (k2 fork)
+# Repo Architecture — Filing Rules
 
 > **Authoritative schema:** See `docs/K2_SCHEMA.md` for the full category list,
 > frontmatter spec, and disambiguation rules.
@@ -55,8 +54,9 @@ This skill guarantees:
    - Long-form prose essay → `writing/{slug}.md`
    - Unclear → `inbox/{slug}.md` with flag for human review
 4. **Cross-link.** Link from related categories and to related entities.
-5. **Cite sources.** Populate the `sources` frontmatter field with paths into
-   `sources/`.
+5. **Cite sources.** Add a `## Sources` section in the page body with wikilinks
+   to every contributing source file (under `sources/` or `human/`). NOT in
+   frontmatter.
 6. **Check notability.** See `skills/conventions/quality.md` notability gate.
 
 ## Output Format
@@ -66,15 +66,17 @@ Cites sources: {list of source paths}."
 
 ## Anti-Patterns
 
-- Filing by format ("it's a PDF so it goes in sources/") — wrong
-- Filing by source ("it came from email so it goes in sources/") — wrong
-- Writing to `sources/` — forbidden under k2 rules
-- Relocating a source page into a category folder — forbidden; create a wiki
+- Filing by format ("it's a PDF so it goes in sources/")
+- Filing by source channel ("it came from email so it goes in sources/")
+- Writing to, modifying, or moving anything under `human/`
+- Writing to or moving existing files under `sources/` (except zettel archival
+  with explicit human approval — see `_brain-filing-rules.md`)
+- Relocating a source page into a category folder — compile a parallel wiki
   page that cites the source instead
-- Trusting imported frontmatter tags/PARA/archive status as truth — read as
-  evidence only, not truth
+- Trusting imported frontmatter tags, PARA, or archive status as truth — read
+  as evidence only
 - Creating pages without checking if one already exists
-- Guessing a category when no clear fit exists — use `inbox/` and flag
+- Guessing a category when no clear fit exists — use `inbox/` with a flag
 
 ## Category Mnemonic (for quick recall)
 

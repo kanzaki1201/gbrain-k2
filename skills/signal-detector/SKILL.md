@@ -51,15 +51,29 @@ Every time this skill creates or updates a brain page that mentions a person or 
 
 ### Phase 1: Idea/Observation Detection (PRIMARY)
 
-When the user expresses a novel thought, observation, thesis, or framework:
-- If it's the user's **original thinking** (they generated it) → create/update `originals/{slug}`
-- If it's a **world concept** they're referencing → create/update `concepts/{slug}`
-- If it's a **product or business idea** → create/update `ideas/{slug}`
+When the user expresses a novel thought, observation, thesis, or framework,
+route by content type:
+
+- **Reusable framework or mental model** they could teach → `concepts/{slug}`
+- **Unexecuted product or business idea** → `ideas/{slug}`
+- **Long-form prose** (essay, draft, argument) → `writing/{slug}`
+- **Private reflection** (health, habits, body, personal notes) → `personal/{slug}`
+- **Decision record** (option, rationale, outcome tracking) → `decisions/{slug}`
+- **How-to / process / troubleshoot fix** → `how-to/{slug}`
+- **Atomic thought** that doesn't cleanly fit the above → stays in
+  `human/zettel/` (the zettel-processor skill handles ongoing compile and
+  archival for human zettels; signal-detector does NOT file atomic thoughts
+  into the wiki directly).
 
 **Capture exact phrasing.** The user's language IS the insight. Don't paraphrase.
 
-**Cross-linking (MANDATORY):** Every original MUST link to related people, companies,
-meetings, and concepts. An original without cross-links is a dead original.
+**Never write to, modify, or move anything in `human/`.** Signal-detector
+reads from human/ and enriches downstream category pages. Zettel archival is
+gated through the zettel-processor skill with explicit human approval.
+
+**Cross-linking (MANDATORY):** Every compiled thinking page MUST link to related
+people, companies, meetings, and concepts. A compiled page without cross-links
+is a dead page.
 
 ### Phase 2: Entity Detection (SECONDARY)
 
@@ -75,7 +89,8 @@ meetings, and concepts. An original without cross-links is a dead original.
 
 Always log a one-line summary:
 - `Signals: 0 ideas, 0 entities, 0 facts (skipped: operational)`
-- `Signals: 1 idea (captured → originals/x), 2 entities (enriched → people/y, companies/z)`
+- `Signals: 1 idea (captured → concepts/x), 2 entities (enriched → people/y, companies/z)`
+- `Signals: 1 zettel noted (→ deferred to zettel-processor)`
 
 This makes the ambient capture loop debuggable.
 
@@ -91,6 +106,9 @@ The output is brain pages created/updated and the signal log line.
 - Creating pages for non-notable entities (one-off mentions)
 - Skipping back-links after creating/updating pages
 - Running on purely operational messages ("ok", "thanks", "do it")
+- Writing to, modifying, or moving anything under `human/`
+- Moving source pages out of `sources/` — compile a parallel wiki page that
+  cites the source; leave the source in place
 
 ## Tools Used
 

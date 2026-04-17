@@ -13,53 +13,80 @@ read `GBRAIN_RECOMMENDED_SCHEMA.md` first. This doc specifies the deltas.
 
 ---
 
-## Operating Principles (k2-specific)
+## Operating Principles
 
-These override the stock gbrain filing rules where they conflict.
+### 1. Two tiers of human ownership: `human/` is sacred, `sources/` is reference.
 
-### 1. Sources is sacred. Human writing stays in sources/.
+**`human/` is SACRED.** Live human writing lives here. The agent NEVER writes
+to `human/`, NEVER modifies files in `human/`, and NEVER moves files in or
+out of `human/` except one narrow case (see Principle 5). If the agent needs
+to record a derived fact, it goes in a compiled wiki page (people/, concepts/,
+etc.) that CITES the human source — the human source itself is untouched.
 
-`sources/` contains everything the human writes or captures. The agent does NOT
-write new content to `sources/`, does NOT edit existing source files, and does
-NOT move source pages out of `sources/` into category folders.
+**`sources/` is immutable reference material.** Imported legacy content (prior
+note tools, Obsidian export), attachments, and archived human content live
+here. The agent reads from `sources/` freely but only writes via one gated
+path: `sources/human/archive/zettel/` receives matured human content approved for
+archival (see Principle 5).
 
-The anti-pattern to avoid: moving a source page into a category folder and calling
-it done. Source pages are not the wiki. The agent treats every source page as a
-new signal, extracts what matters, and produces compiled truth in category folders.
+**Moving source pages OUT of `sources/` is also forbidden.** Even though the
+target folder is an agent-owned category, the move itself violates the
+sources-as-immutable-reference invariant. A source page about Alice does NOT
+get relocated to `people/alice.md` — instead, the agent creates a parallel
+`people/alice.md` that cites the source page in its `## Sources` body section.
+The source page stays in `sources/` forever.
 
-Category folders (`people/`, `concepts/`, etc.) are entirely agent-owned. They are
-synthesis derived from sources, not a relocation of sources.
+**Category folders** (`people/`, `concepts/`, etc.) are entirely agent-owned.
+They are synthesis derived from human/ and sources/, not a relocation of them.
 
-**Narrow exception: zettel promotion.** Moving a file from
-`sources/zettel/` to `sources/promoted_zettel/` is allowed and expected when a
-zettel has been wholesale-promoted into a wiki page (see Principle 5 below).
-Both directories are within `sources/`, so human ownership is preserved; the
-move is a status transition, not a re-filing. No other source moves are allowed.
+**`inbox/` is shared.** Both agent and human write here. Agent should be
+disciplined about inbox writes — the inbox is a triage zone, not a dumping
+ground. Every agent-written inbox entry should be reviewable and actionable;
+flagged items for human attention are the typical case.
 
-### 5. Zettel promotion: 1:1 wholesale only.
+Anti-pattern to avoid: moving human content into a category folder and calling
+it done. Human content stays in human/ (or sources/human/archive/zettel/ once
+explicitly archived). The agent's job is to compile parallel wiki pages that
+cite the human sources.
 
-When a zettel in `sources/zettel/` produces a single wiki page that covers its
-content entirely (the wiki page's Compiled Truth fully subsumes the zettel),
-the agent:
+### 5. Zettel processing and archival: human-approved only.
 
-1. Creates the wiki page in the appropriate category folder.
-2. Cites the zettel in the wiki page's `## Sources` body section.
-3. Moves the zettel file from `sources/zettel/` to `sources/promoted_zettel/`.
-4. Updates any `## Sources` citations on other wiki pages that referenced the
-   old path to use the new `promoted_zettel/` path.
+When a zettel in `human/zettel/` is processed by the zettel-processor skill:
 
-Wikilinks inside the zettel's own body, and wikilinks from other pages pointing
-at this zettel by basename, continue to resolve after the move (Obsidian
-resolves by basename vault-wide).
+1. The zettel-processor compiles the zettel's content into the appropriate
+   category wiki page (concepts/, how-to/, ideas/, etc.).
+2. The wiki page's `## Sources` section cites the zettel at its `human/zettel/`
+   path.
+3. **The zettel itself stays in `human/zettel/`.** Agent does NOT move it.
+4. If the zettel has been wholesale-compiled (1:1 into a single wiki page) AND
+   is stable (no recent edits), the zettel-processor marks it as an archival
+   candidate and the maintenance skill surfaces a prompt to the human via the
+   configured messaging channel.
+5. **Only when the human explicitly approves** does the agent move the zettel:
+   `human/zettel/foo.md` → `sources/human/archive/zettel/foo.md`. Any wiki pages that
+   cited the old path update their `## Sources` wikilink to the new path.
 
-**Partial-use zettels stay in `sources/zettel/`.** If a zettel contributes to
-multiple wiki pages as one source among many, or contributes only a subset of
-its content (e.g. one sentence in a person's timeline), it does NOT promote.
-It stays available for future enrichment passes.
+Wikilinks pointing at the zettel by basename continue to resolve after the
+move (Obsidian resolves by basename vault-wide).
 
-**When the human wants to add to a promoted zettel,** they start a new zettel
-in `sources/zettel/` with a link back to the promoted one. Promoted zettels
-are frozen.
+**Partial-use zettels never become archival candidates.** If a zettel
+contributes to multiple wiki pages as one source among many, or only partially
+compiles (some content not yet captured), it stays in `human/zettel/`
+indefinitely. No prompt fires.
+
+**Updated zettels are re-processed.** The zettel-processor detects zettels that
+have been modified since last run and re-compiles the affected wiki pages.
+This is why the zettel itself must stay editable in `human/zettel/` — the
+human may keep developing the idea.
+
+**Dreaming and maintenance loops** actively scan `human/` to detect:
+- New zettels needing initial compile
+- Updated zettels needing re-compile
+- Archival candidates (stable + wholesale compiled)
+- Orphan compiled pages (wiki page exists but source zettel was deleted)
+
+All findings surface via the maintenance messaging channel. None of them
+trigger autonomous agent writes to `human/`.
 
 ### 2. Existing tags and folder locations in imported sources are untrusted.
 
@@ -93,12 +120,18 @@ and `archive/` is agent-writable.
 
 ```
 brain-vault/
-├── sources/              human territory — agent reads, only writes during promotion
+├── human/                — SACRED: human writing, agent NEVER writes or modifies
+│   ├── zettel/           active atomic zettel destination (new writing lands here)
+│   └── <free structure>  any way the human organizes their own writing
+├── sources/              immutable reference material, read-only for agent
 │   ├── assets/           image and file attachments
-│   ├── YYYY-MM-DD-*-import/   imported legacy content (dated snapshot)
-│   ├── zettel/           live atomic human writing (active zettel destination)
-│   ├── promoted_zettel/  zettels that have been wholesale-promoted into wiki (frozen)
-│   └── <free structure>  any other subdir the human creates for writing
+│   ├── imports/          legacy imports (dated snapshots from prior note tools)
+│   │   └── YYYY-MM-DD-*-import/
+│   └── human/archive/    matured human content approved for archival
+│                          (only entry point for agent writes to sources/,
+│                           gated by explicit human approval)
+├── inbox/                shared triage zone (agent and human both write here;
+│                          agent uses sparingly to avoid bloat)
 ├── people/               real humans (known + public figures referenced)
 ├── places/               physical locations (restaurants, homes, travel, landmarks)
 ├── projects/             things the user is actively working on (tech, creative, life)
@@ -118,20 +151,21 @@ brain-vault/
 └── archive/              retired content
 ```
 
-### Deliberate deviations from stock gbrain
+### Category notes
 
-**Added:** `how-to/`, `household/`, `tools/`, `decisions/` (renamed from `deals/`).
+**Explicitly NOT a category:** assets-as-a-concept, vtbassets, or any project-
+specific resource collection. Use the `tags` frontmatter field for cross-cutting
+workflow membership (e.g. `tags: [vtb, 3d-rigging]`). The page's primary home
+is determined by what it IS (a tool, a how-to, a concept), not the workflow it
+serves.
 
-**Removed:** `hiring/`, `civic/` (civic content goes in `writing/`).
+**Low expected volume:** `org/`, `meetings/`, `writing/`, `personal/`. These
+categories exist for clarity of routing when content does arrive, but may stay
+near-empty for long periods depending on the human's current activity.
 
-**Merged into `media/`:** `books/` (media-type: book).
-
-**Kept but expect low volume:** `org/`, `meetings/`, `writing/`, `personal/`.
-
-**Explicitly NOT a category:** assets-as-a-concept, vtbassets, or any project-specific
-resource collection. Use the `tags` frontmatter field for cross-cutting workflow
-membership (e.g. `tags: [vtb, 3d-rigging]`). The page's primary home is determined
-by what it IS (a tool, a how-to, a concept), not the workflow it serves.
+**Category list is the source of truth.** When an upstream gbrain change
+suggests a new category, route it through the `update-k2` skill flow — the
+category list here is authoritative for the fork.
 
 ---
 
@@ -437,13 +471,13 @@ character production pipelines.
 ## Sources
 
 - [[sources/imports/2026-04-16-obsidian-import/pages/example-tool]] — imported legacy page with accumulated notes and sub-tags
-- [[sources/zettel/2026-02-04-some-rigging-test]] — first hands-on test of the rigging workflow
+- [[human/zettel/2026-02-04-some-rigging-test]] — first hands-on test of the rigging workflow (still active — not yet archival candidate)
 
 ---
 
 ## Timeline
 
-- **[[2026-02-04]]** | [[sources/zettel/2026-02-04-some-rigging-test]] — First hands-on test of the rigging workflow with this plugin.
+- **[[2026-02-04]]** | [[human/zettel/2026-02-04-some-rigging-test]] — First hands-on test of the rigging workflow with this plugin.
 - **[[2026-04-16]]** | [[sources/imports/2026-04-16-obsidian-import/pages/example-tool]] — Imported legacy page with accumulated notes and sub-tags.
 ```
 
@@ -452,19 +486,32 @@ character production pipelines.
 ## Enforcement
 
 1. The agent MUST read `docs/K2_SCHEMA.md` before creating any new wiki page.
-2. The agent MUST NOT write new content to `sources/`, MUST NOT edit existing
-   source files, and MUST NOT move source pages into category folders. The only
-   allowed write to `sources/` is the zettel promotion move
-   (`sources/zettel/` → `sources/promoted_zettel/`) per Operating Principle 5.
-3. The agent MUST emit frontmatter per this spec on every wiki page it creates
+2. The agent MUST NOT write to, edit, move into, or delete from `human/` under
+   any circumstance. `human/` is sacred.
+3. The agent MUST NOT move, edit, or delete existing files under `sources/`.
+   The only agent WRITE to `sources/` is adding new files via the zettel
+   archival move (`human/zettel/foo.md` → `sources/human/archive/zettel/foo.md`)
+   AND only after explicit human approval via the maintenance messaging
+   channel. The agent MUST NOT perform this move autonomously. Moving a
+   source page into a category folder is explicitly forbidden — compile a
+   parallel wiki page that cites the source instead.
+4. The agent MUST emit frontmatter per this spec on every wiki page it creates
    or updates. Missing required fields is a quality failure.
-4. The agent MUST include a `## Sources` section in every wiki page body, with
+5. The agent MUST include a `## Sources` section in every wiki page body, with
    wikilinks to all source files that contributed to the page. `sources:` in
    frontmatter is NOT used (moved to body to avoid frontmatter bloat).
-5. The agent MUST NOT trust existing tags, PARA fields, folder location, or
+6. The agent MUST NOT trust existing tags, PARA fields, folder location, or
    archive status in imported sources. Read each source as fresh signal.
-6. If a source page doesn't have a clear category, the compiled page goes in
+7. The agent MAY write to `inbox/` with discipline (flagged items needing
+   human attention). The agent MUST NOT use inbox as a dumping ground for
+   ambiguous output.
+8. If a source page doesn't have a clear category, the compiled page goes in
    `inbox/` with a flag for human review. Do not guess.
+9. There is no `originals/` category. User's original thinking compiles into
+   the K2 category matching its TYPE: concepts/ for frameworks, ideas/ for
+   unexecuted possibilities, writing/ for long-form prose, personal/ for
+   private reflection. Atomic thoughts that don't fit these stay in
+   `human/zettel/` as ongoing zettels.
 
 ---
 
@@ -474,3 +521,14 @@ character production pipelines.
 - **k2-0.2.0** (2026-04-16) — Sources moved from frontmatter to `## Sources` body section
   (avoids frontmatter bloat when a page cites many sources). Added
   `sources/promoted_zettel/` convention for 1:1 wholesale-promoted zettels.
+- **k2-0.3.0** (2026-04-16) — Major restructure:
+  - Added top-level `human/` zone (sacred, agent never writes/modifies/moves).
+    New zettels go to `human/zettel/`.
+  - Removed `sources/zettel/` and `sources/promoted_zettel/`. Replaced by
+    `sources/human/archive/zettel/` (matured human content landing zone, gated by
+    explicit human approval).
+  - Zettel archival flow is now human-approved via maintenance messaging
+    channel, not autonomous.
+  - Inbox explicitly documented as shared agent/human zone (with agent
+    discipline expected).
+  - Originals/ absence explicitly documented in Enforcement rule 9.

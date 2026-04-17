@@ -23,29 +23,52 @@ not the source, not the skill that's running.
 | Reusable framework/thesis -> `sources/` | -> `concepts/` | It's a mental model |
 | Tweet thread about policy -> `media/` | -> `civic/` or `concepts/` | media/ is for content ops |
 
-## What `sources/` Is Actually For (k2 fork)
+## Zones: human/, sources/, inbox/
 
-**This section diverges from stock gbrain.** See `docs/K2_SCHEMA.md` for the
-full k2 rules.
+See `docs/K2_SCHEMA.md` for the full schema. This section is the shortcut
+reference for filing decisions.
 
-`sources/` in this fork is the human's territory:
+Human ownership is split into two tiers with different permission levels:
 
-- Imported legacy content (dated snapshot directories like `sources/imports/2026-04-16-obsidian-import/`)
-- New human writing (`sources/zettel/` is the active atomic-note destination)
-- Attachments (images, PDFs, audio) under `sources/assets/`
-- Promoted zettels: `sources/promoted_zettel/` (frozen after 1:1 promotion, see below)
-- Quick captures from ingest pipelines before triage
+### `human/` — SACRED (agent never writes or modifies)
 
-**The agent does not write new content to `sources/`, does not edit existing
-source files, and does not move source pages into category folders.** This
-applies even when "re-filing" a source page that appears to belong in a
-category. Source pages are signals, not wiki pages. The agent's job is to
-produce compiled wiki pages in category folders (`people/`, `concepts/`, etc.)
-that cite sources — not to relocate sources.
+- `human/zettel/` — active atomic human writing destination
+- Any subdirectories the human creates for their own writing
 
-The anti-pattern: moving a source page into a category folder and calling it
-done. This is forbidden. If a source page has a clear primary subject, the
-correct action is:
+**The agent NEVER writes to `human/`, NEVER edits files in `human/`, NEVER
+moves files in or out of `human/`, and NEVER deletes from `human/`.** One
+narrow exception: the zettel archival move (see below), and only after
+explicit human approval via the maintenance messaging channel.
+
+### `sources/` — immutable reference material
+
+- `sources/imports/YYYY-MM-DD-*/` — legacy content from prior note tools
+- `sources/assets/` — image and file attachments
+- `sources/human/archive/zettel/` — matured human content approved for archival
+
+The agent reads `sources/` freely. The agent writes to `sources/` only via
+one gated path: the zettel archival move below.
+
+**Moves OUT of `sources/` are also forbidden.** Even into agent-owned category
+folders. If a source page is about a person, the agent creates `people/{name}.md`
+as a NEW parallel page that cites the source — the agent does NOT move the
+source page to `people/`. The source stays in `sources/` forever. This rule
+applies to all of sources/ including imports/, assets/, and human/archive/.
+
+### `inbox/` — shared triage zone
+
+Both agent and human write to `inbox/`. Agent use should be disciplined —
+inbox is for flagged items needing human attention, NOT a dumping ground for
+ambiguous content. Every agent-written inbox entry should be actionable.
+
+### Anti-pattern: relocation
+
+Moving a human source page into a category folder and calling it done is
+FORBIDDEN. Human content stays in human/ (or sources/human/archive/zettel/ once
+explicitly archived). The agent's job is to compile parallel wiki pages in
+category folders that CITE the human sources.
+
+If a source has a clear primary subject, the correct action is:
 
 1. Leave the source page in place.
 2. Create or update the corresponding category page (`people/name.md`,
@@ -54,28 +77,30 @@ correct action is:
    (NOT in frontmatter — sources list in frontmatter bloats during bootstrap).
 4. Add a timeline entry on the wiki page linking back to the source.
 
-### Narrow exception: zettel promotion
+### Narrow exception: zettel archival (human-approved)
 
-When a zettel in `sources/zettel/` produces a single wiki page that covers its
-content entirely (the wiki page's Compiled Truth fully subsumes the zettel),
-the agent moves the zettel file from `sources/zettel/` to
-`sources/promoted_zettel/` as part of the promotion. Both directories are
-within `sources/`, so human ownership is preserved; this is a status
-transition, not a re-filing.
+When a zettel in `human/zettel/` has been wholesale-compiled (1:1 into a
+single wiki page) AND is stable (no recent edits), the zettel-processor skill
+marks it as an archival candidate. The maintenance skill surfaces the prompt
+to the human via the configured messaging channel.
+
+**Only when the human explicitly approves** does the agent move the zettel:
+`human/zettel/foo.md` → `sources/human/archive/zettel/foo.md`.
 
 Rules:
 
-- **1:1 wholesale only.** If the zettel contributes to multiple wiki pages, or
-  only a subset of its content is compiled, the zettel stays in `sources/zettel/`.
-- **Update citations.** Any wiki page `## Sources` entry or timeline entry that
-  referenced the old `sources/zettel/...` path must be updated to the new
-  `sources/promoted_zettel/...` path after the move.
-- **Wikilinks are safe.** Obsidian resolves `[[zettel title]]` by basename
+- **Never autonomous.** The move requires explicit human approval. No
+  threshold, no heuristic approval — explicit consent per zettel.
+- **1:1 wholesale only.** Partial-use zettels (contributing to multiple wiki
+  pages, or only partially compiled) are never archival candidates.
+- **Updated zettels stay.** A zettel with recent edits suggests the human is
+  still developing the idea. Not an archival candidate.
+- **Update citations on move.** Any wiki page `## Sources` entry or timeline
+  entry that referenced the old `human/zettel/...` path must be updated to
+  the new `sources/human/archive/zettel/...` path after the move.
+- **Wikilinks are safe by basename.** Obsidian resolves `[[zettel title]]`
   vault-wide, so wikilinks inside other pages continue to resolve after the
   move without rewriting.
-- **Promoted zettels are frozen.** If the human wants to add to a promoted
-  zettel, they start a new zettel in `sources/zettel/` that references the
-  promoted one.
 
 **Imported legacy tags, PARA fields, folder locations, and archive status are
 untrusted.** They are evidence of prior human categorization effort, not truth.
