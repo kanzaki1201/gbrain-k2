@@ -2,12 +2,12 @@
 name: zettel-processor
 version: 1.0.0
 description: |
-  k2-specific skill for processing human zettels. Compiles zettels from
-  human/zettel/ into wiki category pages, detects archival candidates
-  (1:1 wholesale + stable), surfaces archival prompts via the maintenance
-  messaging channel, and performs human-approved moves to sources/human/archive/zettel/.
-  NEVER writes to, modifies, or moves files in human/ except the approved
-  archival move. Fires during bootstrap AND on every maintenance cycle.
+  Process human zettels. Compiles zettels from human/zettel/ into wiki
+  category pages, detects archival candidates (1:1 wholesale + stable),
+  surfaces archival prompts via the maintenance messaging channel, and
+  performs human-approved moves to sources/human/archive/zettel/. NEVER
+  writes to, modifies, or moves files in human/ except the approved archival
+  move. Fires during bootstrap AND on every maintenance cycle.
 triggers:
   - "process zettels"
   - "compile zettels"
@@ -23,7 +23,7 @@ tools:
 mutating: true
 ---
 
-# Zettel Processor — k2-specific
+# Zettel Processor
 
 Compiles human-authored atomic zettels into wiki category pages while keeping
 the zettels themselves sacred. Detects archival candidates and surfaces them

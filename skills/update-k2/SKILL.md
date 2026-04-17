@@ -62,13 +62,13 @@ These files have significant k2 customizations. Expect conflicts here on most
 upstream merges — resolve by keeping the k2 version and integrating upstream
 fixes where they don't clash with k2 intent:
 
-- `docs/K2_SCHEMA.md` — k2-only, no upstream equivalent. Upstream never writes here.
-- `docs/GBRAIN_RECOMMENDED_SCHEMA.md` — upstream file with a small k2 pointer header. Preserve header on merge.
-- `skills/_brain-filing-rules.md` — k2 rewrote the sources-interpretation section. Preserve k2 content; accept upstream additions to unrelated sections (citation format, back-link rules, raw preservation).
-- `skills/repo-architecture/SKILL.md` — k2 rewrote the decision tree with k2 categories. Keep k2 version.
-- `skills/signal-detector/SKILL.md` — k2 rewrote Phase 1 routing (no originals/) and added human/-never-write rule. Keep k2 version.
-- `skills/zettel-processor/SKILL.md` — k2-only, no upstream equivalent.
-- `skills/update-k2/SKILL.md` — this file, k2-only.
+- `docs/K2_SCHEMA.md` — no upstream equivalent. Upstream never writes here.
+- `docs/GBRAIN_RECOMMENDED_SCHEMA.md` — upstream file with a small pointer header. Preserve header on merge.
+- `skills/_brain-filing-rules.md` — sources-interpretation section is rewritten. Preserve local content; accept upstream additions to unrelated sections (citation format, back-link rules, raw preservation).
+- `skills/repo-architecture/SKILL.md` — decision tree rewritten with the local category set. Keep local version.
+- `skills/signal-detector/SKILL.md` — Phase 1 routing and the human/-never-write rule are local. Keep local version.
+- `skills/zettel-processor/SKILL.md` — no upstream equivalent.
+- `skills/update-k2/SKILL.md` — this file, no upstream equivalent.
 
 Other files under `skills/`, `docs/`, `src/` are expected to match upstream
 unless noted otherwise.

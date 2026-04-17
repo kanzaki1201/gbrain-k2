@@ -4,12 +4,11 @@
 
 # K2 Brain Schema
 
-This is the authoritative schema for the k2 fork of gbrain. It extends
-`GBRAIN_RECOMMENDED_SCHEMA.md` with Obsidian-first conventions, a sources-preserving
-workflow, and a category set tuned for a creator/engineer (not a VC partner).
+Authoritative schema for the brain vault. Obsidian-first conventions,
+sources-preserving workflow, category set tuned for a creator/engineer.
 
-**For philosophy, MECE principles, and compiled-truth-plus-timeline pattern:**
-read `GBRAIN_RECOMMENDED_SCHEMA.md` first. This doc specifies the deltas.
+Philosophy, MECE principles, and compiled-truth-plus-timeline pattern are in
+`GBRAIN_RECOMMENDED_SCHEMA.md`.
 
 ---
 
@@ -429,7 +428,7 @@ Starts with a one-paragraph executive summary.
 
 **Below the line — Timeline.** Append-only evidence log. Dated entries, sourced.
 
-See `GBRAIN_RECOMMENDED_SCHEMA.md` for the full pattern. No k2-specific deviations.
+See `GBRAIN_RECOMMENDED_SCHEMA.md` for the full pattern.
 
 ---
 
