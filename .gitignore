@@ -12,3 +12,4 @@ supabase/.temp/
 .claude/skills/
 .idea
 reports/hermes-skill-audits/
+__pycache__/
