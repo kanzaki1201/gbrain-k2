@@ -130,9 +130,24 @@
       "description": "Structured data research: search, extract, archive, deduplicate, track. Parameterized YAML recipes for investor updates, donations, company metrics."
     },
     {
-      "name": "zettel-processor",
-      "path": "zettel-processor/SKILL.md",
-      "description": "Process human zettels. Compile into wiki pages, detect archival candidates, execute human-approved archival moves. Never writes to human/ except the approved archival move."
+      "name": "recompile",
+      "path": "recompile/SKILL.md",
+      "description": "Detect file changes in human/ and sources/ since last checkpoint, compile or recompile affected wiki pages."
+    },
+    {
+      "name": "zettel-status-check",
+      "path": "zettel-status-check/SKILL.md",
+      "description": "Zettel archival lifecycle: surface candidates, execute approved moves, flag orphan citations."
+    },
+    {
+      "name": "project-hermes-skills",
+      "path": "project-hermes-skills/SKILL.md",
+      "description": "Refresh Hermes brain skill projections from gbrain-k2 source. Thin lazy-load pointers."
+    },
+    {
+      "name": "blueprint-audit",
+      "path": "blueprint-audit/SKILL.md",
+      "description": "Audit Hermes brain skill projections against canonical gbrain-k2 blueprints."
     },
     {
       "name": "update-k2",

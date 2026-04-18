@@ -21,9 +21,13 @@ mutating: true
 
 # Maintain Skill
 
-Brain health audit + active remediation. Reads the wiki, flags issues,
-fixes what's mechanical (missing markdown links, back-link backfills), and
-surfaces what needs human judgment.
+Brain health audit + active remediation. **This skill FIXES issues, not
+just reports them.** Stale pages get their compiled truth rewritten.
+Orphan pages get cross-reference links added. Wikilink violations get
+converted. If you finish this skill having only reported issues without
+fixing the mechanical ones, you have not followed the skill.
+
+Surfaces what needs human judgment (ambiguous cases only).
 
 > **Recommended cadence:** evening pass at 20:00 (chained after recompile, before zettel-status-check).
 
@@ -32,6 +36,10 @@ surfaces what needs human judgment.
 > skill. If you're looking for new-zettel compilation, run recompile first.
 
 ## Contract
+
+**The default is FIX, not REPORT.** Every dimension that has a mechanical
+fix procedure must be executed, not just flagged. Reporting without fixing
+mechanical issues is a skill violation.
 
 This skill guarantees:
 - `gbrain doctor` runs and the health dashboard is the baseline.
@@ -330,12 +338,13 @@ full report goes to the messaging channel, NOT to the vault.
 
 ## Output Format
 
-The report is your **reply** — delivered via the messaging channel (Discord,
-Telegram, or wherever the cron job delivers). Do NOT write report files to
-`~/brain-vault/reports/` or anywhere in the vault. The vault stores knowledge;
-operational reports belong in chat where the human sees them and can respond.
+The report is your **reply** via the messaging channel AND written to
+`~/gbrain-k2/reports/maintain-report.md` (overwrite each run, not append).
+This file is gitignored. It gives the human a persistent last-run snapshot
+without scrolling chat history. Do NOT write reports into the brain vault.
 
-Format the reply as:
+Write the report to `~/gbrain-k2/reports/maintain-report.md` (overwrite,
+not append) AND deliver as your messaging reply. Format:
 
 ```
 ## Brain Health Report — YYYY-MM-DD HH:MM
