@@ -73,13 +73,40 @@ clippings (that's `idea-ingest` / `media-ingest`).
 
 ### 1. Discover
 
-List zettels in `human/zettel/`. For each, classify as `new`, `updated`,
-`stable-compiled`, or `candidate-for-archival`:
+**Discovery is a filesystem operation, not a semantic search.** The list of
+zettels to process lives on disk under `human/zettel/`, and whether a zettel
+has been compiled is determined by which wiki pages cite it via markdown links.
+Do NOT use `gbrain query` or `gbrain search` for this — those are for content
+lookup, not file tracking, and will return irrelevant results.
+
+**List active zettels:**
+
+```bash
+find ~/brain-vault/human/zettel -maxdepth 1 -name "*.md" -type f
+```
+
+**For each zettel, find wiki pages that cite it:**
+
+```bash
+# Substitute <basename> with the zettel filename without extension
+grep -rl "human/zettel/<basename>" ~/brain-vault \
+  --include="*.md" \
+  --exclude-dir=human \
+  --exclude-dir=sources \
+  --exclude-dir=.git \
+  --exclude-dir=.obsidian
+```
+
+A zettel with zero matches is `new`. A zettel with matches AND `mtime >
+last-compile timestamp on any citing page` is `updated`. Otherwise `stable-compiled`.
+
+**Classification:**
 
 - **New** — no existing wiki page cites this zettel.
-- **Updated** — wiki pages cite it AND mtime > last compile timestamp.
+- **Updated** — wiki pages cite it AND the zettel's mtime is newer than the
+  last timeline entry on any citing page.
 - **Stable-compiled** — wiki pages cite it AND mtime is older than 7 days.
-- **Candidate** — either:
+- **Candidate for archival** — either:
   - stable-compiled AND exactly one wiki page cites it AND that page's
     Compiled Truth fully subsumes the zettel content, or
   - a mature multi-target zettel that is long, stable, and clearly functioning
@@ -151,6 +178,13 @@ for a 30-day cooldown.
 
 ## Anti-Patterns
 
+- **Using `gbrain query` or `gbrain search` to discover zettels.** These are
+  semantic/keyword search over COMPILED brain content, not a filesystem tracker.
+  Asking "which zettels need compiling?" returns garbage because the DB has no
+  concept of unprocessed files. Always use `find`/`ls` on `human/zettel/` and
+  `grep -r` for citation lookup. If a past run reported "no zettels to compile"
+  via `gbrain query`, that report was a hallucination — redo Phase 1 with the
+  shell commands above.
 - Modifying a zettel's content. Never — not even typo fixes. Flag to human.
 - Moving a zettel without explicit approval. Archival is human-gated per zettel.
 - Classifying a multi-target or partially-compiled zettel as archival. Multiple
