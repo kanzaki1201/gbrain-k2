@@ -5,19 +5,20 @@ Cross-cutting quality rules for all brain-writing skills.
 ## Citations (MANDATORY)
 
 Every fact written to a brain page must carry an inline footnote citation
-using Obsidian's `^[...]` syntax. Citations should include markdown links
-to source pages when a brain page exists for the source.
+using Obsidian's `^[...]` syntax. Citations are plain text — do NOT use
+markdown links inside citations, as `gbrain extract links` would create
+spurious graph edges that pollute the knowledge graph.
 
 - **User's statements:** `^[Source: User, YYYY-MM-DD]`
-- **Meeting data:** `^[Source: [Meeting title](../meetings/slug.md), YYYY-MM-DD]`
-- **Email/message:** `^[Source: email from [name](../people/slug.md) re: {subject}, YYYY-MM-DD]`
-- **Web content:** `^[Source: [publication](URL), YYYY-MM-DD]`
-- **Social media:** `^[Source: [@handle](URL), YYYY-MM-DD]`
-- **Synthesis:** `^[Source: compiled from [source1](../path.md), [source2](../path.md)]`
+- **Meeting data:** `^[Source: Meeting "title", YYYY-MM-DD]`
+- **Email/message:** `^[Source: email from name re: subject, YYYY-MM-DD]`
+- **Web content:** `^[Source: publication, URL, YYYY-MM-DD]`
+- **Social media:** `^[Source: @handle, YYYY-MM-DD]`
+- **Synthesis:** `^[Source: compiled from source1, source2]`
 - **API enrichment:** `^[Source: {provider} enrichment, YYYY-MM-DD]`
 
-Links inside citations feed the knowledge graph and allow tracing provenance
-by clicking through. When no brain page exists for a source, use plain text.
+Semantic cross-references belong in the body text and `## Sources` section,
+where they feed the knowledge graph. Citations are provenance metadata only.
 
 ### Source precedence (highest to lowest)
 

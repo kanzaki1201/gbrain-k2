@@ -57,7 +57,7 @@ to source pages. See `skills/conventions/quality.md` for full format reference.
 Three formats:
 - **Direct attribution:** `^[Source: User, YYYY-MM-DD]`
 - **API/external:** `^[Source: {provider} enrichment, YYYY-MM-DD]`
-- **Synthesis:** `^[Source: compiled from [source1](../path.md), [source2](../path.md)]`
+- **Synthesis:** `^[Source: compiled from source1, source2]`
 
 Source precedence (highest to lowest):
 1. User's direct statements
