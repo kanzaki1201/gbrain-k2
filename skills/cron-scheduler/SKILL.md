@@ -48,15 +48,19 @@ This skill guarantees:
 Document the standing cadence in the skills themselves so operators can inspect
 the intended schedule from inside the repo:
 
-| Window | Skill / action | Purpose |
+| Cron | Skill(s) | Purpose |
 |---|---|---|
-| Morning | `briefing` (+ optional `daily-task-prep`) | prompt wiki interaction: time-sensitive threads, open projects, stale docs, random non-source page |
-| Waking hours / evening | `zettel-processor` | compile new or changed zettels and surface archival candidates for human review |
-| Daily | `gbrain check-update --json` | report update availability; never auto-install |
-| Nightly | `maintain` | stale pages, stale threads, citation hygiene, backlink hygiene, general semantic upkeep |
-| Weekly | `maintain` + `gbrain doctor --json` + `gbrain embed --stale` | deeper maintenance and substrate verification |
+| `0 9 * * *` | `briefing` | Morning wiki interaction prompts |
+| `0 12 * * *` | `gbrain check-update --json` | Report update availability; never auto-install |
+| `0 */4 * * *` | `recompile` | Catch file changes in human/ and sources/ throughout the day |
+| `0 20 * * *` | `recompile` → `maintain` → `zettel-status-check` | **Evening pass** — compile changes, audit health + fix issues, surface zettel archival candidates. Runs as a chained sequence (each completes before the next starts). Report delivered via messaging. |
+| `0 6 * * 1` | `maintain` (deeper) + `gbrain doctor` + `gbrain embed --stale` | Weekly deeper maintenance and substrate verification |
 
-Keep this table aligned with the live Hermes cron jobs and with `HERMES_HANDOVER.md`.
+The evening pass is the primary human-facing maintenance window — its
+report lands in the messaging channel during waking hours so the user can
+react to archival candidates and flagged issues.
+
+Keep this table aligned with the live Hermes cron jobs.
 
 ## Idempotency Requirement
 

@@ -862,34 +862,36 @@ casual mention.
 Without crons, the brain only grows when the user is actively engaging it.
 With crons wired to call enrich, the brain compounds 24/7.
 
-Recommended cadence for a creator/engineer setup:
+### K2 cadence (live)
 
-**High frequency (every 10–30 minutes):**
-- **Message monitor** — check key channels for unread items from important
-  contacts. Call enrich on senders if their page is thin.
-- **Feed radar** — scan RSS / reading-list / timeline feeds for items tagged
-  or referencing tracked entities.
+Two runtime layers:
 
-**Medium frequency (every 1–3 hours):**
-- **Social radar** — scan mentions and engagement on public social. Call
-  enrich on notable new accounts.
-- **Heartbeat** — the omnibus check. Calendar lookahead, open-threads sweep,
-  inbox scan. Post only if something needs attention.
+**Autopilot** (`gbrain-autopilot.service`, systemd, continuous, non-LLM):
+sync → extract links → extract timeline → embed stale → health check →
+adaptive sleep. Keeps the DB mirrored to the filesystem. No synthesis.
 
-**Daily:**
-- **Morning briefing** — calendar + tasks + recent signals + brain state →
-  one concise notification.
-- **Zettel processor** — scan `human/zettel/` for new or updated zettels,
-  compile them, queue archival candidates. (See `skills/zettel-processor/`.)
-- **Meeting ingestion** — pull new meeting transcripts if any, create meeting
-  pages, propagate to entity pages.
+**Hermes cron** (scheduled LLM passes, reports delivered via messaging):
 
-**Weekly:**
-- **Brain lint** — full maintenance pass: contradictions, stale pages,
-  orphans, missing cross-references, MECE filing violations, citation
-  coverage. Post a report.
-- **Enrichment sweep** — find pages last enriched 90+ days ago or with many
-  `[No data yet]` sections. Queue for re-enrichment.
+| Cron | Skill(s) | Purpose |
+|---|---|---|
+| `0 9 * * *` | `briefing` | Morning wiki interaction prompts |
+| `0 12 * * *` | `gbrain check-update` | Update availability check |
+| `0 */4 * * *` | `recompile` | Catch file changes in human/ and sources/ |
+| `0 20 * * *` | `recompile` → `maintain` → `zettel-status-check` | **Evening pass** — compile, audit + fix, surface archival candidates. Chained sequence, report to messaging. |
+| `0 6 * * 1` | `maintain` (deeper) + `gbrain doctor` + `gbrain embed --stale` | Weekly deeper maintenance |
+
+The evening pass is the primary human-facing window. It runs during waking
+hours so the user can react to archival candidates, flagged issues, and
+health reports immediately.
+
+**Additional upstream cadences** (not currently wired in K2 but available
+in the upstream skill library):
+
+- **Message/feed/social monitors** — high-frequency polling (every 10-30 min).
+  Wire via `data-research` or `webhook-transforms` when needed.
+- **Meeting ingestion** — triggered per-meeting, not scheduled.
+- **Enrichment sweep** — pages last enriched 90+ days ago. Could be added as
+  a weekly sub-pass inside the Monday deeper maintenance.
 
 ### Cron design rules
 
