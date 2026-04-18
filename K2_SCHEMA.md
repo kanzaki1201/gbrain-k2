@@ -293,6 +293,12 @@ only for the agent. `inbox/` is shared. All other categories are agent-writable.
 
 ```
 brain-vault/
+├── RESOLVER.md           — master dispatch table: agent reads this FIRST on every
+│                           non-operational message to route to the correct skill
+├── schema.md             — this file (symlink to ~/gbrain-k2/K2_SCHEMA.md);
+│                           page conventions, templates, category definitions
+├── log.md                — chronological record of all ingests/updates (append-only)
+│
 ├── human/                — SACRED: human writing, agent NEVER writes or modifies
 │   ├── zettel/           active atomic zettel destination (new writing lands here)
 │   │   └── archive/      archived zettels, still inside the human-owned zone
@@ -322,6 +328,23 @@ brain-vault/
 ├── org/                  institutional workstreams
 └── writing/              long-form prose — essays, drafts, civic/policy commentary
 ```
+
+### Root files
+
+**RESOLVER.md** — symlink to `~/gbrain-k2/skills/RESOLVER.md`. The master
+dispatch table mapping user triggers to brain skills. The agent reads this
+before routing any non-operational message. URL in message → idea-ingest.
+Question about entities → query. Person/company mentioned → enrich.
+
+**schema.md** — symlink to `~/gbrain-k2/K2_SCHEMA.md` (this file). Page
+conventions, category definitions, templates, and operating principles. The
+agent reads this to understand how the brain is structured.
+
+**log.md** — chronological record of all ingests and updates. Append-only.
+Each entry is a self-contained line: `YYYY-MM-DD HH:MM | action | path —
+context`. Brain-writing skills append to this after every ingest or update.
+At scale, concurrent appends rarely conflict because each line is independent.
+Treat as operational telemetry for the brain, not a hand-maintained artifact.
 
 ### Category notes
 
