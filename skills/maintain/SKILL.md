@@ -135,9 +135,45 @@ Pages where compiled_truth is older than the latest timeline entry. The assessme
 - For each stale page: read the page from gbrain, review timeline, determine if compiled_truth needs rewriting
 
 ### Orphan pages
-Pages with zero inbound links. Nobody references them.
-- Review orphans: are they genuinely isolated or just missing links?
-- Add links in gbrain from related pages or flag for deletion
+Pages with zero inbound markdown links. Most orphans are not genuinely
+isolated — they're mentioned elsewhere by name without a proper link, which
+means the back-link iron law is being violated. **Active remediation is the
+default, flagging is the exception.**
+
+**Procedure for each orphan:**
+
+1. **Find inbound name-mentions** across the vault:
+   ```bash
+   # For each orphan page <slug>.md, grep for the entity name
+   ENTITY_NAME=$(basename "$orphan" .md | tr '-' ' ')
+   grep -rlE "(^|[^a-z0-9-])${ENTITY_NAME}([^a-z0-9-]|$)" ~/brain-vault \
+     --include="*.md" -i \
+     --exclude-dir=.git --exclude-dir=.obsidian --exclude-dir=.claude \
+     --exclude-dir=sources 2>/dev/null
+   ```
+2. **Triage the results:**
+   - Agent-owned pages mentioning the entity → add markdown links (case A).
+   - `human/` pages mentioning the entity → no action, human zone is read-only.
+   - `sources/` pages mentioning the entity → no action, immutable.
+   - No mentions anywhere → genuinely orphan (case B).
+3. **Case A — Add cross-references.** For each agent-owned page that mentions
+   the entity, rewrite the mention as a markdown link:
+   ```text
+   "...we talked to Alice about..."
+   → "...we talked to [Alice](../people/alice.md) about..."
+   ```
+   Also enforce the iron law: append a back-link to the orphan's Timeline
+   section pointing to the page that mentions it:
+   ```text
+   - **YYYY-MM-DD** | Referenced in [page title](../path.md) — brief context ^[Source: ...]
+   ```
+4. **Case B — Genuinely isolated.** Surface in the report with a one-line
+   rationale ("no inbound mentions, no referring entities found in current
+   vault"). Do NOT auto-delete. Human decides whether to keep, retire to
+   `archive/`, or ignore.
+
+Report per-orphan outcome: `fixed-A-linked-from-N-pages`, `flagged-case-B`,
+or `deferred-needs-human` for ambiguous cases.
 
 ### Dead links
 Links pointing to pages that don't exist.
