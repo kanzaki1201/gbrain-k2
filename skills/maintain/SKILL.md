@@ -1,10 +1,11 @@
 ---
 name: maintain
-version: 1.0.0
+version: 2.0.0
 description: |
-  Brain health checks: back-link enforcement, citation audit, filing validation,
-  stale info detection, orphan pages, and benchmarks. Use when asked to check
-  brain health, run maintenance, or audit quality.
+  Keep the wiki aligned with raw content: recompile wiki pages when files in
+  human/ or sources/ change (new, edited, deleted), then run brain health
+  checks (stale pages, orphan pages, dead links, citation audit, filing
+  validation, back-link iron law).
 triggers:
   - "brain health"
   - "check backlinks"
@@ -12,55 +13,121 @@ triggers:
   - "maintenance"
   - "orphan pages"
   - "stale pages"
+  - "recompile brain"
+  - new or updated file in human/ or sources/
 tools:
-  - get_health
-  - get_page
-  - put_page
-  - list_pages
-  - get_backlinks
-  - add_link
-  - search
+  - bash
 mutating: true
 ---
 
 # Maintain Skill
 
-Periodic brain health checks and cleanup.
+Active content recompilation + brain health checks. Keeps compiled wiki
+pages in sync with raw content in `human/` and `sources/`, then audits and
+repairs health issues.
 
-> **Recommended cadence:** nightly semantic maintenance pass.
+> **Recommended cadence:** nightly full pass (02:00 by default).
 
 > **Scheduled role in K2 cadence:**
-> - nightly job: `maintain`
-> - weekly deeper maintenance: `maintain` + `gbrain doctor --json` + `gbrain embed --stale`
-> - zettel compilation and zettel archival-candidate surfacing belong to `zettel-processor`
+> - nightly job: `maintain` (full pass: recompile + health)
+> - weekly deeper pass: `maintain` + `gbrain doctor --json` + `gbrain embed --stale`
+> - evening zettel lifecycle: `zettel-status-check` (archival candidates only — no recompile)
 
 ## Contract
 
 This skill guarantees:
+- File changes in `human/` and `sources/` since last run trigger wiki recompilation
 - All health dimensions are checked (stale, orphan, dead links, cross-refs, backlinks, citations, filing, tags)
 - Each issue found has a specific fix action
 - Back-link iron law is enforced
 - Citation format is validated against the standard
 - Results are reported with counts per dimension
+- A checkpoint is written so the next run only processes what changed since
 
 ## Phases
 
-0. **Snapshot before touching anything.** Maintenance can modify many pages
-   in one pass. Commit the current vault state first so the maintenance diff
-   is reviewable and revertible on its own:
+### Phase 0: Snapshot
 
-   ```bash
-   cd ~/brain-vault
-   git add -A
-   git commit -m "chore: snapshot before maintenance pass" || true
-   ```
+Commit the current vault state so the maintenance diff lands on its own
+clean commit, isolated from drift since the last auto-commit.
 
-   The `|| true` is important — if nothing changed since the last auto-commit,
-   the commit fails with "nothing to commit" and that's fine. Either way, the
-   subsequent maintenance edits land on their own clean commit.
+```bash
+cd ~/brain-vault
+git add -A
+git commit -m "chore: snapshot before maintenance pass" || true
+```
 
-1. **Run health check.** Check gbrain health to get the dashboard.
-2. **Check each dimension:**
+The `|| true` is important — if nothing changed since the last auto-commit,
+the commit fails with "nothing to commit" and that's fine. Subsequent edits
+land on their own commit.
+
+### Phase 1: Content Recompile (file-change-driven)
+
+Detect raw-content changes in `human/` and `sources/` since the last run,
+then recompile affected wiki pages. This is the active sync from raw content
+to compiled wiki.
+
+**1a. Load checkpoint:**
+
+```bash
+CHECKPOINT_FILE=~/.gbrain/maintain-checkpoint.txt
+CHECKPOINT=$(cat "$CHECKPOINT_FILE" 2>/dev/null || echo "")
+```
+
+**1b. Compute changes since checkpoint:**
+
+```bash
+cd ~/brain-vault
+if [ -n "$CHECKPOINT" ] && git cat-file -e "$CHECKPOINT" 2>/dev/null; then
+  # Incremental: name-status format gives A/M/D per file
+  git diff --name-status "$CHECKPOINT"..HEAD -- 'human/' 'sources/'
+else
+  # First run or invalid checkpoint: treat all as new
+  find human/ sources/ -name "*.md" -type f -not -path "*/archive/*" \
+    | sed 's|^|A\t|'
+fi
+```
+
+Output format per line: `<STATUS>\t<path>` where STATUS is `A` (added),
+`M` (modified), `D` (deleted), or `R<score>\t<old>\t<new>` (renamed).
+
+**1c. Route each change to the right handler:**
+
+| Status | Path pattern | Action |
+|--------|-------------|--------|
+| `A` | `human/zettel/<name>.md` | Compile into wiki: apply `_brain-filing-rules.md` + `repo-architecture/SKILL.md`, decide shape (wholesale / multi-target / unclear), create or update wiki page(s), cite zettel in `## Sources`, add timeline entry, enforce back-links. |
+| `A` | `sources/**/*.md` | **Do not auto-compile.** Sources are passive reference per K2_SCHEMA §1. Add to report as "new source available, awaits explicit ingest." Skip. |
+| `A` | `human/<other>` | Flag for human review. Human owns this zone; agent should not guess. |
+| `M` | `human/zettel/<name>.md` | Recompile: find citing wiki pages (`grep -rl "human/zettel/<name>"`), rewrite Compiled Truth based on current zettel content, append timeline entry `- **YYYY-MM-DD** \| zettel updated ^[Source: human/zettel/<name>.md, YYYY-MM-DD]`. Do NOT modify the zettel. |
+| `M` | `sources/**/*.md` | Only recompile if wiki pages cite this source. Skip otherwise. |
+| `D` | `human/zettel/<name>.md` | Check if file moved to `human/zettel/archive/`. If yes → hand off to `zettel-status-check` for citation rewrite. If truly deleted (not in archive either) → flag citing wiki pages as orphan sources, surface for human review. |
+| `D` | `sources/**/*.md` | Flag citing wiki pages as orphan sources. Do not auto-delete. |
+| `R` | any | Treat as `D <old>` + `A <new>`. |
+
+**1d. Run the compile loop.** For each `A` or `M` in `human/zettel/`:
+
+1. Read zettel content.
+2. Apply filing rules to decide primary category + entities.
+3. Create or update wiki page(s) with citations, timeline, cross-links.
+4. Never modify the zettel. Preserve its mtime.
+
+**1e. Save checkpoint:**
+
+```bash
+git rev-parse HEAD > "$CHECKPOINT_FILE"
+```
+
+**1f. Log to vault log.md:**
+
+```bash
+echo "$(date -Iminutes) | maintain-recompile | processed N files" >> ~/brain-vault/log.md
+```
+
+### Phase 2: Health check
+
+Check gbrain health to get the dashboard, then iterate the dimensions below.
+
+### Phase 3: Check each dimension
 
 ### Stale pages
 Pages where compiled_truth is older than the latest timeline entry. The assessment hasn't been updated to reflect recent evidence.

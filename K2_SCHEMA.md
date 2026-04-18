@@ -197,26 +197,39 @@ valid source. It simply leaves the active writing zone. Archival means "this no
 longer needs to sit in live human workspace," not "this thought has lost value"
 or "the wiki has fully replaced it in every sense."
 
-### 6. Zettel processing and archival: human-approved only.
+### 6. Zettel processing and archival: two-skill split, human-approved for archival.
 
-When a zettel in `human/zettel/` is processed by the zettel-processor skill:
+Zettel handling is split across two skills by responsibility:
 
-1. The zettel-processor compiles the zettel's content into the appropriate
-   category wiki page (concepts/, how-to/, ideas/, etc.).
-2. The wiki page's `## Sources` section cites the zettel at its `human/zettel/`
+**Compile (agent-owned wiki updates): `maintain` Phase 1.**
+When a zettel in `human/zettel/` is new or updated, the nightly `maintain`
+pass detects the file change and compiles the zettel's content into the
+appropriate category wiki page (concepts/, how-to/, ideas/, etc.):
+
+1. `maintain` runs `git diff --name-status` since its last checkpoint to
+   find new/modified zettels (and source files).
+2. For each new zettel, create or update wiki page(s) with the zettel cited
+   in `## Sources` using a markdown link to `human/zettel/<name>.md`.
+3. For each updated zettel, rewrite affected wiki pages' Compiled Truth and
+   append a timeline entry noting the re-sync.
+4. **The zettel itself stays in `human/zettel/`.** Agent NEVER modifies it.
+
+**Archival lifecycle (human-gated): `zettel-status-check`.**
+The evening `zettel-status-check` pass handles archival state:
+
+1. Scans `human/zettel/` and classifies each zettel (active / stable-compiled
+   / candidate-for-archival / orphan).
+2. Surfaces archival candidates via the messaging channel:
+   - Wholesale-compiled AND stable (1:1 into one wiki page, no recent edits).
+   - Mature multi-target zettels functioning as source reservoirs rather
+     than active live writing.
+3. **Only when the human explicitly approves** does `zettel-status-check`
+   move the zettel: `human/zettel/foo.md` → `human/zettel/archive/foo.md`.
+   Wiki pages that cited the old path have citations rewritten to the new
    path.
-3. **The zettel itself stays in `human/zettel/`.** Agent does NOT move it.
-4. If the zettel has been wholesale-compiled (1:1 into a single wiki page) AND
-   is stable (no recent edits), the zettel-processor marks it as an archival
-   candidate and the maintenance skill surfaces a prompt to the human via the
-   configured messaging channel.
-5. Mature multi-target zettels can also become archival candidates during
-   maintenance when they are long, stable, and clearly functioning as mature
-   source reservoirs rather than active live writing. These are review
-   candidates only; human approval is still required.
-6. **Only when the human explicitly approves** does the agent move the zettel:
-   `human/zettel/foo.md` → `human/zettel/archive/foo.md`. Any wiki pages that
-   cited the old path update their `## Sources` link to the new path.
+4. If the human manually moves a zettel into `human/zettel/archive/`,
+   `zettel-status-check` treats the new path as authoritative and rewrites
+   citations without re-applying candidacy rules.
 
 Markdown links referencing the zettel by path must be rewritten on archival move.
 Obsidian wikilinks pointing at the zettel by basename (if any exist in human-
