@@ -38,13 +38,16 @@ Compile daily briefing with meeting context, open threads, stale docs, and wiki-
 0. **Today's journal backlinks.** Check what links to today's date:
    ```bash
    TODAY=$(date +%Y-%m-%d)
-   grep -rl "\[\[$TODAY\]\]" ~/brain-vault --include="*.md" \
+   # Both wikilink date stubs [[YYYY-MM-DD]] and markdown date links are valid
+   grep -rlE "\[\[$TODAY\]\]|$TODAY\.md\)" ~/brain-vault --include="*.md" \
      --exclude-dir=.git --exclude-dir=.obsidian --exclude-dir=.claude
    ```
-   Every page with a `[[YYYY-MM-DD]]` date stub pointing to today is
-   something that was scheduled, started, due, or noted for today.
-   Read each matching page's relevant section to pull context. This is
-   the same signal Obsidian's backlinks panel shows for the daily note.
+   Also check `human/journals/$TODAY.md` if it exists — read it for any
+   human-written notes about today.
+   
+   Every page referencing today's date is something scheduled, due, started,
+   or noted for today. Read each match's relevant section for context. Same
+   signal Obsidian's backlinks panel shows for the daily note.
 
 1. **Today's meetings.** For each meeting on the calendar:
    - Search gbrain for each participant by name
