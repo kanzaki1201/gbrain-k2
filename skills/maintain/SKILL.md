@@ -21,13 +21,11 @@ mutating: true
 
 # Maintain Skill
 
-Brain health audit + active remediation. **This skill FIXES issues, not
-just reports them.** Stale pages get their compiled truth rewritten.
-Orphan pages get cross-reference links added. Wikilink violations get
-converted. If you finish this skill having only reported issues without
-fixing the mechanical ones, you have not followed the skill.
-
-Surfaces what needs human judgment (ambiguous cases only).
+Brain health audit. Stale pages get their compiled truth rewritten
+(LLM synthesis, cap at 5 per run to stay within iteration budget).
+Orphans and wikilink violations are reported with counts and
+classification but NOT fixed here — those are batch operations run
+separately via scripts.
 
 > **Recommended cadence:** evening pass at 20:00 (chained after recompile, before zettel-status-check).
 
@@ -36,10 +34,6 @@ Surfaces what needs human judgment (ambiguous cases only).
 > skill. If you're looking for new-zettel compilation, run recompile first.
 
 ## Contract
-
-**The default is FIX, not REPORT.** Every dimension that has a mechanical
-fix procedure must be executed, not just flagged. Reporting without fixing
-mechanical issues is a skill violation.
 
 This skill guarantees:
 - `gbrain doctor` runs and the health dashboard is the baseline.
@@ -104,10 +98,11 @@ failures as the baseline for the report.
 Run each dimension below. Incremental dimensions scan only the changed pages
 from Phase 1. Full-vault dimensions scan everything.
 
-#### Stale pages (full-vault, active rewrite)
+#### Stale pages (full-vault, active rewrite, cap 5 per run)
 Pages where compiled truth is older than the latest timeline entry — the
-synthesis hasn't caught up to new evidence. **Active rewrite is the
-default, flagging is the exception.**
+synthesis hasn't caught up to new evidence. **Rewrite up to 5 stale pages
+per run** to stay within the cron iteration budget. Remaining stale pages
+carry over to the next run. Report the full count but only fix 5.
 
 **Step 1: Detect stale pages.**
 
@@ -165,70 +160,33 @@ Procedure:
 Report per stale page: `rewritten` (with summary of what changed),
 `touched` (trivial evidence, no content change), or `flagged-ambiguous`.
 
-#### Orphan pages (active remediation)
+#### Orphan pages (report only)
 
-Scan agent-owned category dirs for pages with zero inbound links.
-**Exclude** `archive/`, `reports/`, `human/`, `sources/` from the scan
-scope (archive is retired content, human/sources are read-only zones).
+Count agent-owned pages with zero inbound links. **Exclude** `archive/`,
+`reports/`, `human/`, `sources/` from the scan scope.
 
-**Step 1: Detect orphans with BOTH link types.**
-
-A page is orphan only if it has zero markdown-link refs AND zero
-wikilink refs from the entire vault. Obsidian resolves `[[slug]]`
-wikilinks from human/ and sources/ — our markdown-link-only grep
-misses those and produces false positives.
+Check BOTH markdown links and wikilinks before declaring orphan (Obsidian
+resolves `[[slug]]` wikilinks from human/sources — markdown-only grep
+produces false positives).
 
 ```bash
 SLUG=$(basename "$page" .md)
-
-# Markdown links: [text](path/slug.md)
 MD_REFS=$(grep -rlE "\]\([^)]*${SLUG}\.md\)" ~/brain-vault \
-  --include="*.md" \
-  --exclude-dir=.git --exclude-dir=.obsidian --exclude-dir=.claude \
-  2>/dev/null | grep -v "^.*/$page\$" | wc -l)
-
-# Wikilinks: [[slug]] or [[Slug]] (Obsidian resolves by basename)
+  --include="*.md" --exclude-dir=.git --exclude-dir=.obsidian \
+  --exclude-dir=.claude 2>/dev/null | grep -v "$page" | wc -l)
 WL_REFS=$(grep -rlE "\[\[${SLUG}\]\]|\[\[${SLUG}\|" ~/brain-vault \
-  --include="*.md" -i \
-  --exclude-dir=.git --exclude-dir=.obsidian --exclude-dir=.claude \
-  2>/dev/null | grep -v "^.*/$page\$" | wc -l)
+  --include="*.md" -i --exclude-dir=.git --exclude-dir=.obsidian \
+  --exclude-dir=.claude 2>/dev/null | grep -v "$page" | wc -l)
 ```
 
-**Step 2: Classify.**
+Report the count and classify: `not-orphan` (MD>0), `wikilink-only`
+(MD=0, WL>0, from read-only zones), `true-orphan` (MD=0, WL=0).
 
-| MD_REFS | WL_REFS | Classification | Action |
-|---------|---------|----------------|--------|
-| > 0 | any | Not orphan | Skip |
-| 0 | > 0 | Wikilink-only refs | Case C below |
-| 0 | 0 | True orphan | Case A or B below |
-
-**Step 3: Triage by case.**
-
-- **Case A — Agent-owned pages mention the entity by name** (grep for
-  entity name, not link syntax). Rewrite mentions as markdown links:
-  ```
-  "we talked to Alice" → "we talked to [Alice](../people/alice.md)"
-  ```
-  Enforce iron law: append back-link on the orphan's Timeline.
-
-- **Case B — Genuinely isolated** (zero mentions of any kind). Leave as
-  orphan. Surface in report with one-line rationale. Do NOT auto-delete.
-
-- **Case C — Wikilink-only refs from agent zones.** These are K2_SCHEMA §4
-  violations — agent-owned pages must use markdown links. Run the converter:
-  ```bash
-  python3 ~/gbrain-k2/scripts/fix-wikilinks.py
-  ```
-  After conversion, the page will have proper inbound markdown links and
-  exit orphan status.
-- **Case C2 — Wikilink-only refs from human/ or sources/ only.** The page
-  IS referenced but only from read-only zones via wikilinks. Not actionable
-  (can't rewrite human/ or sources/). Not a true orphan — Obsidian sees
-  the link. Note in report as "wikilink-only from read-only zones."
-
-Report per orphan: `fixed-A-linked-from-N`, `case-B-genuinely-isolated`,
-`case-C-wikilinks-converted`, `case-C2-readonly-zones-only`, or
-`deferred-ambiguous`.
+**Do NOT fix orphans in this skill.** Orphan remediation is a batch
+operation — run `python3 ~/gbrain-k2/scripts/fix-wikilinks.py` for
+wikilink violations, or a dedicated orphan-fix script for missing
+cross-references. Fixing 150+ orphans one-by-one would exhaust the
+cron iteration budget.
 
 #### Dead links (full-vault)
 Markdown links to pages that don't exist.
@@ -427,9 +385,10 @@ dimension table + "all clean"). Don't pad for length.
 - **Compiling raw content.** That's `recompile`'s job. If you find yourself
   about to create a wiki page from a zettel or source, stop and invoke
   recompile instead.
-- **Reporting without fixing where fixing is mechanical.** Back-link
-  backfills, wikilink → markdown conversions, and citation additions on
-  obvious sources should be DONE, not just listed.
+- **Trying to fix all orphans in one run.** That's 600+ iterations for
+  150 orphans. Report the count, let the batch scripts handle the fixes.
+- **Skipping stale-page rewrites entirely.** The cap is 5 per run, not 0.
+  If stale pages exist, rewrite 5 of them.
 - **Deleting orphan pages without human confirmation.** Many orphans are
   just missing links. Remediate (case A) before suggesting deletion (case B).
 - **Scanning the full vault for every dimension.** Incremental dimensions

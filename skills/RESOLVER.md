@@ -59,6 +59,7 @@ This is the dispatcher. Skills are the implementation. **Read the skill file bef
 
 | Trigger | Skill |
 |---------|-------|
+| "Audit Hermes brain skill projections", "check blueprint drift" | `skills/blueprint-audit/SKILL.md` |
 | "Set up GBrain", first boot | `skills/setup/SKILL.md` |
 | "Migrate from Obsidian/Notion/Logseq" | `skills/migrate/SKILL.md` |
 | Brain health check, maintenance run | `skills/maintain/SKILL.md` |
