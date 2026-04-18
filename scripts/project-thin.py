@@ -104,7 +104,7 @@ version: {version}
 mutating: {mutating}
 ---
 
-Read `~/gbrain-k2/skills/{skill_name}/SKILL.md` and follow it end to end.
+Read ~/gbrain-k2/skills/{skill_name}/SKILL.md and follow it.
 """
     return projection
 
