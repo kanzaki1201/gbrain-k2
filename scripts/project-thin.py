@@ -101,18 +101,10 @@ name: {name}
 version: {version}
 {desc_block}
 {trigger_block}
-tools:
-  - bash
 mutating: {mutating}
 ---
 
-# {name} (thin projection)
-
 Read `~/gbrain-k2/skills/{skill_name}/SKILL.md` and follow it end to end.
-
-```bash
-cat ~/gbrain-k2/skills/{skill_name}/SKILL.md
-```
 """
     return projection
 
