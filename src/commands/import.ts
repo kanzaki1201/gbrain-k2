@@ -5,6 +5,7 @@ import { cpus, totalmem, homedir } from 'os';
 import type { BrainEngine } from '../core/engine.ts';
 import { importFile } from '../core/import-file.ts';
 import { loadConfig } from '../core/config.ts';
+import { isSyncable } from '../core/sync.ts';
 
 function defaultWorkers(): number {
   const cpuCount = cpus().length;
@@ -249,6 +250,14 @@ export function collectMarkdownFiles(dir: string): string[] {
       if (stat.isDirectory()) {
         walk(full);
       } else if (entry.endsWith('.md') || entry.endsWith('.mdx')) {
+        // Apply the same syncability filter sync.ts uses. Otherwise import
+        // pollutes the DB with meta files (log.md, schema.md, index.md,
+        // README.md) and every subsequent sync runs a cleanup cycle
+        // producing "Deleted un-syncable page" log noise.
+        const relPath = relative(dir, full);
+        if (!isSyncable(relPath)) {
+          continue;
+        }
         files.push(full);
       }
     }

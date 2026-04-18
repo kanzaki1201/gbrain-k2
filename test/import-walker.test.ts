@@ -87,3 +87,72 @@ describe('collectMarkdownFiles — symlink containment', () => {
     expect(files).not.toContain(join(root, 'dangling.md'));
   });
 });
+
+describe('collectMarkdownFiles — meta-file filtering (isSyncable)', () => {
+  let root: string;
+
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), 'gbrain-walker-meta-'));
+  });
+
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  test('skips root-level meta files that sync later deletes', () => {
+    // Regression: before this fix, import walked every .md including log.md,
+    // schema.md, index.md, README.md. Those got ingested as pages. On next
+    // sync, isSyncable() flagged them as un-syncable and the "delete
+    // un-syncable modified" cleanup path removed them from the DB — emitting
+    // scary "Deleted un-syncable page" log lines every cycle. Fix: import
+    // now uses isSyncable() so these files never enter the DB.
+    writeFileSync(join(root, 'log.md'), '# Brain Log\n\nentries...\n');
+    writeFileSync(join(root, 'schema.md'), '# Schema\n');
+    writeFileSync(join(root, 'index.md'), '# Index\n');
+    writeFileSync(join(root, 'README.md'), '# Readme\n');
+    // Legit page should still be picked up
+    mkdirSync(join(root, 'people'));
+    writeFileSync(join(root, 'people', 'alice.md'), '# Alice\n');
+
+    const files = collectMarkdownFiles(root);
+    expect(files).not.toContain(join(root, 'log.md'));
+    expect(files).not.toContain(join(root, 'schema.md'));
+    expect(files).not.toContain(join(root, 'index.md'));
+    expect(files).not.toContain(join(root, 'README.md'));
+    expect(files).toContain(join(root, 'people', 'alice.md'));
+  });
+
+  test('skips README.md at any depth (common convention)', () => {
+    mkdirSync(join(root, 'projects'));
+    writeFileSync(join(root, 'projects', 'README.md'), '# Projects\n');
+    writeFileSync(join(root, 'projects', 'alpha.md'), '# Alpha project\n');
+
+    const files = collectMarkdownFiles(root);
+    expect(files).not.toContain(join(root, 'projects', 'README.md'));
+    expect(files).toContain(join(root, 'projects', 'alpha.md'));
+  });
+
+  test('skips hidden-directory contents (node_modules READMEs etc.)', () => {
+    mkdirSync(join(root, '.obsidian'));
+    mkdirSync(join(root, '.obsidian', 'plugins'));
+    mkdirSync(join(root, '.obsidian', 'plugins', 'foo'));
+    writeFileSync(join(root, '.obsidian', 'plugins', 'foo', 'README.md'), '# plugin\n');
+    writeFileSync(join(root, 'notes.md'), '# notes\n');
+
+    const files = collectMarkdownFiles(root);
+    // The walker itself skips hidden dirs higher up, but defense-in-depth:
+    // even if one leaked through, isSyncable() would drop it.
+    expect(files).toContain(join(root, 'notes.md'));
+    expect(files.some(f => f.includes('.obsidian'))).toBe(false);
+  });
+
+  test('skips ops/ directory', () => {
+    mkdirSync(join(root, 'ops'));
+    writeFileSync(join(root, 'ops', 'checklist.md'), '# ops\n');
+    writeFileSync(join(root, 'notes.md'), '# notes\n');
+
+    const files = collectMarkdownFiles(root);
+    expect(files).not.toContain(join(root, 'ops', 'checklist.md'));
+    expect(files).toContain(join(root, 'notes.md'));
+  });
+});
