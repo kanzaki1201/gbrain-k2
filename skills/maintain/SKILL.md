@@ -214,13 +214,21 @@ WL_REFS=$(grep -rlE "\[\[${SLUG}\]\]|\[\[${SLUG}\|" ~/brain-vault \
 - **Case B — Genuinely isolated** (zero mentions of any kind). Leave as
   orphan. Surface in report with one-line rationale. Do NOT auto-delete.
 
-- **Case C — Wikilink-only refs** (from human/ or sources/ zones). The
-  page IS referenced but only via wikilinks that the graph extractor
-  can't parse. Not a real orphan — Obsidian sees the link. No agent
-  action needed. Note in report as "wikilink-only, not a true orphan."
+- **Case C — Wikilink-only refs from agent zones.** These are K2_SCHEMA §4
+  violations — agent-owned pages must use markdown links. Run the converter:
+  ```bash
+  python3 ~/gbrain-k2/scripts/fix-wikilinks.py
+  ```
+  After conversion, the page will have proper inbound markdown links and
+  exit orphan status.
+- **Case C2 — Wikilink-only refs from human/ or sources/ only.** The page
+  IS referenced but only from read-only zones via wikilinks. Not actionable
+  (can't rewrite human/ or sources/). Not a true orphan — Obsidian sees
+  the link. Note in report as "wikilink-only from read-only zones."
 
 Report per orphan: `fixed-A-linked-from-N`, `case-B-genuinely-isolated`,
-`case-C-wikilink-only`, or `deferred-ambiguous`.
+`case-C-wikilinks-converted`, `case-C2-readonly-zones-only`, or
+`deferred-ambiguous`.
 
 #### Dead links (full-vault)
 Markdown links to pages that don't exist.
