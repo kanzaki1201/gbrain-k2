@@ -45,6 +45,20 @@ This skill guarantees:
 
 ## Phases
 
+0. **Snapshot before touching anything.** Maintenance can modify many pages
+   in one pass. Commit the current vault state first so the maintenance diff
+   is reviewable and revertible on its own:
+
+   ```bash
+   cd ~/brain-vault
+   git add -A
+   git commit -m "chore: snapshot before maintenance pass" || true
+   ```
+
+   The `|| true` is important — if nothing changed since the last auto-commit,
+   the commit fails with "nothing to commit" and that's fine. Either way, the
+   subsequent maintenance edits land on their own clean commit.
+
 1. **Run health check.** Check gbrain health to get the dashboard.
 2. **Check each dimension:**
 
