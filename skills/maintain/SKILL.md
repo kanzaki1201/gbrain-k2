@@ -95,14 +95,18 @@ and any warnings or failures as the baseline for the report.
 Run each dimension below. Incremental dimensions scan only the changed pages
 from Phase 1. Full-vault dimensions scan everything.
 
-#### Stale pages (full-vault)
+#### Stale pages (full-vault, active rewrite)
 Pages where compiled truth is older than the latest timeline entry — the
-synthesis hasn't caught up to new evidence.
+synthesis hasn't caught up to new evidence. **Active rewrite is the
+default, flagging is the exception.**
+
+**Step 1: Detect stale pages.**
 
 ```bash
-# For each agent-owned page, compare max(timeline date) vs file mtime
+cd ~/brain-vault
 for page in $(find people companies projects tools concepts ideas originals \
-  decisions -name "*.md" -not -name "README.md" 2>/dev/null); do
+  decisions household personal places meetings media writing org \
+  -name "*.md" -not -name "README.md" 2>/dev/null); do
   max_tl=$(grep -hoE '^- \*\*[0-9]{4}-[0-9]{2}-[0-9]{2}\*\*' "$page" 2>/dev/null \
     | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | sort -r | head -1)
   [ -z "$max_tl" ] && continue
@@ -111,8 +115,43 @@ for page in $(find people companies projects tools concepts ideas originals \
 done
 ```
 
-For each stale page: read the page, review timeline, rewrite compiled
-truth to reflect new evidence. Never delete timeline entries.
+**Step 2: For each stale page, rewrite compiled truth.**
+
+A page has two sections separated by `---`:
+- **Above the line: Compiled Truth** — current-state synthesis (rewritable)
+- **Below the line: Timeline** — append-only evidence log (never modify)
+
+Procedure:
+
+1. Read the full page.
+2. Identify timeline entries NEWER than the last compiled-truth update.
+   These are the evidence the synthesis hasn't absorbed yet.
+3. **Rewrite the Compiled Truth section** to incorporate the new evidence.
+   This is an LLM synthesis task: read the old compiled truth + the new
+   timeline entries, produce an updated compiled truth that reflects ALL
+   evidence. The new version REPLACES the old one (compiled truth is
+   always current-state, never append-only).
+4. **Preserve the Timeline section exactly.** Never edit, reorder, or
+   delete timeline entries. They are evidence.
+5. **Add a timeline entry** recording the re-sync:
+   ```
+   - **YYYY-MM-DD** | Compiled truth rewritten to reflect timeline evidence through YYYY-MM-DD ^[Source: maintain stale-page rewrite]
+   ```
+6. **Enforce back-links.** If the new compiled truth mentions entities
+   that don't have back-links yet, add them (same procedure as the
+   orphan dimension).
+7. **Touch the file** so mtime advances past the latest timeline date,
+   preventing the page from being flagged stale again next cycle.
+
+**When NOT to rewrite:**
+- If the "new" timeline entries are trivial (e.g., only back-link
+  additions, no substantive new facts) — skip rewrite, just touch the
+  file to clear staleness.
+- If the compiled truth and new evidence contradict each other and the
+  resolution isn't obvious — flag for human review instead of guessing.
+
+Report per stale page: `rewritten` (with summary of what changed),
+`touched` (trivial evidence, no content change), or `flagged-ambiguous`.
 
 #### Orphan pages (full-vault, active remediation)
 Pages with zero inbound markdown links. Most orphans are not genuinely
