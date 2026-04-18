@@ -87,8 +87,9 @@ Save `/tmp/maintain-changed.txt` for Phase 3 incremental dimensions.
 gbrain doctor --json
 ```
 
-Parse the JSON for the dashboard. Use `brain_score`, the list of `checks`,
-and any warnings or failures as the baseline for the report.
+Parse the JSON for the dashboard. Use `health_score` when present (fallback to
+`brain_score` on older builds), the list of `checks`, and any warnings or
+failures as the baseline for the report.
 
 ### Phase 3: Dimensions
 
@@ -343,7 +344,7 @@ Checkpoint: <old> → <new>
 Changed pages since last maintain: N
 
 ### Doctor
-brain_score: X/100
+health_score: X/100
 warnings: ...
 
 ### Dimensions
