@@ -189,11 +189,9 @@ WL_REFS=$(grep -rlE "\[\[${SLUG}\]\]|\[\[${SLUG}\|" ~/brain-vault \
 Report the count and classify: `not-orphan` (MD>0), `wikilink-only`
 (MD=0, WL>0, from read-only zones), `true-orphan` (MD=0, WL=0).
 
-**Do NOT fix orphans in this skill.** Orphan remediation is a batch
-operation — run `python3 ~/gbrain-k2/scripts/fix-wikilinks.py` for
-wikilink violations, or a dedicated orphan-fix script for missing
-cross-references. Fixing 150+ orphans one-by-one would exhaust the
-cron iteration budget.
+**Do NOT fix orphans in this skill.** Fixing 150+ orphans would exhaust
+the cron iteration budget. Report the count; the human can ask Hermes
+to fix specific orphans interactively when needed.
 
 #### Dead links (full-vault)
 Markdown links to pages that don't exist.
@@ -393,7 +391,7 @@ dimension table + "all clean"). Don't pad for length.
   about to create a wiki page from a zettel or source, stop and invoke
   recompile instead.
 - **Trying to fix all orphans in one run.** That's 600+ iterations for
-  150 orphans. Report the count, let the batch scripts handle the fixes.
+  150 orphans. Report the count; human triggers fixes interactively.
 - **Skipping stale-page rewrites entirely.** The cap is 5 per run, not 0.
   If stale pages exist, rewrite 5 of them.
 - **Deleting orphan pages without human confirmation.** Many orphans are
