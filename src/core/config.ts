@@ -13,6 +13,7 @@ export interface GBrainConfig {
   database_path?: string;
   openai_api_key?: string;
   anthropic_api_key?: string;
+  lint_exclude_paths?: string[];
 }
 
 /**
@@ -39,6 +40,7 @@ export function loadConfig(): GBrainConfig | null {
   const merged = {
     ...fileConfig,
     engine: inferredEngine,
+    lint_exclude_paths: fileConfig?.lint_exclude_paths || ['sources', 'human'],
     ...(dbUrl ? { database_url: dbUrl } : {}),
     ...(process.env.OPENAI_API_KEY ? { openai_api_key: process.env.OPENAI_API_KEY } : {}),
   };

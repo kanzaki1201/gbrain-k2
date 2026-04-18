@@ -70,6 +70,7 @@ async function initPGLite(opts: { jsonOutput: boolean; apiKey: string | null; cu
   const config: GBrainConfig = {
     engine: 'pglite',
     database_path: dbPath,
+    lint_exclude_paths: ['sources', 'human'],
     ...(opts.apiKey ? { openai_api_key: opts.apiKey } : {}),
   };
   saveConfig(config);
@@ -142,6 +143,7 @@ async function initPostgres(opts: { databaseUrl: string; jsonOutput: boolean; ap
   const config: GBrainConfig = {
     engine: 'postgres',
     database_url: databaseUrl,
+    lint_exclude_paths: ['sources', 'human'],
     ...(opts.apiKey ? { openai_api_key: opts.apiKey } : {}),
   };
   saveConfig(config);

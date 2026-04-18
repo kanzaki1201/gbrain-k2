@@ -18,6 +18,7 @@
 
 import { readFileSync, writeFileSync, readdirSync, statSync, lstatSync, existsSync } from 'fs';
 import { join, relative } from 'path';
+import { loadConfig } from '../core/config.ts';
 
 export interface LintIssue {
   file: string;
@@ -173,12 +174,22 @@ export function fixContent(content: string): string {
 }
 
 /** Collect markdown files from a directory */
-function collectPages(dir: string): string[] {
+function shouldExcludePath(relPath: string, excludePaths: string[]): boolean {
+  const normalized = relPath.replace(/\\/g, '/');
+  return excludePaths.some((excludePath) => {
+    const exclude = excludePath.replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/$/, '');
+    return normalized === exclude || normalized.startsWith(`${exclude}/`);
+  });
+}
+
+function collectPages(dir: string, excludePaths: string[] = []): string[] {
   const pages: string[] = [];
   function walk(d: string) {
     for (const entry of readdirSync(d)) {
       if (entry.startsWith('.') || entry.startsWith('_')) continue;
       const full = join(d, entry);
+      const relPath = relative(dir, full);
+      if (shouldExcludePath(relPath, excludePaths)) continue;
       if (lstatSync(full).isDirectory()) walk(full);
       else if (entry.endsWith('.md')) pages.push(full);
     }
@@ -191,6 +202,8 @@ export async function runLint(args: string[]) {
   const target = args.find(a => !a.startsWith('--'));
   const doFix = args.includes('--fix');
   const dryRun = args.includes('--dry-run');
+  const config = loadConfig();
+  const excludePaths = config?.lint_exclude_paths || ['sources', 'human'];
 
   if (!target) {
     console.error('Usage: gbrain lint <dir|file.md> [--fix] [--dry-run]');
@@ -206,7 +219,7 @@ export async function runLint(args: string[]) {
 
   // Single file or directory
   const isSingleFile = statSync(target).isFile();
-  const pages = isSingleFile ? [target] : collectPages(target);
+  const pages = isSingleFile ? [target] : collectPages(target, excludePaths);
 
   let totalIssues = 0;
   let totalFixed = 0;
