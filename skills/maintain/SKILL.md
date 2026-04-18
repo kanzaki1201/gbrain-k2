@@ -165,38 +165,62 @@ Procedure:
 Report per stale page: `rewritten` (with summary of what changed),
 `touched` (trivial evidence, no content change), or `flagged-ambiguous`.
 
-#### Orphan pages (full-vault, active remediation)
-Pages with zero inbound markdown links. Most orphans are not genuinely
-isolated — they're mentioned elsewhere by name without a proper link.
+#### Orphan pages (active remediation)
 
-**Procedure for each orphan:**
+Scan agent-owned category dirs for pages with zero inbound links.
+**Exclude** `archive/`, `reports/`, `human/`, `sources/` from the scan
+scope (archive is retired content, human/sources are read-only zones).
 
-1. **Find inbound name-mentions:**
-   ```bash
-   ENTITY_NAME=$(basename "$orphan" .md | tr '-' ' ')
-   grep -rlE "(^|[^a-z0-9-])${ENTITY_NAME}([^a-z0-9-]|$)" ~/brain-vault \
-     --include="*.md" -i \
-     --exclude-dir=.git --exclude-dir=.obsidian --exclude-dir=.claude \
-     --exclude-dir=sources 2>/dev/null
-   ```
-2. **Triage:**
-   - Agent-owned pages mentioning entity → add markdown links (case A).
-   - `human/` pages → no action, read-only.
-   - `sources/` pages → no action, immutable.
-   - No mentions anywhere → genuinely orphan (case B).
-3. **Case A — Add cross-references.** Rewrite mention as markdown link:
-   ```
-   "we talked to Alice" → "we talked to [Alice](../people/alice.md)"
-   ```
-   Enforce iron law: append back-link on the orphan's Timeline:
-   ```
-   - **YYYY-MM-DD** | Referenced in [page](../path.md) — context ^[Source: ...]
-   ```
-4. **Case B — Genuinely isolated.** Surface with one-line rationale. Do NOT
-   auto-delete. Human decides.
+**Step 1: Detect orphans with BOTH link types.**
 
-Report per-orphan: `fixed-A-linked-from-N`, `flagged-case-B`, or
-`deferred-ambiguous`.
+A page is orphan only if it has zero markdown-link refs AND zero
+wikilink refs from the entire vault. Obsidian resolves `[[slug]]`
+wikilinks from human/ and sources/ — our markdown-link-only grep
+misses those and produces false positives.
+
+```bash
+SLUG=$(basename "$page" .md)
+
+# Markdown links: [text](path/slug.md)
+MD_REFS=$(grep -rlE "\]\([^)]*${SLUG}\.md\)" ~/brain-vault \
+  --include="*.md" \
+  --exclude-dir=.git --exclude-dir=.obsidian --exclude-dir=.claude \
+  2>/dev/null | grep -v "^.*/$page\$" | wc -l)
+
+# Wikilinks: [[slug]] or [[Slug]] (Obsidian resolves by basename)
+WL_REFS=$(grep -rlE "\[\[${SLUG}\]\]|\[\[${SLUG}\|" ~/brain-vault \
+  --include="*.md" -i \
+  --exclude-dir=.git --exclude-dir=.obsidian --exclude-dir=.claude \
+  2>/dev/null | grep -v "^.*/$page\$" | wc -l)
+```
+
+**Step 2: Classify.**
+
+| MD_REFS | WL_REFS | Classification | Action |
+|---------|---------|----------------|--------|
+| > 0 | any | Not orphan | Skip |
+| 0 | > 0 | Wikilink-only refs | Case C below |
+| 0 | 0 | True orphan | Case A or B below |
+
+**Step 3: Triage by case.**
+
+- **Case A — Agent-owned pages mention the entity by name** (grep for
+  entity name, not link syntax). Rewrite mentions as markdown links:
+  ```
+  "we talked to Alice" → "we talked to [Alice](../people/alice.md)"
+  ```
+  Enforce iron law: append back-link on the orphan's Timeline.
+
+- **Case B — Genuinely isolated** (zero mentions of any kind). Leave as
+  orphan. Surface in report with one-line rationale. Do NOT auto-delete.
+
+- **Case C — Wikilink-only refs** (from human/ or sources/ zones). The
+  page IS referenced but only via wikilinks that the graph extractor
+  can't parse. Not a real orphan — Obsidian sees the link. No agent
+  action needed. Note in report as "wikilink-only, not a true orphan."
+
+Report per orphan: `fixed-A-linked-from-N`, `case-B-genuinely-isolated`,
+`case-C-wikilink-only`, or `deferred-ambiguous`.
 
 #### Dead links (full-vault)
 Markdown links to pages that don't exist.
