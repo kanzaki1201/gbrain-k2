@@ -140,13 +140,16 @@ Procedure:
 6. **Enforce back-links.** If the new compiled truth mentions entities
    that don't have back-links yet, add them (same procedure as the
    orphan dimension).
-7. **Touch the file** so mtime advances past the latest timeline date,
-   preventing the page from being flagged stale again next cycle.
+7. **Advance both metadata and mtime.** Prefer updating frontmatter
+   `updated:` to today's date and then touching the file so both the
+   page metadata and filesystem mtime move past the latest timeline
+   date. This keeps the page coherent for humans and prevents the stale
+   detector from re-flagging it next cycle.
 
 **When NOT to rewrite:**
 - If the "new" timeline entries are trivial (e.g., only back-link
-  additions, no substantive new facts) — skip rewrite, just touch the
-  file to clear staleness.
+  additions, no substantive new facts) — skip rewrite, update the
+  `updated:` field, and touch the file to clear staleness.
 - If the compiled truth and new evidence contradict each other and the
   resolution isn't obvious — flag for human review instead of guessing.
 
