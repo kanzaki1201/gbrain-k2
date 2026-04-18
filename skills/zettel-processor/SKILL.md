@@ -97,22 +97,34 @@ grep -rl "human/zettel/<basename>" ~/brain-vault \
   --exclude-dir=.obsidian
 ```
 
-A zettel with zero matches is `new`. A zettel with matches AND `mtime >
-last-compile timestamp on any citing page` is `updated`. Otherwise `stable-compiled`.
+Output of this phase: a list of `(zettel_path, [citing_pages])` tuples. No
+classification yet — that is Phase 2.
 
-**Classification:**
+### 2. Classify
 
-- **New** — no existing wiki page cites this zettel.
-- **Updated** — wiki pages cite it AND the zettel's mtime is newer than the
-  last timeline entry on any citing page.
-- **Stable-compiled** — wiki pages cite it AND mtime is older than 7 days.
+For each `(zettel_path, citing_pages)` tuple from Phase 1, assign exactly one
+label. The label drives which later phase handles the zettel.
+
+- **New** — `citing_pages` is empty. No wiki page cites this zettel yet.
+  → handled in Phase 3 (Compile).
+- **Updated** — `citing_pages` is non-empty AND the zettel's mtime is newer
+  than the most recent timeline entry on any citing page.
+  → handled in Phase 3 (Compile, re-compile affected pages).
+- **Stable-compiled** — `citing_pages` is non-empty AND the zettel's mtime is
+  older than 7 days (and older than citing-page timeline entries).
+  → no action unless it also qualifies as a candidate.
 - **Candidate for archival** — either:
-  - stable-compiled AND exactly one wiki page cites it AND that page's
-    Compiled Truth fully subsumes the zettel content, or
+  - `stable-compiled` AND exactly one citing page AND that page's Compiled
+    Truth fully subsumes the zettel content, or
   - a mature multi-target zettel that is long, stable, and clearly functioning
     as a source reservoir rather than active live writing.
+  → handled in Phase 4 (Queue archival candidates).
 
-### 2. Compile (new + updated)
+A zettel can only hold one label at a time. When in doubt between
+`stable-compiled` and `candidate`, default to `stable-compiled` — archival
+requires explicit human approval anyway, so mis-labeling as stable is harmless.
+
+### 3. Compile (new + updated)
 
 For each zettel:
 
@@ -129,13 +141,13 @@ For each zettel:
    Iron Law.
 4. Do NOT modify the zettel itself. Preserve its mtime.
 
-### 3. Queue archival candidates
+### 4. Queue archival candidates
 
-Candidates from Phase 1 are packaged into the zettel-processor pass output
+Candidates from Phase 2 are packaged into the zettel-processor pass output
 with: zettel path, compiled-to path, stable-since date, one-sentence rationale.
 No move happens here.
 
-### 3.5 Respect explicit human archival intent
+### 4.5 Respect explicit human archival intent
 
 If the human explicitly says a specific zettel can be archived, archival may
 proceed even when the zettel is multi-target, partial-use, or otherwise outside
@@ -148,12 +160,12 @@ If the human has already manually moved the zettel into `human/zettel/archive/`:
    the archived path.
 3. Do not second-guess the move with candidacy rules.
 
-### 4. Execute archival (only on explicit approval)
+### 5. Execute archival (only on explicit approval)
 
 When the human approves a specific candidate:
 
 1. Re-verify candidacy — if the zettel has been edited since prompt emission,
-   candidacy lapses; re-run Phase 3 next cycle.
+   candidacy lapses; re-run Phase 4 next cycle.
 2. `mv human/zettel/{name}.md human/zettel/archive/{name}.md`.
 3. Rewrite markdown-link citations in affected wiki pages from the old path to
    the new path.
