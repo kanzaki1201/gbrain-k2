@@ -150,16 +150,19 @@ maintain with `--reset-checkpoint` to pick up."
 
 ## Output Format
 
-Per-run log line:
+The report is your **reply** — delivered via the messaging channel. Do NOT
+write report files to the vault.
+
+Summary line:
 ```
-Zettel status: N total, C candidates, O orphans fixed, A archived, D denied
+Zettel status: N total, C candidates, O orphans flagged, A archived, D denied
 ```
 
-Full report sections:
+Full reply sections (include only non-empty sections):
 - Archival candidates surfaced (awaiting human decision)
 - Archival executions completed (approved this cycle)
-- Orphan citations fixed (zettels manually archived)
-- Uncompiled zettels flagged (for maintain's next recompile pass)
+- Orphan citations flagged (zettels manually archived, maintain handles rewrite)
+- Uncompiled zettels noted (for recompile's next pass)
 - Denials recorded (for cooldown tracking)
 
 ## Interactions

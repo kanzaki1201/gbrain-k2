@@ -141,6 +141,10 @@ echo "$(date -Iminutes) | recompile | processed N files" >> ~/brain-vault/log.md
 
 ## Output Format
 
+The report is your **reply** — delivered via the messaging channel. Do NOT
+write report files to the vault. The vault stores knowledge; operational
+reports belong in chat.
+
 ```
 Recompile: N files processed (A added: X, M modified: Y, D deleted: Z)
   Compiled: <zettel/source path> → <wiki page(s)>
@@ -149,6 +153,9 @@ Recompile: N files processed (A added: X, M modified: Y, D deleted: Z)
   Orphans flagged: <page> cites missing source
   Skipped: <path> (human/<other>, awaits human review)
 ```
+
+If nothing changed (0 files in diff), reply with a one-liner: "Recompile:
+0 files since last checkpoint. Nothing to do."
 
 ## Interactions
 

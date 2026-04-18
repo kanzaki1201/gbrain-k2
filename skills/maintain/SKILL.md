@@ -321,7 +321,17 @@ echo "$(date -Iminutes) | maintain | health=$SCORE, N issues flagged, M fixed" \
   >> ~/brain-vault/log.md
 ```
 
+The one-liner in `log.md` is vault telemetry (append-only, low-noise). The
+full report goes to the messaging channel, NOT to the vault.
+
 ## Output Format
+
+The report is your **reply** — delivered via the messaging channel (Discord,
+Telegram, or wherever the cron job delivers). Do NOT write report files to
+`~/brain-vault/reports/` or anywhere in the vault. The vault stores knowledge;
+operational reports belong in chat where the human sees them and can respond.
+
+Format the reply as:
 
 ```
 ## Brain Health Report — YYYY-MM-DD HH:MM
@@ -332,7 +342,6 @@ Changed pages since last maintain: N
 ### Doctor
 brain_score: X/100
 warnings: ...
-ok: ...
 
 ### Dimensions
 
@@ -342,7 +351,7 @@ ok: ...
 | Orphan pages         | full-vault  | N     | N     | N         |
 | Dead links           | full-vault  | N     | N     | N         |
 | Missing cross-refs   | incremental | N     | N     | N         |
-| Link density         | stats       | N/A   | N/A   | N/A       |
+| Link density         | stats       | ratio | —     | —         |
 | Back-link violations | incremental | N     | N     | N         |
 | Citation gaps        | incremental | N     | N     | N         |
 | Wikilink violations  | incremental | N     | N     | N         |
@@ -356,6 +365,9 @@ ok: ...
 ### Outstanding issues (requires human attention)
 ...
 ```
+
+If no issues require human attention, keep the report short (doctor score +
+dimension table + "all clean"). Don't pad for length.
 
 ## Interactions
 
