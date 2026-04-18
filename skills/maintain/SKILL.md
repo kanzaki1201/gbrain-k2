@@ -1,11 +1,12 @@
 ---
 name: maintain
-version: 2.0.0
+version: 3.0.0
 description: |
-  Keep the wiki aligned with raw content: recompile wiki pages when files in
-  human/ or sources/ change (new, edited, deleted), then run brain health
-  checks (stale pages, orphan pages, dead links, citation audit, filing
-  validation, back-link iron law).
+  Brain health audit + quality fixes. Back-link iron law enforcement,
+  citation audit, filing validation, stale detection, orphan remediation,
+  link density, embedding freshness. Owns ~/.gbrain/maintain-checkpoint.txt
+  so dimension checks can run incrementally on pages changed since last
+  maintain pass. Does NOT recompile — that belongs to the recompile skill.
 triggers:
   - "brain health"
   - "check backlinks"
@@ -13,8 +14,6 @@ triggers:
   - "maintenance"
   - "orphan pages"
   - "stale pages"
-  - "recompile brain"
-  - new or updated file in human/ or sources/
 tools:
   - bash
 mutating: true
@@ -22,34 +21,33 @@ mutating: true
 
 # Maintain Skill
 
-Active content recompilation + brain health checks. Keeps compiled wiki
-pages in sync with raw content in `human/` and `sources/`, then audits and
-repairs health issues.
+Brain health audit + active remediation. Reads the wiki, flags issues,
+fixes what's mechanical (missing markdown links, back-link backfills), and
+surfaces what needs human judgment.
 
-> **Recommended cadence:** nightly full pass (02:00 by default).
+> **Recommended cadence:** nightly at 02:00 (cron).
 
-> **Scheduled role in K2 cadence:**
-> - nightly job: `maintain` (full pass: recompile + health)
-> - weekly deeper pass: `maintain` + `gbrain doctor --json` + `gbrain embed --stale`
-> - evening zettel lifecycle: `zettel-status-check` (archival candidates only — no recompile)
+> **Scope boundary:** this skill audits + fixes the wiki. It does NOT compile
+> raw content from `human/` or `sources/` — that belongs to the `recompile`
+> skill. If you're looking for new-zettel compilation, run recompile first.
 
 ## Contract
 
 This skill guarantees:
-- File changes in `human/` and `sources/` since last run trigger wiki recompilation
-- All health dimensions are checked (stale, orphan, dead links, cross-refs, backlinks, citations, filing, tags)
-- Each issue found has a specific fix action
-- Back-link iron law is enforced
-- Citation format is validated against the standard
-- Results are reported with counts per dimension
-- A checkpoint is written so the next run only processes what changed since
+- `gbrain doctor` runs and the health dashboard is the baseline.
+- Each dimension is checked and reported, even if clean.
+- Dimensions that make sense incrementally (citation audit, wikilink
+  violations, tag consistency, filing check) run only on pages changed
+  since the last maintain checkpoint.
+- Dimensions that require full-vault scope (orphans, dead links, link
+  density, stale detection) run across all agent-owned pages.
+- Back-link iron law violations are actively remediated, not just flagged.
+- Results are reported with counts per dimension.
+- The checkpoint advances after the full pass completes.
 
 ## Phases
 
 ### Phase 0: Snapshot
-
-Commit the current vault state so the maintenance diff lands on its own
-clean commit, isolated from drift since the last auto-commit.
 
 ```bash
 cd ~/brain-vault
@@ -57,351 +55,289 @@ git add -A
 git commit -m "chore: snapshot before maintenance pass" || true
 ```
 
-The `|| true` is important — if nothing changed since the last auto-commit,
-the commit fails with "nothing to commit" and that's fine. Subsequent edits
-land on their own commit.
-
-### Phase 1: Content Recompile (file-change-driven)
-
-Detect raw-content changes in `human/` and `sources/` since the last run,
-then recompile affected wiki pages. This is the active sync from raw content
-to compiled wiki.
-
-**1a. Load checkpoint:**
+### Phase 1: Load checkpoint + compute changed pages
 
 ```bash
 CHECKPOINT_FILE=~/.gbrain/maintain-checkpoint.txt
 CHECKPOINT=$(cat "$CHECKPOINT_FILE" 2>/dev/null || echo "")
-```
 
-**1b. Compute changes since checkpoint:**
-
-```bash
 cd ~/brain-vault
 if [ -n "$CHECKPOINT" ] && git cat-file -e "$CHECKPOINT" 2>/dev/null; then
-  # Incremental: name-status format gives A/M/D per file
-  git diff --name-status "$CHECKPOINT"..HEAD -- 'human/' 'sources/'
+  # List agent-owned pages changed since last maintain run
+  CHANGED_PAGES=$(git diff --name-only "$CHECKPOINT"..HEAD -- \
+    'people/' 'companies/' 'projects/' 'tools/' 'concepts/' 'ideas/' \
+    'originals/' 'how-to/' 'media/' 'meetings/' 'decisions/' \
+    'household/' 'personal/' 'places/' 'writing/' 'org/' 'archive/' 'inbox/')
 else
-  # First run or invalid checkpoint: treat all as new
-  find human/ sources/ -name "*.md" -type f -not -path "*/archive/*" \
-    | sed 's|^|A\t|'
+  # First run: treat all agent pages as changed
+  CHANGED_PAGES=$(find people companies projects tools concepts ideas \
+    originals how-to media meetings decisions household personal places \
+    writing org archive inbox -name "*.md" -type f 2>/dev/null)
 fi
+
+echo "$CHANGED_PAGES" > /tmp/maintain-changed.txt
+echo "Changed agent pages since last maintain: $(wc -l </tmp/maintain-changed.txt)"
 ```
 
-Output format per line: `<STATUS>\t<path>` where STATUS is `A` (added),
-`M` (modified), `D` (deleted), or `R<score>\t<old>\t<new>` (renamed).
-
-**1c. Route each change to the right handler:**
-
-| Status | Path pattern | Action |
-|--------|-------------|--------|
-| `A` | `human/zettel/<name>.md` | Compile into wiki: apply `_brain-filing-rules.md` + `repo-architecture/SKILL.md`, decide shape (wholesale / multi-target / unclear), create or update wiki page(s), cite zettel in `## Sources`, add timeline entry, enforce back-links. |
-| `A` | `sources/**/*.md` | Compile into wiki: route by content type (clipping/article → idea-ingest pattern; media/pdf → media-ingest pattern; meeting transcript → meeting-ingestion pattern). Create a PARALLEL wiki page that cites the source by markdown link. The source file itself is immutable and stays in `sources/` per K2_SCHEMA §1 — never move it, never modify it. |
-| `A` | `human/<other>` | Flag for human review. Human owns this zone; agent should not guess. |
-| `M` | `human/zettel/<name>.md` | Recompile: find citing wiki pages (`grep -rl "human/zettel/<name>"`), rewrite Compiled Truth based on current zettel content, append timeline entry `- **YYYY-MM-DD** \| zettel updated ^[Source: human/zettel/<name>.md, YYYY-MM-DD]`. Do NOT modify the zettel. |
-| `M` | `sources/**/*.md` | Recompile wiki pages that cite this source. If no wiki page exists, treat like `A` and compile. Do NOT modify the source. |
-| `D` | `human/zettel/<name>.md` | Check if file moved to `human/zettel/archive/`. If yes → hand off to `zettel-status-check` for citation rewrite. If truly deleted (not in archive either) → flag citing wiki pages as orphan sources, surface for human review. |
-| `D` | `sources/**/*.md` | Flag citing wiki pages as orphan sources. Do not auto-delete. |
-| `R` | any | Treat as `D <old>` + `A <new>`. |
-
-**1d. Run the compile loop.** For each `A` or `M` in `human/zettel/`:
-
-1. Read zettel content.
-2. Apply filing rules to decide primary category + entities.
-3. Create or update wiki page(s) with citations, timeline, cross-links.
-4. Never modify the zettel. Preserve its mtime.
-
-**1e. Save checkpoint:**
-
-```bash
-git rev-parse HEAD > "$CHECKPOINT_FILE"
-```
-
-**1f. Log to vault log.md:**
-
-```bash
-echo "$(date -Iminutes) | maintain-recompile | processed N files" >> ~/brain-vault/log.md
-```
+Save `/tmp/maintain-changed.txt` for Phase 3 incremental dimensions.
 
 ### Phase 2: Health check
 
-Check gbrain health to get the dashboard, then iterate the dimensions below.
+```bash
+gbrain doctor --json
+```
 
-### Phase 3: Check each dimension
+Parse the JSON for the dashboard. Use `brain_score`, the list of `checks`,
+and any warnings or failures as the baseline for the report.
 
-### Stale pages
-Pages where compiled_truth is older than the latest timeline entry. The assessment hasn't been updated to reflect recent evidence.
-- Check the health output for stale page count
-- For each stale page: read the page from gbrain, review timeline, determine if compiled_truth needs rewriting
+### Phase 3: Dimensions
 
-### Orphan pages
+Run each dimension below. Incremental dimensions scan only the changed pages
+from Phase 1. Full-vault dimensions scan everything.
+
+#### Stale pages (full-vault)
+Pages where compiled truth is older than the latest timeline entry — the
+synthesis hasn't caught up to new evidence.
+
+```bash
+# For each agent-owned page, compare max(timeline date) vs file mtime
+for page in $(find people companies projects tools concepts ideas originals \
+  decisions -name "*.md" -not -name "README.md" 2>/dev/null); do
+  max_tl=$(grep -hoE '^- \*\*[0-9]{4}-[0-9]{2}-[0-9]{2}\*\*' "$page" 2>/dev/null \
+    | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | sort -r | head -1)
+  [ -z "$max_tl" ] && continue
+  mtime=$(date -r "$page" +%Y-%m-%d)
+  if [[ "$max_tl" > "$mtime" ]]; then echo "STALE: $page (tl:$max_tl > mtime:$mtime)"; fi
+done
+```
+
+For each stale page: read the page, review timeline, rewrite compiled
+truth to reflect new evidence. Never delete timeline entries.
+
+#### Orphan pages (full-vault, active remediation)
 Pages with zero inbound markdown links. Most orphans are not genuinely
-isolated — they're mentioned elsewhere by name without a proper link, which
-means the back-link iron law is being violated. **Active remediation is the
-default, flagging is the exception.**
+isolated — they're mentioned elsewhere by name without a proper link.
 
 **Procedure for each orphan:**
 
-1. **Find inbound name-mentions** across the vault:
+1. **Find inbound name-mentions:**
    ```bash
-   # For each orphan page <slug>.md, grep for the entity name
    ENTITY_NAME=$(basename "$orphan" .md | tr '-' ' ')
    grep -rlE "(^|[^a-z0-9-])${ENTITY_NAME}([^a-z0-9-]|$)" ~/brain-vault \
      --include="*.md" -i \
      --exclude-dir=.git --exclude-dir=.obsidian --exclude-dir=.claude \
      --exclude-dir=sources 2>/dev/null
    ```
-2. **Triage the results:**
-   - Agent-owned pages mentioning the entity → add markdown links (case A).
-   - `human/` pages mentioning the entity → no action, human zone is read-only.
-   - `sources/` pages mentioning the entity → no action, immutable.
+2. **Triage:**
+   - Agent-owned pages mentioning entity → add markdown links (case A).
+   - `human/` pages → no action, read-only.
+   - `sources/` pages → no action, immutable.
    - No mentions anywhere → genuinely orphan (case B).
-3. **Case A — Add cross-references.** For each agent-owned page that mentions
-   the entity, rewrite the mention as a markdown link:
-   ```text
-   "...we talked to Alice about..."
-   → "...we talked to [Alice](../people/alice.md) about..."
+3. **Case A — Add cross-references.** Rewrite mention as markdown link:
    ```
-   Also enforce the iron law: append a back-link to the orphan's Timeline
-   section pointing to the page that mentions it:
-   ```text
-   - **YYYY-MM-DD** | Referenced in [page title](../path.md) — brief context ^[Source: ...]
+   "we talked to Alice" → "we talked to [Alice](../people/alice.md)"
    ```
-4. **Case B — Genuinely isolated.** Surface in the report with a one-line
-   rationale ("no inbound mentions, no referring entities found in current
-   vault"). Do NOT auto-delete. Human decides whether to keep, retire to
-   `archive/`, or ignore.
+   Enforce iron law: append back-link on the orphan's Timeline:
+   ```
+   - **YYYY-MM-DD** | Referenced in [page](../path.md) — context ^[Source: ...]
+   ```
+4. **Case B — Genuinely isolated.** Surface with one-line rationale. Do NOT
+   auto-delete. Human decides.
 
-Report per-orphan outcome: `fixed-A-linked-from-N-pages`, `flagged-case-B`,
-or `deferred-needs-human` for ambiguous cases.
+Report per-orphan: `fixed-A-linked-from-N`, `flagged-case-B`, or
+`deferred-ambiguous`.
 
-### Dead links
-Links pointing to pages that don't exist.
-- Remove dead links in gbrain
+#### Dead links (full-vault)
+Markdown links to pages that don't exist.
 
-### Missing cross-references
-Pages that mention entity names but don't have formal links.
-- Read compiled_truth from gbrain, extract entity mentions, create links in gbrain
-
-### Link graph extraction
-If link_count is 0 or low relative to page_count, run batch extraction:
 ```bash
-gbrain extract links --dir ~/brain
+gbrain doctor --json | jq '.checks[] | select(.name=="link_integrity")'
 ```
-This scans all markdown files for entity references, See Also sections, and
-frontmatter fields, then creates typed links in the database.
 
-### Link density health (new dimension)
-Compute `links / pages` and `timeline_entries / pages` ratios after extraction.
-Healthy brain targets: **≥ 2 links/page** and **≥ 0.3 timeline entries/page**
-for non-source pages. Low ratios indicate one of:
-
-- **Source-zone pages use wikilinks not markdown links.** Obsidian exports in
-  `sources/imports/` commonly use `[[name]]` wikilinks which gbrain's link
-  extractor ignores (extractor only parses `[text](path.md)`). Count is
-  accurate but semantically misleading for imports. Not fixable without
-  rewriting imports (which would violate sources/ immutability).
-- **Thin wiki pages without proper cross-references.** Compiled wiki pages
-  mention entities inline without linking them. Fix: enrich the pages with
-  proper markdown-link cross-refs. This is a back-link-iron-law violation.
-- **Pages lacking timeline sections.** Many compiled wiki pages only have
-  Compiled Truth without a Timeline below `---`. Fix: on next update, add
-  Timeline section with dated evidence entries.
-
-Report the ratios and flag any of the three causes that apply.
-
-### Timeline extraction
-If timeline_entry_count is 0, extract structured timeline from markdown:
+Or manually:
 ```bash
-gbrain extract timeline --dir ~/brain
+# For each [text](path.md), check the path resolves
+grep -rhoE '\]\([^)]+\.md\)' ~/brain-vault --include="*.md" \
+  --exclude-dir=.git --exclude-dir=.obsidian --exclude-dir=.claude \
+  --exclude-dir=sources | sed 's|^](\(.*\))$|\1|' | sort -u | \
+  while read link; do [ -f "$link" ] || echo "DEAD: $link"; done
 ```
-Parses `- **YYYY-MM-DD** | Source — Summary` and `### YYYY-MM-DD — Title` formats.
-Note: extracted entries improve structured queries (`gbrain timeline`), not vector search.
 
-### Autopilot check
-Verify autopilot is running:
+Fix: remove dead link or create the missing target page (via recompile,
+not this skill).
+
+#### Missing cross-references (incremental on CHANGED_PAGES)
+Pages that mention entity names but don't link them.
+
 ```bash
-gbrain autopilot --status
+# For each changed page, grep mentions against known entity slugs
+# If a mention has no corresponding markdown link, flag or add it
+while read page; do
+  # ...entity-name detection + link check logic
+done < /tmp/maintain-changed.txt
 ```
-If not running, install it:
+
+#### Link density health (full-vault stats)
+Compute `markdown_links / pages` and `timeline_entries / pages` ratios
+across agent-owned zones.
+
 ```bash
-gbrain autopilot --install --repo ~/brain
+pages=$(find people companies projects tools concepts ideas originals how-to \
+  media meetings decisions household personal places writing org -name "*.md" \
+  -type f 2>/dev/null | wc -l)
+links=$(grep -rhoE '\[[^]]+\]\([^)]+\.md\)' people/ companies/ projects/ \
+  tools/ concepts/ ideas/ originals/ how-to/ media/ meetings/ decisions/ \
+  household/ personal/ places/ writing/ org/ --include="*.md" 2>/dev/null | wc -l)
+timeline=$(grep -rhE '^- \*\*[0-9]{4}-[0-9]{2}-[0-9]{2}\*\* \|' people/ \
+  companies/ projects/ tools/ concepts/ ideas/ originals/ how-to/ media/ \
+  meetings/ decisions/ household/ personal/ places/ writing/ org/ \
+  --include="*.md" 2>/dev/null | wc -l)
+echo "Agent-zone links/page: $(python3 -c "print($links/$pages)")"
+echo "Agent-zone timeline/page: $(python3 -c "print($timeline/$pages)")"
 ```
-Autopilot runs sync, extract, and embed in a continuous loop with adaptive scheduling.
 
-### Back-link enforcement
-Check that the back-linking iron law is being followed:
-- For each recently updated page, check if entities mentioned in it have
-  corresponding back-links FROM those entity pages
-- A mention without a back-link is a broken brain
-- Fix: add the missing back-link to the entity's Timeline or See Also section
-- Format: `- **YYYY-MM-DD** | Referenced in [page title](path) -- brief context`
+Targets: ≥ 2 links/page, ≥ 0.3 timeline/page. Below target → flag for
+recompile/enrichment follow-through.
 
-### Filing rule violations
-Check for common misfiling patterns (see `skills/_brain-filing-rules.md`):
-- Content with clear primary subjects filed in `sources/` instead of the
-  appropriate directory (people/, companies/, concepts/, etc.)
-- Use gbrain search to find pages in `sources/` that reference specific
-  people, companies, or concepts -- these may be misfiled
-- Flag misfiled pages for review or re-filing
+#### Back-link iron law (incremental on CHANGED_PAGES)
+For each entity mentioned in a changed page, confirm the entity's page has
+a back-link to the changed page. Mentions without back-links violate the
+iron law and must be fixed.
 
-### Citation audit
-Spot-check pages for missing `^[...]` footnote citations:
-- Read 5-10 recently updated pages
-- Check that compiled truth (above the line) has inline citations
-- Check that timeline entries have source attribution
-- Flag pages where facts appear without provenance
+```bash
+# For each markdown link in changed pages, check the target has a back-ref
+# See skills/conventions/quality.md for back-link format
+```
 
-### Tag consistency
-Inconsistent tagging (e.g., "vc" vs "venture-capital", "ai" vs "artificial-intelligence").
-- Standardize to the most common variant using gbrain tag operations
+#### Citation audit (incremental on CHANGED_PAGES)
+For each changed page, verify every non-trivial fact carries an inline
+`^[Source: ...]` footnote (or `## Sources` section for compiled truth).
+See `skills/conventions/quality.md`.
 
-### Embedding freshness
-Chunks without embeddings, or chunks embedded with an old model.
-- For large embedding refreshes (>1000 chunks), use nohup:
-  `nohup gbrain embed refresh > /tmp/gbrain-embed.log 2>&1 &`
-- Then check progress: `tail -1 /tmp/gbrain-embed.log`
+Fix: if a fact lacks a citation AND the source is obvious (recent edit,
+known origin), add one. Otherwise flag for human confirmation.
 
-### Security (RLS verification)
-Run `gbrain doctor --json` and check the RLS status.
-All tables should show RLS enabled. If not, run `gbrain init` again.
+#### Wikilink schema violations (incremental on CHANGED_PAGES)
+Agent-owned pages should use markdown links for entity refs, not wikilinks
+(K2_SCHEMA §4). Run the converter:
 
-### Schema health
-Check that the schema version is up to date. `gbrain doctor --json` reports
-the current version vs expected. If behind, `gbrain init` runs migrations
-automatically.
+```bash
+python3 ~/gbrain-k2/scripts/fix-wikilinks.py --dry-run
+```
 
-### File storage health
-Check the integrity of stored files and redirect pointers:
-- Run `gbrain files verify` to check all DB records have valid data
-- Run `gbrain files status` to see migration state (local, mirrored, redirected)
-- Check for orphan `.redirect.yaml` pointers that reference missing storage files
-- Check for large binary files (>= 100 MB) still in git that should be in cloud storage
-- If storage backend is configured: verify redirect pointers resolve (download test)
+If changes are proposed, review and run without `--dry-run`. Date stubs
+`[[YYYY-MM-DD]]` are preserved.
 
-### Open threads
-Timeline items older than 30 days with unresolved action items.
-- Flag for review
+#### Filing rule violations (incremental on CHANGED_PAGES)
+Check for misfiled content (see `skills/_brain-filing-rules.md`). Mostly
+an issue on new pages — existing misfilings are historical artifacts.
 
-## Benchmark Testing
+#### Tag consistency (full-vault)
+```bash
+grep -rhE '^tags:' --include="*.md" people/ companies/ projects/ tools/ \
+  concepts/ ideas/ originals/ how-to/ media/ meetings/ decisions/ 2>/dev/null \
+  | sort | uniq -c | sort -rn | head -20
+```
 
-Periodically verify search quality hasn't regressed. Run a battery of test
-queries across difficulty tiers:
+Standardize synonymous tags (e.g., `vc` vs `venture-capital`). Empty `tags:`
+frontmatter fields are OK.
 
-- **Tier 1 (entity lookup):** known names -- should always resolve
-- **Tier 2 (topic recall):** concepts, topics -- keyword search should handle
-- **Tier 3 (semantic):** queries with no exact keyword match -- needs embeddings
-- **Tier 4 (cross-domain):** relational/connection queries -- only semantic handles
+#### Embedding freshness (full-vault)
+```bash
+gbrain doctor --json | jq '.checks[] | select(.name=="embeddings")'
+```
 
-Compare results from `gbrain search` (keyword) vs `gbrain query` (hybrid).
-Quality matters more than speed (2.5s right > 200ms wrong).
-
-When to run benchmarks:
-- After major brain imports or re-imports
-- After gbrain version upgrades
-- After embedding regeneration
-- Monthly to track quality drift
-
-## Heartbeat Integration
-
-For production agents running on a schedule, integrate gbrain health checks into
-your operational heartbeat.
-
-### On every heartbeat (hourly or per-session)
-
-Run `gbrain doctor --json` and check for degradation. Report any failing checks
-to the user. Key signals: connection health, schema version, RLS status, embedding
-staleness.
-
-### Weekly maintenance
-
-Run `gbrain embed --stale` to refresh embeddings for pages that have changed since
-their last embedding. For large brains (>5000 pages), run this with nohup:
+If coverage <95% or missing count growing, run:
 ```bash
 nohup gbrain embed --stale > /tmp/gbrain-embed.log 2>&1 &
 ```
 
-### Daily verification
+#### RLS verification (full-vault)
+PGLite: N/A. Postgres: check `gbrain doctor --json` for RLS status.
 
-Verify sync is running: check `gbrain stats` and confirm `last_sync` is within
-the last 24 hours. If sync has stopped, the brain is drifting from the repo.
+#### Schema health (full-vault)
+```bash
+gbrain doctor --json | jq '.checks[] | select(.name=="schema_version")'
+```
 
-### Stale compiled truth detection
+If behind, `gbrain init` migrates automatically.
 
-Flag pages where compiled truth is >30 days old but the timeline has recent entries.
-This means new evidence exists that hasn't been synthesized. These pages need a
-compiled truth rewrite (see the maintain workflow above).
+#### File storage health (full-vault)
+```bash
+gbrain files verify
+```
 
-## Report Storage
+Check orphan `.redirect.yaml` pointers and large binaries that should
+migrate to cloud storage.
 
-After maintenance runs, save a report:
-- Health check results (before/after scores for each dimension)
-- Back-link violations found and fixed
-- Filing rule violations found
-- Citation gaps flagged
-- Benchmark results (if run)
-- Outstanding issues requiring user attention
+#### Open threads (full-vault)
+Timeline items 30+ days old with `open`, `pending`, `todo`, `awaiting` or
+similar unresolved markers. Flag for human review.
 
-This creates an audit trail for brain health over time.
+### Phase 4: Save checkpoint + log
 
-## Quality Rules
-
-- Never delete pages without confirmation
-- Log all changes via timeline entries
-- Check gbrain health before and after to show improvement
-
-## Anti-Patterns
-
-- Fixing pages without reading them first -- you must understand context before editing
-- Silently skipping dimensions -- every dimension must be checked and reported, even if clean
-- Deleting orphan pages without checking if they should be linked instead
-- Running embedding refresh during peak usage hours
-- Batch-fixing back-links without verifying the relationship is real
-- Marking a dimension "clean" without actually querying it
-- Rewriting compiled truth without reading the full timeline first
-- Removing tags without checking if other pages use the same tag consistently
+```bash
+git rev-parse HEAD > ~/.gbrain/maintain-checkpoint.txt
+echo "$(date -Iminutes) | maintain | health=$SCORE, N issues flagged, M fixed" \
+  >> ~/brain-vault/log.md
+```
 
 ## Output Format
 
-The maintenance report follows this structure:
-
 ```
-## Brain Health Report — YYYY-MM-DD
+## Brain Health Report — YYYY-MM-DD HH:MM
 
-| Dimension           | Issues Found | Fixed | Remaining |
-|----------------------|-------------|-------|-----------|
-| Stale pages          | N           | N     | N         |
-| Orphan pages         | N           | N     | N         |
-| Dead links           | N           | N     | N         |
-| Missing cross-refs   | N           | N     | N         |
-| Back-link violations | N           | N     | N         |
-| Citation gaps        | N           | N     | N         |
-| Filing violations    | N           | N     | N         |
-| Tag inconsistencies  | N           | N     | N         |
-| Embedding staleness  | N           | N     | N         |
-| Security (RLS)       | N           | N     | N         |
-| Schema health        | N           | N     | N         |
-| File storage         | N           | N     | N         |
-| Open threads         | N           | N     | N         |
+Checkpoint: <old> → <new>
+Changed pages since last maintain: N
 
-### Details
-[Per-dimension breakdown with specific pages and actions taken]
+### Doctor
+brain_score: X/100
+warnings: ...
+ok: ...
 
-### Benchmark Results (if run)
-[Tier 1-4 query results with pass/fail]
+### Dimensions
 
-### Outstanding Issues
-[Items requiring user attention or confirmation]
+| Dimension            | Scope       | Found | Fixed | Remaining |
+|----------------------|-------------|-------|-------|-----------|
+| Stale pages          | full-vault  | N     | N     | N         |
+| Orphan pages         | full-vault  | N     | N     | N         |
+| Dead links           | full-vault  | N     | N     | N         |
+| Missing cross-refs   | incremental | N     | N     | N         |
+| Link density         | stats       | N/A   | N/A   | N/A       |
+| Back-link violations | incremental | N     | N     | N         |
+| Citation gaps        | incremental | N     | N     | N         |
+| Wikilink violations  | incremental | N     | N     | N         |
+| Filing violations    | incremental | N     | N     | N         |
+| Tag inconsistencies  | full-vault  | N     | N     | N         |
+| Embedding staleness  | full-vault  | N     | N     | N         |
+| Schema health        | full-vault  | OK    | —     | —         |
+| File storage         | full-vault  | N     | N     | N         |
+| Open threads         | full-vault  | N     | N     | N         |
+
+### Outstanding issues (requires human attention)
+...
 ```
 
-## Tools Used
+## Interactions
 
-- Check gbrain health (get_health)
-- List pages in gbrain with filters (list_pages)
-- Read a page from gbrain (get_page)
-- Check backlinks in gbrain (get_backlinks)
-- Link entities in gbrain (add_link)
-- Remove links in gbrain (remove_link)
-- Tag a page in gbrain (add_tag)
-- Remove a tag in gbrain (remove_tag)
-- View timeline in gbrain (get_timeline)
+- `recompile` — runs independently on its own schedule. Produces new/
+  updated wiki pages that maintain audits on its next run (changed-pages
+  diff picks them up automatically).
+- `zettel-status-check` — zettel archival lifecycle. Maintain doesn't
+  touch archival decisions.
+
+## Anti-Patterns
+
+- **Compiling raw content.** That's `recompile`'s job. If you find yourself
+  about to create a wiki page from a zettel or source, stop and invoke
+  recompile instead.
+- **Reporting without fixing where fixing is mechanical.** Back-link
+  backfills, wikilink → markdown conversions, and citation additions on
+  obvious sources should be DONE, not just listed.
+- **Deleting orphan pages without human confirmation.** Many orphans are
+  just missing links. Remediate (case A) before suggesting deletion (case B).
+- **Scanning the full vault for every dimension.** Incremental dimensions
+  (citation audit, wikilink check, etc.) scan only changed pages. Full-vault
+  is reserved for dimensions that truly need it.
+- **Advancing the checkpoint on partial success.** If a dimension errors,
+  leave the checkpoint so the next run re-scans.

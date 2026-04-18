@@ -73,8 +73,9 @@ This is the dispatcher. Skills are the implementation. **Read the skill file bef
 
 | Trigger | Skill |
 |---------|-------|
-| New or updated file in `human/zettel/` or `sources/`, "compile zettels", "recompile brain" | `skills/maintain/SKILL.md` (Phase 1: Content Recompile) |
+| New or updated file in `human/zettel/` or `sources/`, "compile zettels", "recompile brain" | `skills/recompile/SKILL.md` |
 | "Check zettel archival candidates", "archive zettel X", human manually moved a zettel to archive | `skills/zettel-status-check/SKILL.md` |
+| "Brain health", "nightly maintenance", "citation audit", "fix orphans" | `skills/maintain/SKILL.md` |
 
 ## Identity & access (always-on)
 
