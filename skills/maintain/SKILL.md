@@ -193,6 +193,11 @@ Report the count and classify: `not-orphan` (MD>0), `wikilink-only`
 the cron iteration budget. Report the count; the human can ask Hermes
 to fix specific orphans interactively when needed.
 
+When doing interactive orphan cleanup after a maintain run, work in
+small high-confidence batches (about 5–10 pages), prefer exact-name
+mentions already present in agent-owned pages, and re-scan inbound links
+plus the total orphan count after each batch before continuing.
+
 #### Dead links (full-vault)
 Markdown links to pages that don't exist.
 
