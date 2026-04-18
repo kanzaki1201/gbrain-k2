@@ -35,6 +35,17 @@ Compile daily briefing with meeting context, open threads, stale docs, and wiki-
 
 ## Phases
 
+0. **Today's journal backlinks.** Check what links to today's date:
+   ```bash
+   TODAY=$(date +%Y-%m-%d)
+   grep -rl "\[\[$TODAY\]\]" ~/brain-vault --include="*.md" \
+     --exclude-dir=.git --exclude-dir=.obsidian --exclude-dir=.claude
+   ```
+   Every page with a `[[YYYY-MM-DD]]` date stub pointing to today is
+   something that was scheduled, started, due, or noted for today.
+   Read each matching page's relevant section to pull context. This is
+   the same signal Obsidian's backlinks panel shows for the daily note.
+
 1. **Today's meetings.** For each meeting on the calendar:
    - Search gbrain for each participant by name
    - Read their pages from gbrain for compiled_truth context
@@ -78,6 +89,17 @@ Run these queries to populate the briefing sections:
 - `gbrain query "meetings this week"` -- recent meeting pages with insights
 - `gbrain query "pending commitments follow-ups"` -- open threads and action items
 - `gbrain search --type person --sort updated --limit 10` -- people in play
+
+### Local-vault fallback rules
+
+Use these when the brain schema is sparse, the query results are noisy, or the local vault uses different page types than the idealized examples above.
+
+- `gbrain list --type meeting --limit N` works for meeting pages in the current local vault. Use it before assuming there are no meetings.
+- Some local vaults use category names like `people/` and `companies/` as directories while `gbrain list --type person` or `--type company` may return nothing. When this happens, read directly from `~/brain-vault/people/*.md`, `~/brain-vault/projects/*.md`, and sibling category dirs instead of trusting the type filter.
+- If `gbrain query "active deals status"` returns irrelevant matches, treat `projects/*.md` with `status: doing|active|open|paused|dormant` as the active-workstream section and cite each page directly.
+- For recent changes, prefer `log.md` plus file mtimes in agent-owned zones. This gives a much cleaner 24h change view than generic semantic search.
+- For time-sensitive threads, extract explicit deadlines from canonical project pages first. In the current local vault, tax/payment deadlines live in project pages and are more reliable than generic follow-up search.
+- If `human/journals/YYYY-MM-DD.md` exists but is still a placeholder or blank, state that today's calendar/meeting capture is empty instead of inventing schedule context.
 
 ## Output Format
 
