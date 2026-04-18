@@ -96,10 +96,10 @@ Output format per line: `<STATUS>\t<path>` where STATUS is `A` (added),
 | Status | Path pattern | Action |
 |--------|-------------|--------|
 | `A` | `human/zettel/<name>.md` | Compile into wiki: apply `_brain-filing-rules.md` + `repo-architecture/SKILL.md`, decide shape (wholesale / multi-target / unclear), create or update wiki page(s), cite zettel in `## Sources`, add timeline entry, enforce back-links. |
-| `A` | `sources/**/*.md` | **Do not auto-compile.** Sources are passive reference per K2_SCHEMA §1. Add to report as "new source available, awaits explicit ingest." Skip. |
+| `A` | `sources/**/*.md` | Compile into wiki: route by content type (clipping/article → idea-ingest pattern; media/pdf → media-ingest pattern; meeting transcript → meeting-ingestion pattern). Create a PARALLEL wiki page that cites the source by markdown link. The source file itself is immutable and stays in `sources/` per K2_SCHEMA §1 — never move it, never modify it. |
 | `A` | `human/<other>` | Flag for human review. Human owns this zone; agent should not guess. |
 | `M` | `human/zettel/<name>.md` | Recompile: find citing wiki pages (`grep -rl "human/zettel/<name>"`), rewrite Compiled Truth based on current zettel content, append timeline entry `- **YYYY-MM-DD** \| zettel updated ^[Source: human/zettel/<name>.md, YYYY-MM-DD]`. Do NOT modify the zettel. |
-| `M` | `sources/**/*.md` | Only recompile if wiki pages cite this source. Skip otherwise. |
+| `M` | `sources/**/*.md` | Recompile wiki pages that cite this source. If no wiki page exists, treat like `A` and compile. Do NOT modify the source. |
 | `D` | `human/zettel/<name>.md` | Check if file moved to `human/zettel/archive/`. If yes → hand off to `zettel-status-check` for citation rewrite. If truly deleted (not in archive either) → flag citing wiki pages as orphan sources, surface for human review. |
 | `D` | `sources/**/*.md` | Flag citing wiki pages as orphan sources. Do not auto-delete. |
 | `R` | any | Treat as `D <old>` + `A <new>`. |
@@ -154,6 +154,25 @@ gbrain extract links --dir ~/brain
 ```
 This scans all markdown files for entity references, See Also sections, and
 frontmatter fields, then creates typed links in the database.
+
+### Link density health (new dimension)
+Compute `links / pages` and `timeline_entries / pages` ratios after extraction.
+Healthy brain targets: **≥ 2 links/page** and **≥ 0.3 timeline entries/page**
+for non-source pages. Low ratios indicate one of:
+
+- **Source-zone pages use wikilinks not markdown links.** Obsidian exports in
+  `sources/imports/` commonly use `[[name]]` wikilinks which gbrain's link
+  extractor ignores (extractor only parses `[text](path.md)`). Count is
+  accurate but semantically misleading for imports. Not fixable without
+  rewriting imports (which would violate sources/ immutability).
+- **Thin wiki pages without proper cross-references.** Compiled wiki pages
+  mention entities inline without linking them. Fix: enrich the pages with
+  proper markdown-link cross-refs. This is a back-link-iron-law violation.
+- **Pages lacking timeline sections.** Many compiled wiki pages only have
+  Compiled Truth without a Timeline below `---`. Fix: on next update, add
+  Timeline section with dated evidence entries.
+
+Report the ratios and flag any of the three causes that apply.
 
 ### Timeline extraction
 If timeline_entry_count is 0, extract structured timeline from markdown:
