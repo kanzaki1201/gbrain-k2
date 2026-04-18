@@ -23,7 +23,7 @@ Ingest meetings, articles, media, documents, and conversations into the brain.
 
 ## Contract
 
-- Every fact written to a brain page carries an inline `[Source: ...]` citation with date and provenance.
+- Every fact written to a brain page carries an inline `^[...]` footnote citation with date and provenance.
 - Every entity mention creates a back-link from the entity's page to the page mentioning them (Iron Law).
 - Raw sources are preserved for provenance via `gbrain files upload-raw` with automatic size routing.
 - State sections are rewritten with current best understanding, never appended to.
@@ -37,14 +37,15 @@ broken brain. See `skills/_brain-filing-rules.md` for format.
 
 ## Citation Requirements (MANDATORY)
 
-Every fact written to a brain page must carry an inline `[Source: ...]` citation.
+Every fact must carry an inline `^[...]` footnote citation with markdown links
+to source pages. See `skills/conventions/quality.md` for full format reference.
 
-- **User's statements:** `[Source: User, {context}, YYYY-MM-DD]`
-- **Meeting data:** `[Source: Meeting "{title}", YYYY-MM-DD]`
-- **Email/message:** `[Source: email from {name} re: {subject}, YYYY-MM-DD]`
-- **Web content:** `[Source: {publication}, {URL}, YYYY-MM-DD]`
-- **Social media:** `[Source: X/@handle, YYYY-MM-DD](URL)` (include link)
-- **Synthesis:** `[Source: compiled from {sources}]`
+- **User's statements:** `^[User, YYYY-MM-DD]`
+- **Meeting data:** `^[[Meeting title](../meetings/slug.md), YYYY-MM-DD]`
+- **Email/message:** `^[email from [name](../people/slug.md) re: {subject}, YYYY-MM-DD]`
+- **Web content:** `^[[publication](URL), YYYY-MM-DD]`
+- **Social media:** `^[[@handle](URL), YYYY-MM-DD]`
+- **Synthesis:** `^[compiled from [source1](../path.md), [source2](../path.md)]`
 
 ## Phases
 
@@ -262,7 +263,7 @@ up 100 bad pages is enormous.
 - Timeline entries are reverse-chronological (newest first)
 - Every person/company mentioned gets a page if notable (see filing rules)
 - Link types: knows, works_at, invested_in, founded, met_at, discussed
-- Source attribution: every timeline entry includes [Source: ...] citation
+- Source attribution: every timeline entry includes ^[...] footnote citation
 - Back-links: every entity mention creates a back-link (Iron Law)
 - Filing: file by primary subject, not format or source (see filing rules)
 

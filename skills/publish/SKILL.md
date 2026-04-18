@@ -70,7 +70,8 @@ The publish command automatically removes all private/internal data:
 | Stripped | Example | Why |
 |---------|---------|-----|
 | YAML frontmatter | `title:`, `type:`, `tags:` | Internal metadata |
-| `[Source: ...]` citations | All formats | Provenance is internal |
+| `^[...]` footnote citations | All formats | Provenance is internal |
+| `[Source: ...]` citations | Legacy format | Provenance is internal |
 | Confirmation numbers | `ABC123DEF` -> "on file" | PII/booking data |
 | Brain cross-links | `[Jane](../people/jane.md)` -> `Jane` | Internal paths |
 | Timeline section | Everything below `---` / `## Timeline` | Raw evidence log |

@@ -139,12 +139,14 @@ An unlinked mention is a broken brain. The graph is the intelligence.
 
 ## Citation Requirements (MANDATORY)
 
-Every fact written to a brain page must carry an inline `[Source: ...]` citation.
+Every fact written to a brain page must carry an inline `^[...]` footnote
+citation. Include markdown links to source pages when they exist in the brain.
+See `skills/conventions/quality.md` for the full format reference.
 
 Three formats:
-- **Direct attribution:** `[Source: User, {context}, YYYY-MM-DD]`
-- **API/external:** `[Source: {provider}, YYYY-MM-DD]` or `[Source: {publication}, {URL}]`
-- **Synthesis:** `[Source: compiled from {list of sources}]`
+- **Direct attribution:** `^[User, YYYY-MM-DD]`
+- **API/external:** `^[{provider} enrichment, YYYY-MM-DD]` or `^[[publication](URL), YYYY-MM-DD]`
+- **Synthesis:** `^[compiled from [source1](../path.md), [source2](../path.md)]`
 
 Source precedence (highest to lowest):
 1. User's direct statements (highest authority)

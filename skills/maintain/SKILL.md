@@ -110,7 +110,7 @@ Check for common misfiling patterns (see `skills/_brain-filing-rules.md`):
 - Flag misfiled pages for review or re-filing
 
 ### Citation audit
-Spot-check pages for missing `[Source: ...]` citations:
+Spot-check pages for missing `^[...]` footnote citations:
 - Read 5-10 recently updated pages
 - Check that compiled truth (above the line) has inline citations
 - Check that timeline entries have source attribution

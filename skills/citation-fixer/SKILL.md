@@ -3,7 +3,7 @@ name: citation-fixer
 version: 1.0.0
 description: |
   Audit and fix citation formatting across brain pages. Ensures every fact has
-  an inline [Source: ...] citation matching the standard format.
+  an inline ^[...] footnote citation matching the standard format.
 triggers:
   - "fix citations"
   - "citation audit"
@@ -28,7 +28,7 @@ This skill guarantees:
 
 ## Phases
 
-1. **Scan pages.** List pages and read each one, checking for inline `[Source: ...]` citations.
+1. **Scan pages.** List pages and read each one, checking for inline `^[...]` footnote citations and legacy `[Source: ...]` format.
 2. **Identify issues:**
    - Facts without any citation
    - Citations missing date

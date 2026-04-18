@@ -30,7 +30,8 @@ export function makeShareable(content: string): string {
   // Remove YAML frontmatter
   clean = clean.replace(/^---[\s\S]*?---\n*/, '');
 
-  // Remove [Source: ...] citations (all formats)
+  // Remove inline footnote citations ^[...] and legacy [Source: ...] format
+  clean = clean.replace(/\s*\^\[[^\]]*\]/g, '');
   clean = clean.replace(/\s*\[Source:[^\]]*\]/g, '');
 
   // Remove confirmation numbers

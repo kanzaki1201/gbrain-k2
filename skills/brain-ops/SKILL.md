@@ -33,7 +33,7 @@ This skill guarantees:
 - Brain is checked BEFORE any external API call (brain-first lookup)
 - Every inbound signal triggers the READ → ENRICH → WRITE loop
 - Every outbound response checks brain for relevant context
-- Source attribution on every fact written (inline `[Source: ...]` citations)
+- Source attribution on every fact written (inline `^[...]` footnote citations)
 - User's direct statements are highest-authority data
 - Back-links maintained on every brain write (Iron Law)
 
@@ -68,7 +68,7 @@ Every message, meeting, email, or conversation that references a person or compa
 5. **Create if missing** — if notable and no page exists, create via enrich skill
 
 **User's direct statements are the highest-value data source.** Write them to brain
-pages immediately with attribution `[Source: User, YYYY-MM-DD]`.
+pages immediately with attribution `^[User, YYYY-MM-DD]`.
 
 ### Phase 3: On Every Outbound Response (READ → PULL → RESPOND)
 
@@ -104,7 +104,7 @@ The output is updated brain pages and enriched responses.
 
 - Answering questions about people/companies without checking the brain first
 - Using external APIs before checking the brain
-- Writing facts without inline `[Source: ...]` citations
+- Writing facts without inline `^[...]` footnote citations
 - Blocking the response to do enrichment
 - Overwriting user's direct statements with lower-authority sources
 - Creating brain pages for non-notable entities

@@ -4,14 +4,20 @@ Cross-cutting quality rules for all brain-writing skills.
 
 ## Citations (MANDATORY)
 
-Every fact written to a brain page must carry an inline `[Source: ...]` citation.
+Every fact written to a brain page must carry an inline footnote citation
+using Obsidian's `^[...]` syntax. Citations should include markdown links
+to source pages when a brain page exists for the source.
 
-- **User's statements:** `[Source: User, {context}, YYYY-MM-DD]`
-- **Meeting data:** `[Source: Meeting "{title}", YYYY-MM-DD]`
-- **Email/message:** `[Source: email from {name} re: {subject}, YYYY-MM-DD]`
-- **Web content:** `[Source: {publication}, {URL}, YYYY-MM-DD]`
-- **Social media:** `[Source: X/@handle, YYYY-MM-DD](URL)`
-- **Synthesis:** `[Source: compiled from {sources}]`
+- **User's statements:** `^[User, YYYY-MM-DD]`
+- **Meeting data:** `^[[Meeting title](../meetings/slug.md), YYYY-MM-DD]`
+- **Email/message:** `^[email from [name](../people/slug.md) re: {subject}, YYYY-MM-DD]`
+- **Web content:** `^[[publication](URL), YYYY-MM-DD]`
+- **Social media:** `^[[@handle](URL), YYYY-MM-DD]`
+- **Synthesis:** `^[compiled from [source1](../path.md), [source2](../path.md)]`
+- **API enrichment:** `^[{provider} enrichment, YYYY-MM-DD]`
+
+Links inside citations feed the knowledge graph and allow tracing provenance
+by clicking through. When no brain page exists for a source, use plain text.
 
 ### Source precedence (highest to lowest)
 

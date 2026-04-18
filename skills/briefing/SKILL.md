@@ -27,7 +27,7 @@ Compile daily briefing with meeting context, open threads, stale docs, and wiki-
 
 ## Contract
 
-- Every fact in the briefing includes an inline `[Source: slug, updated DATE]` citation.
+- Every fact in the briefing includes an inline `^[[slug](../category/slug.md), updated DATE]` footnote citation.
 - Meeting participants are resolved against the brain; gaps are explicitly flagged.
 - Active deals and action items include deadlines and recency context.
 - The briefing is read-only: no brain pages are created or modified unless the user explicitly requests it.
@@ -112,13 +112,13 @@ mentioned must have a back-link from their page. See `skills/_brain-filing-rules
 ## Citation in Briefings
 
 When presenting facts from brain pages, include inline citations:
-- "Jane is CTO of Acme [Source: people/jane-doe, updated 2026-04-01]"
+- "Jane is CTO of Acme^[[jane-doe](../people/jane-doe.md), updated 2026-04-01]"
 - This lets the user trace any claim back to the brain page and assess freshness
 
 ## Anti-Patterns
 
 - **Briefing without brain queries.** Never generate a briefing from memory alone; always query gbrain for current data.
-- **Uncited facts.** Every claim must include `[Source: slug, updated DATE]`. A fact without a citation is unverifiable.
+- **Uncited facts.** Every claim must include a `^[...]` footnote citation. A fact without a citation is unverifiable.
 - **Stale context presented as current.** If a page hasn't been updated in 30+ days, flag the staleness explicitly rather than presenting it as fresh.
 - **Modifying brain pages unprompted.** The briefing is read-only by default. Do not create or update pages unless the user explicitly requests it.
 - **Ignoring coverage gaps.** When a meeting participant has no brain page, say so. Silence about gaps hides ignorance.

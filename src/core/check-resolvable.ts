@@ -139,7 +139,7 @@ function extractTriggers(skillContent: string): string[] {
 /** Scan for inlined cross-cutting rules that should reference convention files. */
 const CROSS_CUTTING_PATTERNS = [
   { pattern: /iron\s*law.*back-?link/i, convention: 'conventions/quality.md', label: 'Iron Law back-linking' },
-  { pattern: /citation.*format.*\[Source:/i, convention: 'conventions/quality.md', label: 'citation format rules' },
+  { pattern: /citation.*format.*(\^\[|\[Source:)/i, convention: 'conventions/quality.md', label: 'citation format rules' },
   { pattern: /notability.*gate/i, convention: 'conventions/quality.md', label: 'notability gate' },
 ];
 

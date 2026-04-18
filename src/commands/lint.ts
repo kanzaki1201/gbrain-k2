@@ -112,14 +112,20 @@ export function lintContent(content: string, filePath: string): LintIssue[] {
     });
   }
 
-  // Rule: Broken citations (unclosed [Source: ...)
+  // Rule: Broken citations (unclosed ^[... or legacy [Source: ...)
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    // Open [Source: without closing ]
+    if (line.match(/\^\[[^\]]*$/) && !(i + 1 < lines.length && lines[i + 1].match(/^\s*[^\[]*\]/))) {
+      issues.push({
+        file: filePath, line: i + 1, rule: 'broken-citation',
+        message: 'Unclosed ^[...] footnote citation',
+        fixable: false,
+      });
+    }
     if (line.match(/\[Source:[^\]]*$/) && !(i + 1 < lines.length && lines[i + 1].match(/^\s*[^\[]*\]/))) {
       issues.push({
         file: filePath, line: i + 1, rule: 'broken-citation',
-        message: 'Unclosed [Source: ...] citation',
+        message: 'Unclosed [Source: ...] citation (legacy format)',
         fixable: false,
       });
     }

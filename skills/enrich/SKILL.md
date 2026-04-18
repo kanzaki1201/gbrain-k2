@@ -51,12 +51,13 @@ they building, what makes them tick, where are they headed.
 
 ## Citation Requirements (MANDATORY)
 
-Every fact must carry an inline `[Source: ...]` citation.
+Every fact must carry an inline `^[...]` footnote citation with markdown links
+to source pages. See `skills/conventions/quality.md` for full format reference.
 
 Three formats:
-- **Direct attribution:** `[Source: User, {context}, YYYY-MM-DD]`
-- **API/external:** `[Source: {provider} enrichment, YYYY-MM-DD]`
-- **Synthesis:** `[Source: compiled from {list of sources}]`
+- **Direct attribution:** `^[User, YYYY-MM-DD]`
+- **API/external:** `^[{provider} enrichment, YYYY-MM-DD]`
+- **Synthesis:** `^[compiled from [source1](../path.md), [source2](../path.md)]`
 
 Source precedence (highest to lowest):
 1. User's direct statements
@@ -244,8 +245,8 @@ Active conversations, pending items, things to follow up on.
 ---
 
 ## Timeline
-Reverse chronological. Every entry has a date and [Source: ...] citation.
-- **YYYY-MM-DD** | Event description [Source: ...]
+Reverse chronological. Every entry has a date and ^[...] citation.
+- **YYYY-MM-DD** | Event description ^[...]
 ```
 
 #### Company page template
@@ -272,7 +273,7 @@ Active items, pending decisions, things to track.
 ---
 
 ## Timeline
-- **YYYY-MM-DD** | Event description [Source: ...]
+- **YYYY-MM-DD** | Event description ^[...]
 ```
 
 ### Step 7: Cross-reference
@@ -322,7 +323,7 @@ This creates an audit trail for brain enrichment over time.
 An enriched person page contains:
 - **Frontmatter** with type, tags, company, relationship, and contact fields
 - **Executive summary** (1 paragraph: how you know them, why they matter, relationship state)
-- **State** section with hard facts and inline `[Source: ...]` citations
+- **State** section with hard facts and inline `^[...]` citations
 - **Texture sections** (What They Believe, What They're Building, What Motivates Them, Hobby Horses)
 - **Assessment** with trajectory read
 - **Relationship** history and contact info
