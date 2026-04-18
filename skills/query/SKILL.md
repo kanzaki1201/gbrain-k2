@@ -62,7 +62,7 @@ This skill guarantees:
 
 Answers should include:
 - Direct response to the question
-- Citations: "According to ^[[jane-doe](../people/jane-doe.md), compiled truth]..."
+- Citations: "According to ^[Source: [jane-doe](../people/jane-doe.md), compiled truth]..."
 - Gap flags: "The brain doesn't have information on X"
 - Conflict notes when sources disagree
 
@@ -102,7 +102,7 @@ pick one.
 ## Citation in Answers
 
 When referencing brain pages in your answer, propagate inline citations:
-- Cite the page: "According to ^[[jane-doe](../people/jane-doe.md), compiled truth]..."
+- Cite the page: "According to ^[Source: [jane-doe](../people/jane-doe.md), compiled truth]..."
 - When brain pages have inline `^[...]` footnote citations, propagate them so
   the user can trace facts to their origin
 - When you synthesize across multiple pages, cite all sources

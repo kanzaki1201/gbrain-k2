@@ -27,7 +27,7 @@ Compile daily briefing with meeting context, open threads, stale docs, and wiki-
 
 ## Contract
 
-- Every fact in the briefing includes an inline `^[[slug](../category/slug.md), updated DATE]` footnote citation.
+- Every fact in the briefing includes an inline `^[Source: [slug](../category/slug.md), updated DATE]` footnote citation.
 - Meeting participants are resolved against the brain; gaps are explicitly flagged.
 - Active deals and action items include deadlines and recency context.
 - The briefing is read-only: no brain pages are created or modified unless the user explicitly requests it.
@@ -112,7 +112,7 @@ mentioned must have a back-link from their page. See `skills/_brain-filing-rules
 ## Citation in Briefings
 
 When presenting facts from brain pages, include inline citations:
-- "Jane is CTO of Acme^[[jane-doe](../people/jane-doe.md), updated 2026-04-01]"
+- "Jane is CTO of Acme^[Source: [jane-doe](../people/jane-doe.md), updated 2026-04-01]"
 - This lets the user trace any claim back to the brain page and assess freshness
 
 ## Anti-Patterns

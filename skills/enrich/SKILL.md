@@ -55,9 +55,9 @@ Every fact must carry an inline `^[...]` footnote citation with markdown links
 to source pages. See `skills/conventions/quality.md` for full format reference.
 
 Three formats:
-- **Direct attribution:** `^[User, YYYY-MM-DD]`
-- **API/external:** `^[{provider} enrichment, YYYY-MM-DD]`
-- **Synthesis:** `^[compiled from [source1](../path.md), [source2](../path.md)]`
+- **Direct attribution:** `^[Source: User, YYYY-MM-DD]`
+- **API/external:** `^[Source: {provider} enrichment, YYYY-MM-DD]`
+- **Synthesis:** `^[Source: compiled from [source1](../path.md), [source2](../path.md)]`
 
 Source precedence (highest to lowest):
 1. User's direct statements

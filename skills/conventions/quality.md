@@ -8,13 +8,13 @@ Every fact written to a brain page must carry an inline footnote citation
 using Obsidian's `^[...]` syntax. Citations should include markdown links
 to source pages when a brain page exists for the source.
 
-- **User's statements:** `^[User, YYYY-MM-DD]`
-- **Meeting data:** `^[[Meeting title](../meetings/slug.md), YYYY-MM-DD]`
-- **Email/message:** `^[email from [name](../people/slug.md) re: {subject}, YYYY-MM-DD]`
-- **Web content:** `^[[publication](URL), YYYY-MM-DD]`
-- **Social media:** `^[[@handle](URL), YYYY-MM-DD]`
-- **Synthesis:** `^[compiled from [source1](../path.md), [source2](../path.md)]`
-- **API enrichment:** `^[{provider} enrichment, YYYY-MM-DD]`
+- **User's statements:** `^[Source: User, YYYY-MM-DD]`
+- **Meeting data:** `^[Source: [Meeting title](../meetings/slug.md), YYYY-MM-DD]`
+- **Email/message:** `^[Source: email from [name](../people/slug.md) re: {subject}, YYYY-MM-DD]`
+- **Web content:** `^[Source: [publication](URL), YYYY-MM-DD]`
+- **Social media:** `^[Source: [@handle](URL), YYYY-MM-DD]`
+- **Synthesis:** `^[Source: compiled from [source1](../path.md), [source2](../path.md)]`
+- **API enrichment:** `^[Source: {provider} enrichment, YYYY-MM-DD]`
 
 Links inside citations feed the knowledge graph and allow tracing provenance
 by clicking through. When no brain page exists for a source, use plain text.
