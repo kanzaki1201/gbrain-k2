@@ -55,6 +55,9 @@ describe('runLint config-backed excludes', () => {
     writeMarkdown(join(repo, 'projects', 'good.md'), '---\ntitle: Good\ntype: project\ncreated: 2026-04-17\n---\n');
     writeMarkdown(join(repo, 'sources', 'bad.md'), 'no frontmatter\n');
     writeMarkdown(join(repo, 'human', 'bad.md'), 'no frontmatter\n');
+    writeMarkdown(join(repo, 'RESOLVER.md'), 'no frontmatter\n');
+    writeMarkdown(join(repo, 'log.md'), 'no frontmatter\n');
+    writeMarkdown(join(repo, 'schema.md'), 'no frontmatter\n');
 
     const output = await captureRunLint([repo]);
     const joined = output.join('\n');
@@ -62,6 +65,9 @@ describe('runLint config-backed excludes', () => {
     expect(joined).toContain('1 pages scanned. 0 issue(s) in 0 page(s).');
     expect(joined).not.toContain('sources/bad.md');
     expect(joined).not.toContain('human/bad.md');
+    expect(joined).not.toContain('RESOLVER.md');
+    expect(joined).not.toContain('log.md');
+    expect(joined).not.toContain('schema.md');
   });
 
   test('uses lint_exclude_paths from config.json', async () => {

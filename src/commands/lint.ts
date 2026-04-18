@@ -203,7 +203,7 @@ export async function runLint(args: string[]) {
   const doFix = args.includes('--fix');
   const dryRun = args.includes('--dry-run');
   const config = loadConfig();
-  const excludePaths = config?.lint_exclude_paths || ['sources', 'human'];
+  const excludePaths = config?.lint_exclude_paths || ['sources', 'human', 'RESOLVER.md', 'log.md', 'schema.md'];
 
   if (!target) {
     console.error('Usage: gbrain lint <dir|file.md> [--fix] [--dry-run]');

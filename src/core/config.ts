@@ -16,6 +16,8 @@ export interface GBrainConfig {
   lint_exclude_paths?: string[];
 }
 
+const DEFAULT_LINT_EXCLUDE_PATHS = ['sources', 'human', 'RESOLVER.md', 'log.md', 'schema.md'];
+
 /**
  * Load config with credential precedence: env vars > config file.
  * Plugin config is handled by the plugin runtime injecting env vars.
@@ -40,7 +42,7 @@ export function loadConfig(): GBrainConfig | null {
   const merged = {
     ...fileConfig,
     engine: inferredEngine,
-    lint_exclude_paths: fileConfig?.lint_exclude_paths || ['sources', 'human'],
+    lint_exclude_paths: fileConfig?.lint_exclude_paths || DEFAULT_LINT_EXCLUDE_PATHS,
     ...(dbUrl ? { database_url: dbUrl } : {}),
     ...(process.env.OPENAI_API_KEY ? { openai_api_key: process.env.OPENAI_API_KEY } : {}),
   };
