@@ -104,7 +104,10 @@ For each `A` or `M` in `human/zettel/`:
 3. Decide shape:
    - **Wholesale** — maps 1:1 to one wiki page. Create or update that page.
    - **Multi-target** — contributes to multiple pages. Fan out.
-   - **Unclear** — flag in `inbox/` with reason; don't guess.
+   - **Below threshold** — too short, too vague, or not notable enough for a
+     wiki page. Skip. Mention in the reply as "skipped (below threshold)."
+     Do NOT create inbox/triage pages — those flood the vault with
+     operational noise.
 4. For each affected wiki page:
    - Update `## Sources` with a markdown link to the zettel.
    - Append a dated Timeline entry with `^[Source: ...]` citation.
