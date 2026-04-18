@@ -85,7 +85,14 @@ Save `/tmp/maintain-changed.txt` for Phase 3 incremental dimensions.
 
 ### Phase 2: Health check
 
+Before running doctor, confirm the vault root exposes `skills/` for resolver
+validation. In the K2 layout this should point at `~/gbrain-k2/skills`.
+
 ```bash
+cd ~/brain-vault
+[ -e skills ] || ln -s ~/gbrain-k2/skills skills
+readlink -f skills
+
 gbrain doctor --json
 ```
 
