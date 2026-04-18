@@ -4,7 +4,7 @@ version: 1.0.0
 description: |
   Detect file changes in human/ and sources/ since the last recompile
   checkpoint, then compile or re-compile affected wiki pages. Owns
-  ~/.gbrain/recompile-checkpoint.txt. LLM work: create wiki pages from new
+  ~/gbrain-k2/reports/recompile-checkpoint.txt. LLM work: create wiki pages from new
   zettels, rewrite Compiled Truth for updated zettels, handle archive moves
   via D+A pair detection.
 triggers:
@@ -65,7 +65,7 @@ git commit -m "chore: snapshot before recompile pass" || true
 ### Phase 1: Load checkpoint + compute changes
 
 ```bash
-CHECKPOINT_FILE=~/.gbrain/recompile-checkpoint.txt
+CHECKPOINT_FILE=~/gbrain-k2/reports/recompile-checkpoint.txt
 CHECKPOINT=$(cat "$CHECKPOINT_FILE" 2>/dev/null || echo "")
 
 cd ~/brain-vault
@@ -135,7 +135,7 @@ done
 ### Phase 4: Save checkpoint + log
 
 ```bash
-git rev-parse HEAD > ~/.gbrain/recompile-checkpoint.txt
+git rev-parse HEAD > ~/gbrain-k2/reports/recompile-checkpoint.txt
 echo "$(date -Iminutes) | recompile | processed N files" >> ~/brain-vault/log.md
 ```
 

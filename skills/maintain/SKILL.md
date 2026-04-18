@@ -4,7 +4,7 @@ version: 3.0.0
 description: |
   Brain health audit + quality fixes. Back-link iron law enforcement,
   citation audit, filing validation, stale detection, orphan remediation,
-  link density, embedding freshness. Owns ~/.gbrain/maintain-checkpoint.txt
+  link density, embedding freshness. Owns ~/gbrain-k2/reports/maintain-checkpoint.txt
   so dimension checks can run incrementally on pages changed since last
   maintain pass. Does NOT recompile — that belongs to the recompile skill.
 triggers:
@@ -25,7 +25,7 @@ Brain health audit + active remediation. Reads the wiki, flags issues,
 fixes what's mechanical (missing markdown links, back-link backfills), and
 surfaces what needs human judgment.
 
-> **Recommended cadence:** nightly at 02:00 (cron).
+> **Recommended cadence:** evening pass at 20:00 (chained after recompile, before zettel-status-check).
 
 > **Scope boundary:** this skill audits + fixes the wiki. It does NOT compile
 > raw content from `human/` or `sources/` — that belongs to the `recompile`
@@ -58,7 +58,7 @@ git commit -m "chore: snapshot before maintenance pass" || true
 ### Phase 1: Load checkpoint + compute changed pages
 
 ```bash
-CHECKPOINT_FILE=~/.gbrain/maintain-checkpoint.txt
+CHECKPOINT_FILE=~/gbrain-k2/reports/maintain-checkpoint.txt
 CHECKPOINT=$(cat "$CHECKPOINT_FILE" 2>/dev/null || echo "")
 
 cd ~/brain-vault
@@ -319,7 +319,7 @@ similar unresolved markers. Flag for human review.
 ### Phase 4: Save checkpoint + log
 
 ```bash
-git rev-parse HEAD > ~/.gbrain/maintain-checkpoint.txt
+git rev-parse HEAD > ~/gbrain-k2/reports/maintain-checkpoint.txt
 echo "$(date -Iminutes) | maintain | health=$SCORE, N issues flagged, M fixed" \
   >> ~/brain-vault/log.md
 ```
