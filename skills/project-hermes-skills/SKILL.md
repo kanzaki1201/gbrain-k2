@@ -39,6 +39,11 @@ Refresh `~/.hermes/skills/brain/` from `~/gbrain-k2/skills/`.
    just plain file copies. Multiple SKILL.md files reference them by path — a
    missing conventions/ dir silently breaks brain-first lookup, citation rules,
    and cross-modal review.
+6b. **Copy RESOLVER.md to brain projection root.** `~/gbrain-k2/skills/RESOLVER.md`
+   MUST be copied verbatim to `~/.hermes/skills/brain/RESOLVER.md`. This is the
+   master dispatch table mapping user triggers to brain skills. Without it,
+   Hermes cannot route messages to the correct skill (e.g. URL → idea-ingest).
+   The file is NOT projectable (no frontmatter rewrite needed), just a plain copy.
 7. Verify the touched skills load with `skills_list(category="brain")` and spot `skill_view(...)` calls.
 
 ## Tool Frontmatter Rule (REQUIRED, not a judgment call)
@@ -90,4 +95,5 @@ Exception: if a skill is genuinely non-mutating and reads no files (pure prompt-
 - Hermes can load the touched skills
 - no projection carries an abstract verb in `tools:` (grep each touched SKILL.md for `get_page|put_page|add_link|add_timeline_entry|^\s*- search$|^\s*- query$`; any match is a failed projection)
 - `~/.hermes/skills/brain/run-project-hermes-skills/SKILL.md` is byte-unchanged after the projection pass
+- `~/.hermes/skills/brain/RESOLVER.md` exists and matches `~/gbrain-k2/skills/RESOLVER.md`
 - no files exist under `/home/k/gbrain-k2/hermes-skills/`
