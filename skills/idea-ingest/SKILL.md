@@ -36,10 +36,9 @@ This skill guarantees:
 - Every fact has an inline `^[...]` footnote citation
 - Filing follows primary subject rules (not format-based)
 
-## Iron Law: Back-Linking (MANDATORY)
+## Iron Law + Citation Rules
 
-Every mention of a person or company with a brain page MUST create a back-link.
-Format: `- **YYYY-MM-DD** | Referenced in [page title](path) — brief context`
+See `skills/conventions/quality.md` for back-linking and citation format rules.
 
 ## Phases
 

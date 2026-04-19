@@ -193,10 +193,32 @@ Report the count and classify: `not-orphan` (MD>0), `wikilink-only`
 the cron iteration budget. Report the count; the human can ask Hermes
 to fix specific orphans interactively when needed.
 
-When doing interactive orphan cleanup after a maintain run, work in
-small high-confidence batches (about 5–10 pages), prefer exact-name
-mentions already present in agent-owned pages, and re-scan inbound links
-plus the total orphan count after each batch before continuing.
+When doing interactive orphan cleanup after a maintain run, use this
+batch playbook:
+
+1. Work in small high-confidence batches (about 5–10 pages).
+2. Search agent-owned zones only (`people/ companies/ projects/ tools/ concepts/ ideas/ originals/ how-to/ media/ meetings/ decisions/ household/ personal/ places/ writing/ org/ archive/ inbox/`) for exact title or alias mentions already present in other agent-owned pages.
+3. Choose anchors where the mention is already conceptually right and only the markdown link is missing.
+4. For each orphan target:
+   - add at least one inbound markdown link from an existing agent-owned page
+   - add a timeline/backlink entry on the orphan page in the form `- **YYYY-MM-DD** | Referenced in [page title](path) — context ^[Source: maintain orphan remediation, YYYY-MM-DD]`
+   - preserve citations and existing section structure
+5. Re-scan both the selected targets and the full orphan count after the batch.
+6. Append one concise telemetry line to `~/brain-vault/log.md` summarizing `fixed N pages` and the orphan count delta.
+7. Commit only the intended remediation files plus `log.md`, with batch numbering derived from existing `fix orphan backlinks batch N` history.
+
+Heuristics from live runs:
+- Title/alias phrases with spaces or distinctive wording are high-signal anchors.
+- Short single-token names like `Henry` or `Daniel` need manual review because they collide easily.
+- Existing source links in `sources/` or `human/` do not clear orphan status; the inbound markdown link must come from an agent-owned page.
+- Outbound links already present on the orphan page are strong remediation hints. If an orphan already links to a tool, project, or concept page that clearly governs the topic, add the reciprocal inbound markdown link from that anchor page instead of waiting for an exact title mention elsewhere.
+- Same-event cohort pages are strong anchors for orphan people pages. When two people are described in the same meeting, social event, or contact-cluster note, add reciprocal links across those people pages and record the relationship on both sides.
+- Shared-creator and explicit comparison notes are strong anchors for media pages. If page A explicitly says a creator previously did page B, or a review directly compares A to B, add the markdown link on the anchor page and record the backlink on the orphan target.
+- Thematic-lane anchors are valid for media pages when the anchor page already names the lane in concrete terms: shared Hong Kong crime cinema, mountain-climbing / Everest works, tokusatsu / effects showcases, body-horror / alien-survival works, and similar explicit clusters. Add the link where the anchor page already has enough prose to justify the connection; avoid vague genre-only jumps.
+- Project pages can anchor media pages when the project page explicitly cites the franchise or title as a stylistic or storyboard reference. Example pattern: `MGS-style walkie-talkie scene` on a project page is strong enough to link to `Metal Gear (Series)`.
+- Reciprocal links between two orphan media pages are acceptable when each page already has enough concrete framing to justify the pairing and you can add one inbound link from each side without inventing new facts. High-rating same-lane crime-film pairs are a good example.
+- The batch target is a quality goal, not a quota. When the vault only offers 1-6 high-confidence fixes, commit the smaller batch and stop instead of forcing weak links.
+- Before committing, check recent `git log` and `git status`. Background auto-sync can capture the staged orphan-remediation files under a generic commit message; when that happens, immediately amend the latest commit to the batch-style message so history stays legible.
 
 #### Dead links (full-vault)
 Markdown links to pages that don't exist.

@@ -39,9 +39,9 @@ This skill guarantees:
 - Raw source files preserved via `gbrain files upload-raw`
 - Filing by primary subject, not by media format
 
-## Iron Law: Back-Linking (MANDATORY)
+## Iron Law + Citation Rules
 
-Every mention of a person or company with a brain page MUST create a back-link.
+See `skills/conventions/quality.md` for back-linking and citation format rules.
 
 ## Phases
 

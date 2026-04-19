@@ -6,8 +6,8 @@ description: |
   an inline ^[...] footnote citation matching the standard format.
 triggers:
   - "fix citations"
-  - "citation audit"
-  - "check citations"
+  - "fix citation formatting"
+  - "check citation format"
 tools:
   - search
   - get_page

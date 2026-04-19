@@ -39,13 +39,9 @@ This skill guarantees:
 - Back-links all entity mentions (Iron Law)
 - Citations on every fact written
 
-## Iron Law: Back-Linking (MANDATORY)
+## Iron Law + Citation Rules
 
-Every time this skill creates or updates a brain page that mentions a person or company:
-1. Check if that person/company has a brain page
-2. If yes → add a back-link FROM their page TO the page you just created/updated
-3. Format: `- **YYYY-MM-DD** | Referenced in [page title](path) — brief context`
-4. An unlinked mention is a broken brain.
+See `skills/conventions/quality.md` for back-linking and citation format rules.
 
 ## Phases
 
