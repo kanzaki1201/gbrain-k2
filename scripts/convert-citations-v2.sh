@@ -43,13 +43,15 @@ while IFS= read -r -d '' file; do
   fi
 
   # 3. Convert bare dates inside ^[...] to [[YYYY-MM-DD]]
-  # Match YYYY-MM-DD that's NOT already inside [[ ]]
+  # IMPORTANT: must NOT convert dates inside (path.md) URL targets
   if grep -qP '\^\[.*\d{4}-\d{2}-\d{2}(?!\])' "$file" 2>/dev/null; then
-    # Only convert dates inside ^[...] context, not elsewhere
     perl -i -pe '
-      # For lines containing ^[, convert bare dates to wikilink dates
       if (/\^\[/) {
+        # First pass: convert bare dates to [[date]]
         s/(?<!\[)(\d{4}-\d{2}-\d{2})(?!\])/[[$1]]/g;
+        # Second pass: un-wikilink any dates inside (...) URL targets
+        s/(\([^)]*?)\[\[(\d{4}-\d{2}-\d{2})\]\]/$1$2/g
+          while /\([^)]*\[\[\d{4}-\d{2}-\d{2}\]\]/;
       }
     ' "$file"
     dates_converted=$((dates_converted + 1))
