@@ -23,6 +23,32 @@ const MARKED_JS = readFileSync(join(dirname(require.resolve('marked')), 'marked.
 
 // ── Content stripping ──────────────────────────────────────────────
 
+/** Remove ^[...] footnotes with bracket-depth awareness (handles nested [[dates]] and [links](path)) */
+function stripFootnotes(s: string): string {
+  let result = '';
+  let i = 0;
+  while (i < s.length) {
+    if (s[i] === '^' && i + 1 < s.length && s[i + 1] === '[') {
+      let depth = 1;
+      let j = i + 2;
+      while (j < s.length && depth > 0) {
+        if (s[j] === '[') depth++;
+        else if (s[j] === ']') depth--;
+        j++;
+      }
+      // Also consume leading whitespace before the footnote
+      while (result.length > 0 && result[result.length - 1] === ' ') {
+        result = result.slice(0, -1);
+      }
+      i = j;
+    } else {
+      result += s[i];
+      i++;
+    }
+  }
+  return result;
+}
+
 /** Strip private/internal data from brain markdown before publishing */
 export function makeShareable(content: string): string {
   let clean = content;
@@ -30,8 +56,9 @@ export function makeShareable(content: string): string {
   // Remove YAML frontmatter
   clean = clean.replace(/^---[\s\S]*?---\n*/, '');
 
-  // Remove inline footnote citations ^[...] and legacy [Source: ...] format
-  clean = clean.replace(/\s*\^\[[^\]]*\]/g, '');
+  // Remove inline footnote citations ^[...] (bracket-depth aware for nested links/dates)
+  clean = stripFootnotes(clean);
+  // Remove legacy [Source: ...] format
   clean = clean.replace(/\s*\[Source:[^\]]*\]/g, '');
 
   // Remove confirmation numbers

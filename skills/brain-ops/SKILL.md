@@ -68,7 +68,7 @@ Every message, meeting, email, or conversation that references a person or compa
 5. **Create if missing** — if notable and no page exists, create via enrich skill
 
 **User's direct statements are the highest-value data source.** Write them to brain
-pages immediately with attribution `^[Source: User, YYYY-MM-DD]`.
+pages immediately with attribution `^[User, YYYY-MM-DD]`.
 
 ### Phase 3: On Every Outbound Response (READ → PULL → RESPOND)
 

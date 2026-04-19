@@ -58,16 +58,12 @@ export function walkMarkdownFiles(dir: string): { path: string; relPath: string 
 
 // --- Link extraction ---
 
-/** Extract markdown links to .md files (relative paths only).
- *  Strips ^[...] inline footnotes first so citation links don't
- *  pollute the knowledge graph with provenance edges. */
+/** Extract markdown links to .md files (relative paths only) */
 export function extractMarkdownLinks(content: string): { name: string; relTarget: string }[] {
-  // Remove inline footnotes: ^[...] (may contain nested [...](path))
-  const cleaned = content.replace(/\^\[[^\]]*\]/g, '');
   const results: { name: string; relTarget: string }[] = [];
   const pattern = /\[([^\]]+)\]\(([^)]+\.md)\)/g;
   let match;
-  while ((match = pattern.exec(cleaned)) !== null) {
+  while ((match = pattern.exec(content)) !== null) {
     const target = match[2];
     if (target.includes('://')) continue; // skip external URLs
     results.push({ name: match[1], relTarget: target });

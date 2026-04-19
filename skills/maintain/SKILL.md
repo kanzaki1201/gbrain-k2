@@ -146,7 +146,7 @@ Procedure:
    delete timeline entries. They are evidence.
 5. **Add a timeline entry** recording the re-sync:
    ```
-   - **YYYY-MM-DD** | Compiled truth rewritten to reflect timeline evidence through YYYY-MM-DD ^[Source: maintain stale-page rewrite]
+   - **YYYY-MM-DD** | Compiled truth rewritten to reflect timeline evidence through YYYY-MM-DD ^[maintain stale-page rewrite]
    ```
 6. **Enforce back-links.** If the new compiled truth mentions entities
    that don't have back-links yet, add them (same procedure as the
@@ -201,7 +201,7 @@ batch playbook:
 3. Choose anchors where the mention is already conceptually right and only the markdown link is missing.
 4. For each orphan target:
    - add at least one inbound markdown link from an existing agent-owned page
-   - add a timeline/backlink entry on the orphan page in the form `- **YYYY-MM-DD** | Referenced in [page title](path) — context ^[Source: maintain orphan remediation, YYYY-MM-DD]`
+   - add a timeline/backlink entry on the orphan page in the form `- **YYYY-MM-DD** | Referenced in [page title](path) — context ^[maintain orphan remediation, YYYY-MM-DD]`
    - preserve citations and existing section structure
 5. Re-scan both the selected targets and the full orphan count after the batch.
 6. Append one concise telemetry line to `~/brain-vault/log.md` summarizing `fixed N pages` and the orphan count delta.
@@ -284,7 +284,7 @@ iron law and must be fixed.
 
 #### Citation audit (incremental on CHANGED_PAGES)
 For each changed page, verify every non-trivial fact carries an inline
-`^[Source: ...]` footnote (or `## Sources` section for compiled truth).
+`^[...]` footnote (or `## Sources` section for compiled truth).
 See `skills/conventions/quality.md`.
 
 Fix: if a fact lacks a citation AND the source is obvious (recent edit,

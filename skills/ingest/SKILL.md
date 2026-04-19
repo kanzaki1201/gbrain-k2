@@ -40,12 +40,12 @@ broken brain. See `skills/_brain-filing-rules.md` for format.
 Every fact must carry an inline `^[...]` footnote citation with markdown links
 to source pages. See `skills/conventions/quality.md` for full format reference.
 
-- **User's statements:** `^[Source: User, YYYY-MM-DD]`
-- **Meeting data:** `^[Source: Meeting "title", YYYY-MM-DD]`
-- **Email/message:** `^[Source: email from name re: subject, YYYY-MM-DD]`
-- **Web content:** `^[Source: publication, URL, YYYY-MM-DD]`
-- **Social media:** `^[Source: @handle, YYYY-MM-DD]`
-- **Synthesis:** `^[Source: compiled from source1, source2]`
+- **User's statements:** `^[User, YYYY-MM-DD]`
+- **Meeting data:** `^[Meeting "title", YYYY-MM-DD]`
+- **Email/message:** `^[email from name re: subject, YYYY-MM-DD]`
+- **Web content:** `^[publication, URL, YYYY-MM-DD]`
+- **Social media:** `^[@handle, YYYY-MM-DD]`
+- **Synthesis:** `^[compiled from source1, source2]`
 
 ## Phases
 

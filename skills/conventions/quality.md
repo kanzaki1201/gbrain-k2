@@ -5,24 +5,22 @@ Cross-cutting quality rules for all brain-writing skills.
 ## Citations (MANDATORY)
 
 Every fact written to a brain page must carry an inline footnote citation
-using Obsidian's `^[...]` syntax. Citations MAY contain markdown links —
-`gbrain extract links` strips `^[...]` footnotes before parsing, so links
-inside citations don't pollute the knowledge graph.
+using Obsidian's `^[...]` syntax. No `Source:` prefix — the `^[]` already
+implies citation. Dates ALWAYS as `[[YYYY-MM-DD]]` wikilinks.
 
-When the source is a brain page (zettel, meeting, person, etc.), use a
-markdown link so the citation is navigable in Obsidian:
+When the source is a brain page, use a markdown link so the citation is
+navigable in Obsidian AND visible to the knowledge graph (provenance
+edges are legitimate graph relationships):
 
-- **Zettel:** `^[Source: [zettel title](../human/zettel/name.md), YYYY-MM-DD]`
-- **Meeting:** `^[Source: [meeting title](../meetings/slug.md), YYYY-MM-DD]`
-- **Person/entity:** `^[Source: [name](../people/slug.md), YYYY-MM-DD]`
-- **Web content:** `^[Source: [publication](URL), YYYY-MM-DD]`
-- **User's statements:** `^[Source: User, YYYY-MM-DD]`
-- **Synthesis:** `^[Source: compiled from [s1](../path.md), [s2](../path.md)]`
-- **API enrichment:** `^[Source: {provider} enrichment, YYYY-MM-DD]`
+- **Zettel:** `^[[zettel: title](../human/zettel/slug.md), [[YYYY-MM-DD]]]`
+- **Meeting:** `^[[meeting title](../meetings/slug.md), [[YYYY-MM-DD]]]`
+- **Web content:** `^[[publication](URL), [[YYYY-MM-DD]]]`
+- **User's statements:** `^[User, Discord/Telegram thread, [[YYYY-MM-DD]]]`
+- **Synthesis:** `^[compiled from [s1](../path.md), [s2](../path.md)]`
+- **API enrichment:** `^[{provider} enrichment, [[YYYY-MM-DD]]]`
+- **Inferred (no source):** `^[inferred]`
 
-No `## Sources` section needed. The inline citations ARE the provenance
-trail. Each one is clickable in Obsidian and invisible to the graph
-extractor.
+No `## Sources` section. The inline citations ARE the provenance trail.
 
 ### Source precedence (highest to lowest)
 

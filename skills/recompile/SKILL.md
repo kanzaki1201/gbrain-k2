@@ -35,7 +35,7 @@ from `zettel-status-check` (which handles zettel lifecycle).
 - File changes in `human/` and `sources/` since the last recompile checkpoint
   trigger wiki page creation or updates.
 - Every compiled wiki page cites its source(s) with inline `^[...]` footnotes
-  and markdown-link `## Sources` entries.
+  containing navigable markdown links. No `## Sources` section.
 - Every entity mention in a compiled page creates a back-link on the entity
   page (Iron Law — see `skills/conventions/quality.md`).
 - `human/` files are read-only. The skill never modifies zettel content.
@@ -89,7 +89,7 @@ Output per line: `<STATUS>\t<path>` where STATUS is `A` (added), `M` (modified),
 | `A` | `human/zettel/<name>.md` | Compile into wiki: apply `_brain-filing-rules.md` + `repo-architecture/SKILL.md`, decide shape (wholesale / multi-target / unclear), create or update wiki page(s), cite zettel in `## Sources`, add timeline entry, enforce back-links. |
 | `A` | `sources/**/*.md` | Compile into wiki: route by content type (clipping/article → idea-ingest pattern; media/pdf → media-ingest pattern; meeting transcript → meeting-ingestion pattern). Create a PARALLEL wiki page citing the source via markdown link. Source file stays in `sources/` — never moved, never modified. |
 | `A` | `human/<other>` | Flag for human review. Human owns this zone; agent should not guess. |
-| `M` | `human/zettel/<name>.md` | Recompile: find citing wiki pages (`grep -rl "human/zettel/<name>"`), rewrite Compiled Truth based on current zettel content, append timeline entry `- **YYYY-MM-DD** \| zettel updated ^[Source: human/zettel/<name>.md, YYYY-MM-DD]`. Do NOT modify the zettel. |
+| `M` | `human/zettel/<name>.md` | Recompile: find citing wiki pages (`grep -rl "human/zettel/<name>"`), rewrite Compiled Truth based on current zettel content, append timeline entry `- **YYYY-MM-DD** \| zettel updated ^[human/zettel/<name>.md, YYYY-MM-DD]`. Do NOT modify the zettel. |
 | `M` | `sources/**/*.md` | Recompile wiki pages that cite this source. If no wiki page exists, treat like `A` and compile. Do NOT modify the source. |
 | `D` | `human/zettel/<name>.md` | Check if file moved to `human/zettel/archive/`. If yes → rewrite citations in citing wiki pages from old path to archive path. If truly deleted → flag citing wiki pages as orphan sources, surface for human review. |
 | `D` | `sources/**/*.md` | Flag citing wiki pages as orphan sources. Do not auto-delete. |
@@ -110,7 +110,7 @@ For each `A` or `M` in `human/zettel/`:
      operational noise.
 4. For each affected wiki page:
    - Update `## Sources` with a markdown link to the zettel.
-   - Append a dated Timeline entry with `^[Source: ...]` citation.
+   - Append a dated Timeline entry with `^[...]` citation.
    - Cross-link entities per Iron Law.
 5. Never modify the zettel itself. Preserve its mtime.
 

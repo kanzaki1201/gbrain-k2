@@ -144,9 +144,9 @@ citation. Include markdown links to source pages when they exist in the brain.
 See `skills/conventions/quality.md` for the full format reference.
 
 Three formats:
-- **Direct attribution:** `^[Source: User, YYYY-MM-DD]`
-- **API/external:** `^[Source: {provider} enrichment, YYYY-MM-DD]` or `^[Source: publication, URL, YYYY-MM-DD]`
-- **Synthesis:** `^[Source: compiled from source1, source2]`
+- **Direct attribution:** `^[User, YYYY-MM-DD]`
+- **API/external:** `^[{provider} enrichment, YYYY-MM-DD]` or `^[publication, URL, YYYY-MM-DD]`
+- **Synthesis:** `^[compiled from source1, source2]`
 
 Source precedence (highest to lowest):
 1. User's direct statements (highest authority)

@@ -113,22 +113,31 @@ export function lintContent(content: string, filePath: string): LintIssue[] {
     });
   }
 
-  // Rule: Broken citations (unclosed ^[... or legacy [Source: ...)
+  // Rule: Broken citations (unclosed ^[... with bracket-depth check)
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    if (line.match(/\^\[[^\]]*$/) && !(i + 1 < lines.length && lines[i + 1].match(/^\s*[^\[]*\]/))) {
-      issues.push({
-        file: filePath, line: i + 1, rule: 'broken-citation',
-        message: 'Unclosed ^[...] footnote citation',
-        fixable: false,
-      });
-    }
-    if (line.match(/\[Source:[^\]]*$/) && !(i + 1 < lines.length && lines[i + 1].match(/^\s*[^\[]*\]/))) {
-      issues.push({
-        file: filePath, line: i + 1, rule: 'broken-citation',
-        message: 'Unclosed [Source: ...] citation (legacy format)',
-        fixable: false,
-      });
+    // Check for ^[ that doesn't close at the same bracket depth within the line
+    let j = 0;
+    while (j < line.length) {
+      if (line[j] === '^' && j + 1 < line.length && line[j + 1] === '[') {
+        let depth = 1;
+        let k = j + 2;
+        while (k < line.length && depth > 0) {
+          if (line[k] === '[') depth++;
+          else if (line[k] === ']') depth--;
+          k++;
+        }
+        if (depth > 0) {
+          issues.push({
+            file: filePath, line: i + 1, rule: 'broken-citation',
+            message: 'Unclosed ^[...] footnote citation (bracket depth not zero)',
+            fixable: false,
+          });
+        }
+        j = k;
+      } else {
+        j++;
+      }
     }
   }
 
