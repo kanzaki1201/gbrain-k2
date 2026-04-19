@@ -143,6 +143,16 @@
       "name": "update-k2",
       "path": "update-k2/SKILL.md",
       "description": "Pull upstream gbrain changes into the fork safely. Backup, preview, conflict resolution, validation. Never pushes to upstream."
+    },
+    {
+      "name": "publish",
+      "path": "publish/SKILL.md",
+      "description": "Share brain pages as beautiful password-protected HTML (code + skill pair, zero LLM calls)"
+    },
+    {
+      "name": "soul-audit",
+      "path": "soul-audit/SKILL.md",
+      "description": "6-phase interactive interview generating SOUL.md, USER.md, ACCESS_POLICY.md, HEARTBEAT.md."
     }
   ],
   "dependencies": {
