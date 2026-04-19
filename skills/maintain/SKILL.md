@@ -292,11 +292,15 @@ known origin), add one. Otherwise flag for human confirmation.
 
 #### Wikilink schema violations (incremental on CHANGED_PAGES)
 Agent-owned pages should use markdown links for entity refs, not wikilinks
-(K2_SCHEMA §4). Run the converter:
+(K2_SCHEMA §4). Use the converter's own dry-run summary as the count source:
 
 ```bash
 python3 ~/gbrain-k2/scripts/fix-wikilinks.py --dry-run
 ```
+
+Report the converter's `Unresolved wikilinks:` count, not a raw grep count of
+all wikilinks in changed pages. The raw count is noisy because schema-compliant
+`[[YYYY-MM-DD]]` date stubs and already-resolvable wikilinks inflate the number.
 
 If changes are proposed, review and run without `--dry-run`. Date stubs
 `[[YYYY-MM-DD]]` are preserved.
