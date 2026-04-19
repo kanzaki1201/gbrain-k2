@@ -347,26 +347,29 @@ migrate to cloud storage.
 Timeline items 30+ days old with `open`, `pending`, `todo`, `awaiting` or
 similar unresolved markers. Flag for human review.
 
-### Phase 4: Save checkpoint + log
+### Phase 4: Save checkpoint + report + log
 
 ```bash
+# 1. Advance checkpoint
 git rev-parse HEAD > ~/gbrain-k2/reports/maintain-checkpoint.txt
+
+# 2. Write the full report to disk (overwrite, not append)
+cat > ~/gbrain-k2/reports/maintain-report.md << 'REPORT'
+<paste the full report here>
+REPORT
+
+# 3. Append one-liner to vault log
 echo "$(date -Iminutes) | maintain | health=$SCORE, N issues flagged, M fixed" \
   >> ~/brain-vault/log.md
 ```
 
-The one-liner in `log.md` is vault telemetry (append-only, low-noise). The
-full report goes to the messaging channel, NOT to the vault.
+Step 2 is mandatory. The report file at `~/gbrain-k2/reports/maintain-report.md`
+is the persistent last-run snapshot the human checks between messaging sessions.
+If this file is stale, the skill was not followed.
+
+Also deliver the same report as your messaging reply.
 
 ## Output Format
-
-The report is your **reply** via the messaging channel AND written to
-`~/gbrain-k2/reports/maintain-report.md` (overwrite each run, not append).
-This file is gitignored. It gives the human a persistent last-run snapshot
-without scrolling chat history. Do NOT write reports into the brain vault.
-
-Write the report to `~/gbrain-k2/reports/maintain-report.md` (overwrite,
-not append) AND deliver as your messaging reply. Format:
 
 ```
 ## Brain Health Report — YYYY-MM-DD HH:MM
