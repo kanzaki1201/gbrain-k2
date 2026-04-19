@@ -5,20 +5,24 @@ Cross-cutting quality rules for all brain-writing skills.
 ## Citations (MANDATORY)
 
 Every fact written to a brain page must carry an inline footnote citation
-using Obsidian's `^[...]` syntax. Citations are plain text — do NOT use
-markdown links inside citations, as `gbrain extract links` would create
-spurious graph edges that pollute the knowledge graph.
+using Obsidian's `^[...]` syntax. Citations MAY contain markdown links —
+`gbrain extract links` strips `^[...]` footnotes before parsing, so links
+inside citations don't pollute the knowledge graph.
 
+When the source is a brain page (zettel, meeting, person, etc.), use a
+markdown link so the citation is navigable in Obsidian:
+
+- **Zettel:** `^[Source: [zettel title](../human/zettel/name.md), YYYY-MM-DD]`
+- **Meeting:** `^[Source: [meeting title](../meetings/slug.md), YYYY-MM-DD]`
+- **Person/entity:** `^[Source: [name](../people/slug.md), YYYY-MM-DD]`
+- **Web content:** `^[Source: [publication](URL), YYYY-MM-DD]`
 - **User's statements:** `^[Source: User, YYYY-MM-DD]`
-- **Meeting data:** `^[Source: Meeting "title", YYYY-MM-DD]`
-- **Email/message:** `^[Source: email from name re: subject, YYYY-MM-DD]`
-- **Web content:** `^[Source: publication, URL, YYYY-MM-DD]`
-- **Social media:** `^[Source: @handle, YYYY-MM-DD]`
-- **Synthesis:** `^[Source: compiled from source1, source2]`
+- **Synthesis:** `^[Source: compiled from [s1](../path.md), [s2](../path.md)]`
 - **API enrichment:** `^[Source: {provider} enrichment, YYYY-MM-DD]`
 
-Semantic cross-references belong in the body text and `## Sources` section,
-where they feed the knowledge graph. Citations are provenance metadata only.
+No `## Sources` section needed. The inline citations ARE the provenance
+trail. Each one is clickable in Obsidian and invisible to the graph
+extractor.
 
 ### Source precedence (highest to lowest)
 
