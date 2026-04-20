@@ -128,6 +128,11 @@ For each entity with changed struct_hash:
 4. Write markdown file to the wiki zone (path determined by schema filing rules).
 5. Chunk compiled_truth + timeline text → embed → store embeddings.
 
+**Link format:** All markdown links use vault-root-relative paths.
+`[Entity Name](category/slug.md)` — e.g., `[Alice](people/alice.md)`.
+Citation format: `^[[display](path/to/source.md), YYYY-MM-DD]` — also
+vault-root-relative. Never use `../` relative paths.
+
 #### Structural Hash
 
 ```
@@ -317,13 +322,13 @@ updated: 2026-01-01
 
 # Alice
 
-Alice is Bob's biological daughter. ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+Alice is Bob's biological daughter. ^[[alice website](sources/Clippings/alice-website.md), 2026-01-01]
 
 ---
 
 ## Timeline
 
-- **2026-01-01** | Clipping revealed Bob is Alice's biological father ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+- **2026-01-01** | Clipping revealed Bob is Alice's biological father ^[[alice website](sources/Clippings/alice-website.md), 2026-01-01]
 ```
 
 **people/bob.md** (rendered from DB):
@@ -338,13 +343,13 @@ updated: 2026-01-01
 
 # Bob
 
-Bob is Alice's biological father. ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+Bob is Alice's biological father. ^[[alice website](sources/Clippings/alice-website.md), 2026-01-01]
 
 ---
 
 ## Timeline
 
-- **2026-01-01** | Clipping revealed Bob is Alice's biological father ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+- **2026-01-01** | Clipping revealed Bob is Alice's biological father ^[[alice website](sources/Clippings/alice-website.md), 2026-01-01]
 ```
 
 **DB state:**
@@ -469,18 +474,18 @@ The renderer reads alice's full structured data:
 - All entity_sources.
 
 LLM re-synthesizes compiled truth from ALL evidence:
-> "Alice is the biological daughter of [Bob](bob.md) and [Cathy](cathy.md).
-> Born in 1999. ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]
-> ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]"
+> "Alice is the biological daughter of [Bob](people/bob.md) and [Cathy](people/cathy.md).
+> Born in 1999. ^[[new findings](human/zettel/2026-10-10-new-findings.md), 2026-10-10]
+> ^[[alice website](sources/Clippings/alice-website.md), 2026-01-01]"
 
 Notice: the old compiled truth ("Alice is Bob's daughter") is REPLACED, not
 appended to. Compiled truth is always the current synthesis of all evidence.
 
 **Render bob (updated page):**
 LLM re-synthesizes:
-> "Bob is [Alice](alice.md)'s biological father. Alice's mother is [Cathy](cathy.md).
-> ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
-> ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]"
+> "Bob is [Alice](people/alice.md)'s biological father. Alice's mother is [Cathy](people/cathy.md).
+> ^[[alice website](sources/Clippings/alice-website.md), 2026-01-01]
+> ^[[new findings](human/zettel/2026-10-10-new-findings.md), 2026-10-10]"
 
 Notice: bob's compiled truth mentions Cathy as context, but does NOT claim
 Bob and Cathy have a direct relationship. "Alice's mother is Cathy" is a
@@ -508,13 +513,13 @@ updated: 2026-10-10
 
 # Cathy
 
-Cathy is [Alice](alice.md)'s biological mother. ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]
+Cathy is [Alice](people/alice.md)'s biological mother. ^[[new findings](human/zettel/2026-10-10-new-findings.md), 2026-10-10]
 
 ---
 
 ## Timeline
 
-- **2026-10-10** | Zettel revealed Cathy is Alice's biological mother ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]
+- **2026-10-10** | Zettel revealed Cathy is Alice's biological mother ^[[new findings](human/zettel/2026-10-10-new-findings.md), 2026-10-10]
 ```
 
 **people/alice.md** (updated):
@@ -529,14 +534,14 @@ updated: 2026-10-10
 
 # Alice
 
-Alice is the biological daughter of [Bob](bob.md) and [Cathy](cathy.md). Born in 1999. ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10] ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+Alice is the biological daughter of [Bob](people/bob.md) and [Cathy](people/cathy.md). Born in 1999. ^[[new findings](human/zettel/2026-10-10-new-findings.md), 2026-10-10] ^[[alice website](sources/Clippings/alice-website.md), 2026-01-01]
 
 ---
 
 ## Timeline
 
-- **2026-10-10** | Zettel revealed Cathy is Alice's biological mother, born 1999 ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]
-- **2026-01-01** | Clipping revealed Bob is Alice's biological father ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+- **2026-10-10** | Zettel revealed Cathy is Alice's biological mother, born 1999 ^[[new findings](human/zettel/2026-10-10-new-findings.md), 2026-10-10]
+- **2026-01-01** | Clipping revealed Bob is Alice's biological father ^[[alice website](sources/Clippings/alice-website.md), 2026-01-01]
 ```
 
 **people/bob.md** (updated):
@@ -551,14 +556,14 @@ updated: 2026-10-10
 
 # Bob
 
-Bob is [Alice](alice.md)'s biological father. Alice's mother is [Cathy](cathy.md). ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01] ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]
+Bob is [Alice](people/alice.md)'s biological father. Alice's mother is [Cathy](people/cathy.md). ^[[alice website](sources/Clippings/alice-website.md), 2026-01-01] ^[[new findings](human/zettel/2026-10-10-new-findings.md), 2026-10-10]
 
 ---
 
 ## Timeline
 
-- **2026-10-10** | Zettel revealed Cathy as co-parent of Alice ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]
-- **2026-01-01** | Clipping revealed Bob is Alice's biological father ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+- **2026-10-10** | Zettel revealed Cathy as co-parent of Alice ^[[new findings](human/zettel/2026-10-10-new-findings.md), 2026-10-10]
+- **2026-01-01** | Clipping revealed Bob is Alice's biological father ^[[alice website](sources/Clippings/alice-website.md), 2026-01-01]
 ```
 
 **DB state after compile:**
@@ -596,12 +601,12 @@ Compile does NOT resolve the conflict. It records both:
 - New link: alice→ethan (child_of_claimed, context: "Ethan's claim, unverified")
 
 **Render alice (conflicting compiled truth):**
-> "Alice is the biological daughter of [Bob](bob.md) and [Cathy](cathy.md).
-> Born in 1999. [Ethan](ethan.md) has also claimed to be Alice's biological
+> "Alice is the biological daughter of [Bob](people/bob.md) and [Cathy](people/cathy.md).
+> Born in 1999. [Ethan](people/ethan.md) has also claimed to be Alice's biological
 > father, which conflicts with earlier evidence.
-> ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
-> ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]
-> ^[[after the talkshow](../human/zettel/2026-11-11-after-the-talkshow.md), 2026-11-11]"
+> ^[[alice website](sources/Clippings/alice-website.md), 2026-01-01]
+> ^[[new findings](human/zettel/2026-10-10-new-findings.md), 2026-10-10]
+> ^[[after the talkshow](human/zettel/2026-11-11-after-the-talkshow.md), 2026-11-11]"
 
 The compiled truth presents both sides with citations. It does NOT silently
 pick one. The human reads the wiki page and sees the contradiction clearly.
