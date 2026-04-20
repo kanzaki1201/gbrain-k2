@@ -587,8 +587,9 @@ synthesis). The CLI does the DB work.
 
 ### CLI
 
-Database interface. Reads and writes entities, links, timeline entries,
-and embeddings. Does NOT orchestrate the four operations.
+Database interface. Writes entities, links, timeline entries, and
+embeddings. Supports query and hybrid search (vector + keyword + RRF).
+Does NOT orchestrate the four operations.
 
 ### LLM provider
 
