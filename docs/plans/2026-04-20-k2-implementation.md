@@ -68,6 +68,8 @@ Answer questions using the brain. Brain-first lookup, citation propagation.
 
 ### Schema changes
 
+Full schema freedom — can restructure tables as needed, not just add columns.
+
 - Add `pages.source_paths TEXT[]`
 - Add `pages.struct_hash TEXT`
 - Add `links.inferred BOOLEAN DEFAULT false`
@@ -165,6 +167,20 @@ Phase 2 next — implement what the skills call.
 Phase 3 after — test with real data.
 Phase 4 last — docs reflect final state.
 
+## Open design questions (needs /office-hours)
+
+- **Entity identity vs page identity:** Are DB rows entities or pages? Current
+  model: slug is stable identity, source_paths are mutable references. But
+  when a source moves, how do we detect it's a move vs delete+create? Content
+  hash matching? And when a source is deleted, which specific facts/links/timeline
+  entries came from it? Page-level source_paths can't answer that without
+  re-extracting from remaining sources.
+- **Provenance granularity:** source_paths is page-level. Should timeline_entries
+  and links also track which source file created them? Enables precise retraction
+  but adds complexity.
+- **Source move semantics:** path update only, or re-compile? What if the move
+  changes the file's context (e.g., moved to archive)?
+
 ## Deferred
 
 - Drop pages.timeline column (after compile is proven)
@@ -174,7 +190,6 @@ Phase 4 last — docs reflect final state.
 - PageType enum update for K2 categories
 - Compile checkpoint storage (config table key)
 - Canonical struct_hash serialization definition
-- Page identity/merge policy
 - Transaction boundaries across compile operations
 
 ## Decision Audit Trail
