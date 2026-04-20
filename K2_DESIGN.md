@@ -536,21 +536,23 @@ These are invisible to non-Obsidian readers.
 
 | Primitive | Table |
 |---|---|
-| Entity Registry | `pages` (slug, type, title, frontmatter, struct_hash) |
-| Event Ledger | `timeline_entries` (page_id, date, summary, source, detail) |
-| Fact Store | `pages.compiled_truth` (cached LLM output) |
-| Relationship Graph | `links` (from_page_id, to_page_id, link_type, context, inferred) |
+| Entity Registry | `entities` (slug, type, title, frontmatter, struct_hash) |
+| Event Ledger | `timeline_entries` (entity_id, date, summary, source, detail) |
+| Fact Store | `entities.compiled_truth` (cached LLM output) |
+| Relationship Graph | `links` (from_entity_id, to_entity_id, link_type, context, inferred) |
 | Source Registry | `sources` (path, content_hash, status) |
-| Source-Page Map | `page_sources` (page_id, source_id) |
+| Source-Entity Map | `entity_sources` (entity_id, source_id) |
 
-Supporting: `content_chunks` (embeddings), `tags`, `page_versions`, `raw_data`,
+Supporting: `content_chunks` (embeddings), `tags`, `entity_versions`, `raw_data`,
 `ingest_log`, `config`.
 
+Each entity is 1:1 with a wiki page. Slug is the stable identity.
+
 Source tracking: `sources` table tracks raw zone files as first-class records.
-`page_sources` junction maps which sources contributed to each page. Source
-moves update `sources.path` only. Source deletions cascade: pages with 0
-remaining sources are auto-deleted by COMPILE. Pages with remaining sources
-are recompiled. Deleted pages generate timeline entries on affected pages.
+`entity_sources` junction maps which sources contributed to each entity. Source
+moves update `sources.path` only. Source deletions cascade: entities with 0
+remaining sources are auto-deleted by COMPILE. Entities with remaining sources
+are recompiled. Deleted entities generate timeline entries on affected entities.
 
 ### Agent skills
 
