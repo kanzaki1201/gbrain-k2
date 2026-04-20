@@ -431,15 +431,15 @@ Alice's birth, which also involves Bob. So bob needs updating too.
 - alice→cathy (child_of, context: "biological mother")
 - cathy→alice (parent_of, context: "biological daughter")
 - user→alice (talked_to, context: "talked to alice today", date: 2026-10-10)
+  Note: "talked to" is evidence-based, not inferred. The zettel directly
+  states the user talked to Alice. Does NOT imply they met in person
+  (could be phone, video, text).
 
 **New links (inferred):**
 - bob↔cathy (inferred_co_parent, context: "co-parents of Alice")
   Why: both Bob and Cathy are biological parents of Alice. Two biological
   parents of the same child must have had some connection. If they were
   non-biological (adoptive) parents, this inference would NOT hold.
-- user→alice (met, context: "talked to" implies meeting)
-  Why: "talked to alice" implies the user met Alice. Not much info on the
-  relationship depth, but they spoke on 2026-10-10.
 
 **NOT created:**
 - No evidence-based bob→cathy link. The zettel doesn't mention Bob at all.
