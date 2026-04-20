@@ -42,49 +42,49 @@ when the brain learned each fact and from what source.
 The synthesis is pre-computed. Cross-references and contradictions are resolved
 at compile time, not at query time.
 
-### 3. Enrichment fires on every signal.
+### 3. Zone ownership.
 
-The brain grows as a side effect of normal operations, not as a separate task
-the human remembers to do. Every new file in the raw zone triggers downstream
-processing that compiles and cross-references without human prompting beyond
-the initial capture.
+The brain has two zones with strict ownership boundaries:
 
-Automated agents change the economics of knowledge maintenance. They do not
-get bored of updating cross-links, merging contradictory sources, or touching
-50 files in one pass.
+**Raw zone** — sacred. The agent reads but NEVER writes, modifies, moves, or
+deletes. This is the evidence layer. Everything the brain knows traces back
+to a file here. The human owns this zone.
+
+**Wiki zone** — agent-owned. The agent maintains synthesized, linked,
+current-state pages. The human reads but does not directly edit. Corrections
+flow through the raw zone or direct agent commands.
+
+This separation ensures the evidence is never corrupted by synthesis, and the
+synthesis is never blocked by human editing.
 
 ---
 
 ## Part 2: Data Model
 
-### 2a. Zones
+### 2a. Folder-to-Zone Mapping
 
-Three zones with different ownership rules:
+Folders map to zones defined in Principle 3:
 
-**Raw zone** — `human/` and `sources/`. SACRED. The agent NEVER writes to,
-modifies, moves into, or deletes from the raw zone. These are primary-source
-inputs. The agent reads them, derives from them, and preserves them.
-
+**Raw zone folders:**
 - `human/` — live human writing. Zettels, journals, free-form notes.
   - `human/zettel/` — active atomic writing destination
   - `human/zettel/archive/` — archived zettels (agent moves here ONLY with
     explicit human approval)
-- `sources/` — immutable reference material. Imported legacy content, web
-  clippings, attachments.
+- `sources/` — immutable reference material.
   - `sources/imports/YYYY-MM-DD-*/` — dated snapshots from prior note tools
   - `sources/assets/` — image and file attachments
   - `sources/Clippings/` — web clippings
 
-Moving a raw zone file into a category folder is FORBIDDEN. The agent creates
-a parallel wiki page that cites the source. The source stays in the raw zone
-forever.
+Moving a raw zone file into a wiki category folder is FORBIDDEN. The agent
+creates a parallel wiki page that cites the source. The source stays in the
+raw zone forever.
 
-**Wiki zone** — category directories (`people/`, `tools/`, `concepts/`, etc.).
-Agent-owned. The agent maintains synthesized, linked, current-state pages here.
-The human reads the wiki but does not directly edit it. Corrections flow through
-the raw zone or direct agent commands.
+**Wiki zone folders:** `people/`, `places/`, `projects/`, `companies/`,
+`ideas/`, `originals/`, `concepts/`, `how-to/`, `media/`, `tools/`,
+`meetings/`, `decisions/`, `household/`, `personal/`, `org/`, `writing/`,
+`archive/`.
 
-**Shared zone** — `inbox/`. Both agent and human write here. The agent uses it
+**Shared:** `inbox/`. Both agent and human write here. The agent uses it
 sparingly for items needing human attention. Not a dumping ground.
 
 ### 2b. Directory Structure
