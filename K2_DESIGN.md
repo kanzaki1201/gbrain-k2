@@ -535,10 +535,20 @@ Schema changes for k2-1.0.0:
 
 ### CLI: gbrain
 
-- `gbrain import` / `gbrain sync` → INGEST
-- `gbrain compile` → COMPILE
-- `gbrain doctor` / `gbrain maintain` → MAINTAIN
-- `gbrain recover` → RECOVER
+gbrain is the database interface. It reads and writes pages, links, timeline
+entries, and embeddings. It does NOT orchestrate the four operations.
+
+The four operations (INGEST, COMPILE, MAINTAIN, RECOVER) are **agent skills**
+— markdown files that tell an agent how to perform each operation step by
+step. The agent does the LLM work (entity extraction, compiled truth
+synthesis). gbrain does the DB work (put_page, add_link, search, embed).
+
+Agent skill examples:
+- INGEST skill tells the agent to use `gbrain import` / `gbrain sync`
+- COMPILE skill tells the agent to read raw files, extract entities via LLM,
+  then call `gbrain` operations to write pages, links, and timeline entries
+- MAINTAIN skill tells the agent to run health checks and fix issues
+- RECOVER skill tells the agent to parse wiki markdown and rebuild the DB
 
 ### LLM provider
 
