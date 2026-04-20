@@ -64,7 +64,29 @@ existence. Never speculate beyond what the structure necessitates.
 
 ## Part 2: Operations
 
-Four operations. Three daily-use, one recovery.
+Five operations. Four write — three daily-use (INGEST, COMPILE, MAINTAIN) and
+one recovery (RECOVER) — plus one read-only (ASK), used anytime.
+
+The system touches three layers: the **raw zone** (source files), the
+**DB layer** (entities, links, timeline, sources, chunks), and the **wiki
+layer** (rendered markdown files, 1:1 with entities). Each skill has a
+defined CRUD footprint across these layers:
+
+| Skill       | Raw zone | DB layer | Wiki layer |
+|-------------|----------|----------|------------|
+| INGEST      | C        | —        | —          |
+| COMPILE     | R        | CRUD     | CRUD       |
+| ASK         | —        | R        | R          |
+| MAINTAIN    | R        | RUD      | RUD        |
+| RECOVER     | —        | CRUD     | R          |
+
+COMPILE is the only skill with full **C** on DB/wiki — all structured writes
+flow through it (the one-writer invariant). ASK is purely read — it never
+mutates. MAINTAIN has `RUD` but not `C` — it can fix or remove, but does
+not invent new entities. RECOVER is the inverse of COMPILE: reads wiki,
+rebuilds DB. INGEST's footprint is tiny — create on raw only. Manual
+human edits at the raw zone are a fourth create path, outside the skill
+system; COMPILE picks them up on the next run.
 
 ### INGEST — content enters the raw zone
 
@@ -212,6 +234,60 @@ bootstrapping from an exported wiki.
 
 **Roundtrip fidelity:** `render(DB) → markdown → parse(markdown) → DB` must
 produce equivalent structured data. The wiki IS a full backup.
+
+### ASK — answer questions from the brain
+
+The consumer skill. User asks a question; agent answers with citations.
+Read-only: never mutates DB or vault. Used anytime; also invoked internally
+by COMPILE for notability/dedup checks before creating new entities.
+
+**Input:** a natural-language question.
+**Output:** an answer grounded in brain content, with inline citations
+to entity slugs.
+
+**Search reach.** ASK searches the wiki layer only: `entities` rows,
+chunks of `compiled_truth`, and `timeline_entries` text (all embedded in
+`content_chunks`). Raw zone source files are NOT embedded. Sources appear
+only as provenance in citations (`entity_sources → sources → path`). If
+ASK cannot answer from the wiki layer, the fallback is grep on the raw
+zone — a separate tool, not part of ASK. Future raw-embedding is additive
+(new `chunk_source` value) and deferred until the need is proven.
+
+**Contract:**
+- No hallucination — every claim grounded in brain content.
+- Every claim cites an entity slug (and section: compiled_truth or
+  timeline date).
+- Gaps flagged explicitly ("the brain has no information on X").
+- Conflicting evidence preserved — both sides cited, no silent
+  resolution (same rule COMPILE follows).
+
+**Source precedence** (when evidence disagrees):
+1. User direct statement at runtime — highest
+2. compiled_truth — synthesized, cited
+3. timeline_entries — raw evidence
+4. External (web/API) — lowest
+
+**Phases:**
+1. Decompose — classify question intent (lookup / relational / temporal /
+   conceptual).
+2. Retrieve — call CLI ops per intent: `search`/`query` for text,
+   `get_links`/`get_graph` for relational, `get_timeline` for temporal,
+   `get_entity` for direct lookup.
+3. Read chunks first; load full entities only when chunks don't suffice
+   (token discipline).
+4. Synthesize — answer with inline citations.
+5. Flag gaps.
+
+**Anti-patterns:**
+- Answering from general knowledge when the brain has content.
+- Silently picking one side of a conflict.
+- Loading full entities when chunks suffice.
+- Ignoring source precedence.
+
+**Internal use by COMPILE.** During extraction, COMPILE calls entity-side
+CLI ops (or ASK itself) to check whether an entity already exists under a
+different name before creating a new one. This is the notability/dedup
+gate. ASK stays read-only; COMPILE handles all writes.
 
 ---
 
@@ -637,16 +713,19 @@ Uses pg_trgm for trigram keyword matching. See logical schema in
 
 ### Agent skills
 
-The four operations (INGEST, COMPILE, MAINTAIN, RECOVER) are **agent skills**
-— markdown files that tell an agent how to perform each operation step by
-step. The agent does the LLM work (entity extraction, compiled truth
-synthesis). The CLI does the DB work.
+The five operations (INGEST, COMPILE, MAINTAIN, RECOVER, ASK) are **agent
+skills** — markdown files that tell an agent how to perform each operation
+step by step. The agent does the LLM work (entity extraction, compiled
+truth synthesis, question answering). The CLI does the DB work.
+
+Skill specs live in `specs/skills/`; runnable `SKILL.md` files derived from
+those specs live in `skills/<name>/`.
 
 ### CLI
 
 Database interface. Writes entities, links, timeline entries, and
 embeddings. Supports query and hybrid search (vector + keyword + RRF).
-Does NOT orchestrate the four operations.
+Does NOT orchestrate the five operations.
 
 ### LLM provider
 
