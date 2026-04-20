@@ -34,7 +34,8 @@ brain-vault/
 ├── sources/              — RAW ZONE: immutable reference material
 │   ├── assets/           image and file attachments
 │   ├── Clippings/        web clippings
-│   ├── ingested/         agent-ingested content (URLs, transcripts, etc.)
+│   ├── ingested/         agent-ingested content
+│   │   └── agent-daily-YYYY-MM-DD.md  conversational daily notes (agent appends)
 │   └── imports/          legacy imports from prior note tools
 │       └── YYYY-MM-DD-*-import/
 │

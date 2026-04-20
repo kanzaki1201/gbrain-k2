@@ -167,19 +167,26 @@ Phase 2 next — implement what the skills call.
 Phase 3 after — test with real data.
 Phase 4 last — docs reflect final state.
 
-## Open design questions (needs /office-hours)
+## Resolved design decisions (/office-hours 2026-04-20)
 
-- **Entity identity vs page identity:** Are DB rows entities or pages? Current
-  model: slug is stable identity, source_paths are mutable references. But
-  when a source moves, how do we detect it's a move vs delete+create? Content
-  hash matching? And when a source is deleted, which specific facts/links/timeline
-  entries came from it? Page-level source_paths can't answer that without
-  re-extracting from remaining sources.
-- **Provenance granularity:** source_paths is page-level. Should timeline_entries
-  and links also track which source file created them? Enables precise retraction
-  but adds complexity.
-- **Source move semantics:** path update only, or re-compile? What if the move
-  changes the file's context (e.g., moved to archive)?
+Design doc: ~/.gstack/projects/kanzaki1201-gbrain-k2/k-feat-k2-schema-design-rehaul-design-20260420-033726.md
+
+- **Entity = page, 1:1.** Slug is stable identity. No separate entity registry.
+- **Git-based change detection.** COMPILE uses `git diff --name-status -M
+  <checkpoint>..HEAD` to detect A/M/D/R in raw zone. Checkpoint = git SHA
+  in config table.
+- **Source moves:** git rename detection updates source_paths. No re-extraction
+  if content unchanged.
+- **Source deletion:** remove path from source_paths. Pages with empty
+  source_paths = orphan, flagged by MAINTAIN for human review.
+- **Page deletion cascade:** `delete_page` removes page + links + timeline +
+  embeddings + wiki file. Affected pages get a NEW timeline entry recording
+  the dropped link. Timeline is append-only, even for deletions.
+- **Page-level provenance only** (source_paths on pages). Re-extract from
+  remaining sources on change. Sufficient at ~200-2000 file scale.
+- **Raw orphan check:** filesystem scan vs DB source_paths query.
+- **Conversational ingest:** agent-daily-YYYY-MM-DD.md in sources/ingested/.
+  Prefix avoids Obsidian conflict with human daily notes.
 
 ## Deferred
 

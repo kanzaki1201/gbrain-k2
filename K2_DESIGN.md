@@ -155,6 +155,7 @@ lookup: when a source changes, find all pages that cite it.
 
 - **Stale pages:** struct_hash changed but render hasn't run.
 - **Wiki orphans:** wiki zone pages with no inbound links.
+- **Source orphans:** pages with empty source_paths (all sources deleted).
 - **Raw orphans:** raw zone files not cited by any wiki page (compilation gap).
 - **Dead links:** links to non-existent pages.
 - **Missing cross-references:** entity mentions without links.
@@ -170,6 +171,11 @@ lookup: when a source changes, find all pages that cite it.
 
 #### Human review (present, don't force resolution)
 
+- **Source orphans:** pages with no remaining source evidence. Human decides
+  to keep or delete. If deleted, `delete_page` cascades: removes page,
+  links, timeline entries, embeddings, and wiki file. Affected pages
+  (those that linked to the deleted page) get a new timeline entry
+  recording the dropped link. Timeline is append-only, even for deletions.
 - Ambiguous duplicates.
 - Filing disputes.
 - Contradictory evidence — present both sides with citations. Some facts
