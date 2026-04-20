@@ -210,9 +210,11 @@ or dismissed (user rejects).
 
 ---
 
-## Compile Contract: Alice/Bob/Cathy
+## Example: Alice/Bob/Cathy
 
-Reference test case for cross-entity propagation.
+Illustrative test case for cross-entity propagation. Shows how a single
+zettel triggers extraction, linking, inference, and re-rendering across
+multiple wiki pages.
 
 **Starting state:**
 - `people/alice.md` — compiled truth mentions Bob as father.
