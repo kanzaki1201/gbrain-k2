@@ -65,8 +65,14 @@ Four operations. Three daily-use, one recovery.
 
 ### INGEST — content enters the raw zone
 
-**Input:** any content (URL, file, text, transcript, image, agent chat).
+**Input:** content the user gives to the agent directly (URL, text,
+transcript, image, agent chat).
 **Output:** a file in the raw zone (exact path per K2_SCHEMA.md).
+
+Ingest is for interactive use: the user pastes or sends content to the
+agent, the agent writes it to the raw zone. Content that is already in
+the raw zone (imports, clippings, human zettel) is NOT ingested — it is
+already there. COMPILE picks it up.
 
 Invariants:
 - Raw zone files are immutable after creation.
@@ -77,11 +83,16 @@ Invariants:
 
 ### COMPILE — raw zone → DB → rendered wiki
 
-The core engine. Extracts structured data from raw files, synthesizes
-wiki pages, and renders markdown.
+The core engine. Detects changes in the raw zone, extracts structured
+data, synthesizes wiki pages, and renders markdown. User-triggered
+(manual or cron).
 
 **Input:** changes in raw zone since last compile checkpoint.
 **Output:** created/updated wiki pages (structured store + markdown files).
+
+Changes include new files, modified files, deleted files, and moved files.
+When a raw file is deleted or moved by a human, compile updates the DB
+accordingly (removes or updates source_paths, re-renders affected pages).
 
 #### Extract (raw → structured data)
 
