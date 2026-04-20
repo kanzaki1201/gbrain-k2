@@ -1,4 +1,7 @@
-# TODOS
+<!-- DEPRECATED: Pre-rehaul task list. Do NOT follow.
+     Authoritative docs: K2_SCHEMA.md and K2_DESIGN.md -->
+
+# old_TODOS.md (DEPRECATED)
 
 ## P1
 

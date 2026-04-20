@@ -1,4 +1,7 @@
-# CLAUDE.md
+<!-- DEPRECATED: Pre-rehaul architecture (31 skills). Do NOT follow.
+     Authoritative docs: K2_SCHEMA.md and K2_DESIGN.md -->
+
+# old_CLAUDE.md (DEPRECATED)
 
 GBrain is a personal knowledge brain and GStack mod for agent platforms. Pluggable
 engines: PGLite (embedded Postgres via WASM, zero-config default) or Postgres + pgvector
