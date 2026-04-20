@@ -517,7 +517,15 @@ These are invisible to non-Obsidian readers.
 
 ### Database: Postgres
 
-The structured store. Schema details are implementation, not design.
+| Primitive | Table |
+|---|---|
+| Entity Registry | `pages` (slug, type, title, frontmatter, source_paths, struct_hash) |
+| Event Ledger | `timeline_entries` (page_id, date, summary, source, detail) |
+| Fact Store | `pages.compiled_truth` (cached LLM output) |
+| Relationship Graph | `links` (from_page_id, to_page_id, link_type, context, inferred) |
+
+Supporting: `content_chunks` (embeddings), `tags`, `page_versions`, `raw_data`,
+`ingest_log`, `config`.
 
 ### Agent skills
 
