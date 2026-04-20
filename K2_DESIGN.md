@@ -517,38 +517,19 @@ These are invisible to non-Obsidian readers.
 
 ### Database: Postgres
 
-| Primitive | Table |
-|---|---|
-| Entity Registry | `pages` (slug, type, title, frontmatter, source_paths, struct_hash) |
-| Event Ledger | `timeline_entries` (page_id, date, summary, source, detail) |
-| Fact Store | `pages.compiled_truth` (cached LLM output) |
-| Relationship Graph | `links` (from_page_id, to_page_id, link_type, context, inferred) |
+The structured store. Schema details are implementation, not design.
 
-Supporting: `content_chunks` (embeddings), `tags`, `page_versions`, `raw_data`,
-`ingest_log`, `config`.
-
-Schema changes for k2-1.0.0:
-- Add `pages.source_paths TEXT[]`
-- Add `pages.struct_hash TEXT`
-- Add `links.inferred BOOLEAN DEFAULT false`
-- Remove `pages.timeline` column
-
-### CLI: gbrain
-
-gbrain is the database interface. It reads and writes pages, links, timeline
-entries, and embeddings. It does NOT orchestrate the four operations.
+### Agent skills
 
 The four operations (INGEST, COMPILE, MAINTAIN, RECOVER) are **agent skills**
 — markdown files that tell an agent how to perform each operation step by
 step. The agent does the LLM work (entity extraction, compiled truth
-synthesis). gbrain does the DB work (put_page, add_link, search, embed).
+synthesis). The CLI does the DB work.
 
-Agent skill examples:
-- INGEST skill tells the agent to use `gbrain import` / `gbrain sync`
-- COMPILE skill tells the agent to read raw files, extract entities via LLM,
-  then call `gbrain` operations to write pages, links, and timeline entries
-- MAINTAIN skill tells the agent to run health checks and fix issues
-- RECOVER skill tells the agent to parse wiki markdown and rebuild the DB
+### CLI: gbrain
+
+Database interface. Reads and writes pages, links, timeline entries, and
+embeddings. Does NOT orchestrate the four operations.
 
 ### LLM provider
 
