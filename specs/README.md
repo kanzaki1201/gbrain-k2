@@ -182,8 +182,8 @@ Updated as specs land.
 | Skill | File | Status |
 |-------|------|--------|
 | INGEST | [ingest.md](skills/ingest.md) | pending |
-| COMPILE | [compile.md](skills/compile.md) | pending |
-| ASK | [ask.md](skills/ask.md) | pending |
+| COMPILE | [compile.md](skills/compile.md) | drafted |
+| ASK | [ask.md](skills/ask.md) | drafted |
 | MAINTAIN | [maintain.md](skills/maintain.md) | pending |
 | RECOVER | [recover.md](skills/recover.md) | pending |
 
