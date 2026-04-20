@@ -386,7 +386,7 @@ Compile reads the zettel and identifies entities and facts:
 - Facts extracted:
   - Cathy is Alice's biological mother.
   - Alice was born in 1999.
-  - User talked to Alice on 2026-10-10 (inferred from zettel context).
+  - User talked to Alice on 2026-10-10.
 
 How does compile know Cathy needs a new page? It searches the DB:
 - Exact match for "Cathy": no result.
