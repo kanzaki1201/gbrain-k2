@@ -37,13 +37,16 @@ at compile time, not at query time.
 
 The brain has two zones with strict ownership boundaries:
 
-**Raw zone** — sacred. The agent reads but NEVER writes, modifies, moves, or
-deletes. This is the evidence layer. Everything the brain knows traces back
-here.
+**Raw zone** — evidence layer. Everything the brain knows traces back here.
+The human area is sacred: the agent NEVER writes, modifies, moves, or
+deletes anything there. The source area is agent-writable only via INGEST
+(which creates new files). The agent never modifies or deletes existing
+source files. See K2_SCHEMA.md for precise directory mappings.
 
-**Wiki zone** — agent-owned. Synthesized, linked, current-state pages. The
-human reads but does not directly edit. Corrections flow through the raw zone
-or direct agent commands.
+**Wiki zone** — agent-owned. Synthesized, linked, current-state markdown
+files. The human reads but does not directly edit. Corrections flow through
+the raw zone or direct agent commands. See K2_SCHEMA.md for directory
+structure.
 
 The separation ensures evidence is never corrupted by synthesis, and synthesis
 is never blocked by human editing.
@@ -65,34 +68,37 @@ Four operations. Three daily-use, one recovery.
 
 ### INGEST — content enters the raw zone
 
-**Input:** content the user gives to the agent directly (URL, text,
-transcript, image, agent chat).
-**Output:** a file in the raw zone (exact path per K2_SCHEMA.md).
+A utility skill. The user gives content to the agent (URL, text, transcript,
+image, agent chat), and the agent writes it as a markdown file in the raw
+zone. Ingest does NOT touch the database. COMPILE processes the file later.
 
-Ingest is for interactive use: the user pastes or sends content to the
-agent, the agent writes it to the raw zone. Content that is already in
-the raw zone (imports, clippings, human zettel) is NOT ingested — it is
-already there. COMPILE picks it up.
+**Input:** content from the user.
+**Output:** a markdown file in the raw zone (exact path per K2_SCHEMA.md).
+
+Content already in the raw zone (imports, clippings, human zettel) is NOT
+ingested. It is already there. COMPILE picks it up directly.
 
 Invariants:
-- Raw zone files are immutable after creation.
-- Ingest NEVER modifies existing raw zone files.
+- Ingest creates new files only. Never modifies existing raw zone files.
 - Content stored in original form with minimal normalization.
-- Agent-ingested content goes to the agent ingest directory (per K2_SCHEMA.md).
+- Agent-ingested content goes to the ingest directory (per K2_SCHEMA.md).
   Other raw zone structure is human-managed.
 
-### COMPILE — raw zone → DB → rendered wiki
+### COMPILE — raw zone → DB → rendered wiki markdown
 
-The core engine. Detects changes in the raw zone, extracts structured
-data, synthesizes wiki pages, and renders markdown. User-triggered
-(manual or cron).
+The core engine. Like a code compiler: raw zone files are the source code,
+the database is the compiled output, and wiki markdown files are the
+rendered artifacts. User-triggered (manual or cron).
 
 **Input:** changes in raw zone since last compile checkpoint.
-**Output:** created/updated wiki pages (structured store + markdown files).
+**Output:** updated DB (entities, links, timeline entries) + rendered wiki
+markdown files.
 
 Changes include new files, modified files, deleted files, and moved files.
-When a raw file is deleted or moved by a human, compile updates the DB
-accordingly (removes or updates source_paths, re-renders affected pages).
+Source moves update the `sources` table path. Source deletions cascade:
+entities with 0 remaining sources are auto-deleted, entities with remaining
+sources are recompiled. Deleted entities generate timeline entries on
+affected entities.
 
 #### Extract (raw → structured data)
 
@@ -100,25 +106,26 @@ For each new or modified raw file:
 
 1. Extract entities mentioned in the raw text.
 2. For each entity, file per K2_SCHEMA.md and write structured data:
-   - Page record (per schema frontmatter spec).
-   - Timeline entry: date learned, what was learned, source path.
+   - Entity record (per schema frontmatter spec).
+   - Timeline entry: date learned, what was learned, source.
    - Links: to other entities mentioned (FROM [verb] TO).
    - Tags: extracted from content.
 3. Cross-entity propagation: when new evidence affects multiple entities,
-   add timeline entries and links to ALL affected pages.
+   add timeline entries and links to ALL affected entities.
 4. Evidence-based: do not create links without source evidence.
    Inferred links (structural necessity) are marked separately.
-5. Track which raw files contributed to each wiki page.
+5. Register the source file in `sources` table, link to affected entities
+   via `entity_sources`.
 
-#### Render (structured data → wiki)
+#### Render (structured data → wiki markdown)
 
-For each page with changed struct_hash:
+For each entity with changed struct_hash:
 
 1. Synthesize compiled_truth from timeline_entries + links + tags.
    Contextual facts (birth dates, relationships) appear here.
 2. Cache compiled_truth in the structured store.
-3. Format markdown per K2_SCHEMA.md page format.
-4. Write to the wiki zone (path determined by schema filing rules).
+3. Format as markdown file per K2_SCHEMA.md page format.
+4. Write markdown file to the wiki zone (path determined by schema filing rules).
 5. Chunk compiled_truth + timeline text → embed → store embeddings.
 
 #### Structural Hash
@@ -128,7 +135,7 @@ struct_hash = SHA256(
   sorted(timeline_entries) +
   sorted(links) +
   sorted(tags) +
-  sorted(source_paths)
+  sorted(entity_sources)
 )
 ```
 
@@ -143,8 +150,8 @@ may vary between runs (LLM non-deterministic). The graph structure is stable.
 #### Checkpoint
 
 Compile tracks processed state (e.g., git commit hash). Incremental runs
-process only changes since the checkpoint. `source_paths` enables reverse
-lookup: when a source changes, find all pages that cite it.
+process only changes since the checkpoint. `entity_sources` enables reverse
+lookup: when a source changes, find all entities that cite it.
 
 ### MAINTAIN — quality enforcement
 
@@ -153,14 +160,14 @@ lookup: when a source changes, find all pages that cite it.
 
 #### Checks
 
-- **Stale pages:** struct_hash changed but render hasn't run.
-- **Wiki orphans:** wiki zone pages with no inbound links.
-- **Source orphans:** pages with empty source_paths (all sources deleted).
-- **Raw orphans:** raw zone files not cited by any wiki page (compilation gap).
-- **Dead links:** links to non-existent pages.
+- **Stale entities:** struct_hash changed but render hasn't run.
+- **Wiki orphans:** wiki zone markdown files with no inbound links.
+- **Source orphans:** entities with 0 entries in entity_sources (all sources gone).
+- **Raw orphans:** raw zone files not in the sources table (never compiled).
+- **Dead links:** links to non-existent entities.
 - **Missing cross-references:** entity mentions without links.
 - **Duplicates:** similar slugs, shared aliases, same-entity signals.
-- **Filing violations:** pages filed inconsistently with K2_SCHEMA.md rules.
+- **Filing violations:** wiki files filed inconsistently with K2_SCHEMA.md rules.
 - **Citation gaps:** facts without source citations.
 
 #### Automated fixes
@@ -171,10 +178,10 @@ lookup: when a source changes, find all pages that cite it.
 
 #### Human review (present, don't force resolution)
 
-- **Source orphans:** pages with no remaining source evidence. Human decides
-  to keep or delete. If deleted, `delete_page` cascades: removes page,
-  links, timeline entries, embeddings, and wiki file. Affected pages
-  (those that linked to the deleted page) get a new timeline entry
+- **Source orphans:** entities with no remaining source evidence. Human
+  decides to keep or delete. If deleted, cascade removes entity, links,
+  timeline entries, embeddings, and wiki markdown file. Affected entities
+  (those that linked to the deleted entity) get a new timeline entry
   recording the dropped link. Timeline is append-only, even for deletions.
 - Ambiguous duplicates.
 - Filing disputes.
@@ -195,7 +202,7 @@ bootstrapping from an exported wiki.
 | YAML frontmatter | Page record (slug, type, title, tags, aliases) |
 | Compiled truth body | Cached compiled_truth |
 | `[Entity](path.md)` | Link records |
-| `^[[title](src.md), date]` | source_paths + citations |
+| `^[[title](src.md), date]` | entity_sources + citations |
 | `## Timeline` entries | timeline_entries (date, summary, citation) |
 
 **Roundtrip fidelity:** `render(DB) → markdown → parse(markdown) → DB` must
@@ -335,21 +342,21 @@ Alice's birth, which also involves Bob. So bob needs updating too.
 
 **New page: cathy**
 - Create page record: slug=cathy, type=people, title=Cathy.
-- Add source_paths: `["human/zettel/2026-10-10 new findings.md"]`.
+- Link to source via entity_sources: `["human/zettel/2026-10-10 new findings.md"]`.
 - Create timeline entry:
   - date: 2026-10-10
   - summary: "Zettel revealed Cathy is Alice's biological mother"
   - source: human/zettel/2026-10-10 new findings.md
 
 **Update page: alice**
-- Append to source_paths: `"human/zettel/2026-10-10 new findings.md"`.
+- Link to source via entity_sources: `"human/zettel/2026-10-10 new findings.md"`.
 - Create timeline entry:
   - date: 2026-10-10
   - summary: "Zettel revealed Cathy is Alice's biological mother, born 1999"
   - source: human/zettel/2026-10-10 new findings.md
 
 **Update page: bob**
-- Append to source_paths: `"human/zettel/2026-10-10 new findings.md"`.
+- Link to source via entity_sources: `"human/zettel/2026-10-10 new findings.md"`.
 - Create timeline entry:
   - date: 2026-10-10
   - summary: "Zettel revealed Cathy as co-parent of Alice"
@@ -395,7 +402,7 @@ compiled truth reflects only that.
 The renderer reads alice's full structured data:
 - Timeline entries: 2 entries now (original + new).
 - Links: alice→bob (child_of), alice→cathy (child_of).
-- All source_paths.
+- All entity_sources.
 
 LLM re-synthesizes compiled truth from ALL evidence:
 > "Alice is the biological daughter of [Bob](bob.md) and [Cathy](cathy.md).
@@ -561,10 +568,10 @@ The four operations (INGEST, COMPILE, MAINTAIN, RECOVER) are **agent skills**
 step. The agent does the LLM work (entity extraction, compiled truth
 synthesis). The CLI does the DB work.
 
-### CLI: gbrain
+### CLI
 
-Database interface. Reads and writes pages, links, timeline entries, and
-embeddings. Does NOT orchestrate the four operations.
+Database interface. Reads and writes entities, links, timeline entries,
+and embeddings. Does NOT orchestrate the four operations.
 
 ### LLM provider
 
