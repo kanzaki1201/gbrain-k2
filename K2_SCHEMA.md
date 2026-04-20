@@ -35,7 +35,8 @@ brain-vault/
 │   ├── assets/           image and file attachments
 │   ├── Clippings/        web clippings
 │   ├── ingested/         agent-ingested content
-│   │   └── agent-daily-YYYY-MM-DD.md  conversational daily notes (agent appends)
+│   │   └── daily/        conversational daily notes
+│   │       └── agent-daily-YYYY-MM-DD.md  (agent appends throughout day)
 │   └── imports/          legacy imports from prior note tools
 │       └── YYYY-MM-DD-*-import/
 │
