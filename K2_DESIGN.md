@@ -270,13 +270,13 @@ Supporting tables: `entity_versions` (snapshot history), `raw_data`,
 
 | Primitive | CLI operations |
 |-----------|---------------|
-| Entity Registry | put_entity, get_entity, delete_entity, list_entities |
+| Entity Registry | put_entity, get_entity, delete_entity, list_entities, search_entities |
 | Event Ledger | add_timeline_entry, get_timeline |
 | Fact Store | (compiled_truth is a column on entities, updated via put_entity) |
 | Relationship Graph | add_link, get_links, get_graph |
 | Source Registry | register_source, update_source_path, set_source_status |
 | Source-Entity Map | link_entity_source, unlink_entity_source |
-| Search | query (hybrid: vector + keyword + RRF) |
+| Search | search (keyword + fuzzy), query (hybrid: vector + keyword + RRF) |
 
 ### Source tracking
 
