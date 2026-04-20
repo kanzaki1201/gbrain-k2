@@ -529,13 +529,12 @@ evidence-based and inferred (flagged). Enables graph queries.
 
 | Table | Columns | Purpose |
 |-------|---------|---------|
-| `entities` | slug, type, title, compiled_truth, frontmatter, struct_hash | One row per entity. 1:1 with a wiki markdown file. Slug is stable identity. |
-| `timeline_entries` | entity_id, date, summary, source, detail | Append-only evidence log. What the brain learned, when, from where. |
+| `entities` | slug, type, title, compiled_truth, frontmatter, struct_hash, tags[] | One row per entity. 1:1 with a wiki markdown file. Slug is stable identity. |
+| `timeline_entries` | entity_id, date, summary, source_id, detail | Append-only evidence log. What the brain learned, when, from which source. |
 | `links` | from_entity_id, to_entity_id, link_type, context, inferred | Typed directed edges. `inferred` distinguishes structural inference from direct evidence. |
 | `sources` | path, content_hash, status | Raw zone files as first-class records. Status: active/deleted. |
 | `entity_sources` | entity_id, source_id | Junction: which sources contributed to each entity. |
-| `content_chunks` | entity_id, chunk_text, chunk_source, embedding | Chunked text with vector embeddings for semantic search. |
-| `tags` | entity_id, tag | Entity tags for filtering. |
+| `content_chunks` | entity_id, chunk_text, chunk_source, embedding | Chunks of compiled_truth + timeline text with vector embeddings. Raw zone files are not embedded directly. |
 
 Supporting tables: `entity_versions` (snapshot history), `raw_data`,
 `ingest_log`, `config`.
