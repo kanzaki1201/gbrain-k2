@@ -87,9 +87,9 @@ wiki pages, and renders markdown.
 
 For each new or modified raw file:
 
-1. Extract entities (people, tools, concepts, projects, etc.).
-2. For each entity, write structured data:
-   - Page record: slug, type, title, frontmatter, source_paths.
+1. Extract entities mentioned in the raw text.
+2. For each entity, file per K2_SCHEMA.md and write structured data:
+   - Page record (per schema frontmatter spec).
    - Timeline entry: date learned, what was learned, source path.
    - Links: to other entities mentioned (FROM [verb] TO).
    - Tags: extracted from content.
@@ -97,7 +97,7 @@ For each new or modified raw file:
    add timeline entries and links to ALL affected pages.
 4. Evidence-based: do not create links without source evidence.
    Inferred links (structural necessity) are marked separately.
-5. Update source_paths on every affected page.
+5. Track which raw files contributed to each wiki page.
 
 #### Render (structured data → wiki)
 
@@ -106,16 +106,16 @@ For each page with changed struct_hash:
 1. Synthesize compiled_truth from timeline_entries + links + tags.
    Contextual facts (birth dates, relationships) appear here.
 2. Cache compiled_truth in the structured store.
-3. Format markdown: YAML frontmatter + compiled_truth + `---` + timeline.
-4. Write to `{category}/{slug}.md`.
+3. Format markdown per K2_SCHEMA.md page format.
+4. Write to the wiki zone (path determined by schema filing rules).
 5. Chunk compiled_truth + timeline text → embed → store embeddings.
 
 #### Structural Hash
 
 ```
 struct_hash = SHA256(
-  sorted(timeline_entries dates + summaries) +
-  sorted(links from/to/type) +
+  sorted(timeline_entries) +
+  sorted(links) +
   sorted(tags) +
   sorted(source_paths)
 )
@@ -143,12 +143,12 @@ lookup: when a source changes, find all pages that cite it.
 #### Checks
 
 - **Stale pages:** struct_hash changed but render hasn't run.
-- **Wiki orphans:** wiki pages with no inbound links.
+- **Wiki orphans:** wiki zone pages with no inbound links.
 - **Raw orphans:** raw zone files not cited by any wiki page (compilation gap).
-- **Dead links:** markdown links to non-existent pages.
+- **Dead links:** links to non-existent pages.
 - **Missing cross-references:** entity mentions without links.
 - **Duplicates:** similar slugs, shared aliases, same-entity signals.
-- **Filing violations:** pages in wrong category.
+- **Filing violations:** pages filed inconsistently with K2_SCHEMA.md rules.
 - **Citation gaps:** facts without source citations.
 
 #### Automated fixes
