@@ -68,12 +68,14 @@ Answer questions using the brain. Brain-first lookup, citation propagation.
 
 ### Schema changes
 
-Full schema freedom — can restructure tables as needed, not just add columns.
+Full schema freedom — can restructure tables as needed.
 
-- Add `pages.source_paths TEXT[]`
 - Add `pages.struct_hash TEXT`
 - Add `links.inferred BOOLEAN DEFAULT false`
+- Add `sources` table (id, path, content_hash, status, first_seen, last_compiled)
+- Add `page_sources` junction table (page_id, source_id)
 - Deprecate `pages.timeline` (stop writing, keep column for now)
+- Remove `pages.source_paths TEXT[]` (replaced by sources + page_sources)
 
 Files: `src/schema.sql`, `src/core/pglite-schema.ts`, `src/core/schema-embedded.ts`,
 `src/core/types.ts`, `src/core/engine.ts`, `src/core/pglite-engine.ts`,
@@ -182,9 +184,13 @@ Design doc: ~/.gstack/projects/kanzaki1201-gbrain-k2/k-feat-k2-schema-design-reh
 - **Page deletion cascade:** `delete_page` removes page + links + timeline +
   embeddings + wiki file. Affected pages get a NEW timeline entry recording
   the dropped link. Timeline is append-only, even for deletions.
-- **Page-level provenance only** (source_paths on pages). Re-extract from
-  remaining sources on change. Sufficient at ~200-2000 file scale.
-- **Raw orphan check:** filesystem scan vs DB source_paths query.
+- **Sources table** replaces source_paths TEXT[]. `sources` tracks raw zone
+  files as first-class DB records. `page_sources` junction maps sources to
+  pages. Source moves update sources.path only (page_sources untouched).
+- **0 sources = auto-delete.** COMPILE auto-deletes pages with 0 remaining
+  sources. Affected pages get timeline entries for dropped links, then
+  recompile from remaining sources.
+- **Raw orphan check:** filesystem scan vs sources table query.
 - **Conversational ingest:** agent-daily-YYYY-MM-DD.md in sources/ingested/.
   Prefix avoids Obsidian conflict with human daily notes.
 
