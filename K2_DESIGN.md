@@ -231,13 +231,13 @@ updated: 2026-01-01
 
 # Alice
 
-Alice is Bob's daughter. ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+Alice is Bob's biological daughter. ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
 
 ---
 
 ## Timeline
 
-- **2026-01-01** | Clipping revealed Bob is Alice's father ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+- **2026-01-01** | Clipping revealed Bob is Alice's biological father ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
 ```
 
 **people/bob.md** (rendered from DB):
@@ -252,13 +252,13 @@ updated: 2026-01-01
 
 # Bob
 
-Bob is Alice's father. ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+Bob is Alice's biological father. ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
 
 ---
 
 ## Timeline
 
-- **2026-01-01** | Clipping revealed Bob is Alice's father ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+- **2026-01-01** | Clipping revealed Bob is Alice's biological father ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
 ```
 
 **DB state:**
@@ -344,11 +344,13 @@ Alice's birth, which also involves Bob. So bob needs updating too.
 
 **New link (inferred):**
 - bob↔cathy (inferred_co_parent, context: "co-parents of Alice")
-- Why inferred: both Bob and Cathy have `parent_of → alice`. Structural
-  necessity — two parents of the same child must have some relationship.
+- Why inferred: both Bob and Cathy are biological parents of Alice.
+  Two biological parents of the same child must have had some connection.
+  If they were non-biological (adoptive) parents, this inference would
+  NOT hold — adoptive parents may have no relationship to each other.
 - Why NOT evidence-based: no source says Bob and Cathy know each other,
-  are married, or have any direct relationship. We only know they are both
-  Alice's parents.
+  are married, or have any direct relationship beyond shared biological
+  parentage of Alice.
 
 **NOT created:**
 - No evidence-based bob→cathy link. The zettel doesn't mention Bob at all.
@@ -379,7 +381,7 @@ The renderer reads alice's full structured data:
 - All source_paths.
 
 LLM re-synthesizes compiled truth from ALL evidence:
-> "Alice is the daughter of [Bob](bob.md) and [Cathy](cathy.md).
+> "Alice is the biological daughter of [Bob](bob.md) and [Cathy](cathy.md).
 > Born in 1999. ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]
 > ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]"
 
@@ -388,7 +390,7 @@ appended to. Compiled truth is always the current synthesis of all evidence.
 
 **Render bob (updated page):**
 LLM re-synthesizes:
-> "Bob is [Alice](alice.md)'s father. Alice's mother is [Cathy](cathy.md).
+> "Bob is [Alice](alice.md)'s biological father. Alice's mother is [Cathy](cathy.md).
 > ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
 > ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]"
 
@@ -439,14 +441,14 @@ updated: 2026-10-10
 
 # Alice
 
-Alice is the daughter of [Bob](bob.md) and [Cathy](cathy.md). Born in 1999. ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10] ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+Alice is the biological daughter of [Bob](bob.md) and [Cathy](cathy.md). Born in 1999. ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10] ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
 
 ---
 
 ## Timeline
 
 - **2026-10-10** | Zettel revealed Cathy is Alice's biological mother, born 1999 ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]
-- **2026-01-01** | Clipping revealed Bob is Alice's father ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+- **2026-01-01** | Clipping revealed Bob is Alice's biological father ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
 ```
 
 **people/bob.md** (updated):
@@ -461,14 +463,14 @@ updated: 2026-10-10
 
 # Bob
 
-Bob is [Alice](alice.md)'s father. Alice's mother is [Cathy](cathy.md). ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01] ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]
+Bob is [Alice](alice.md)'s biological father. Alice's mother is [Cathy](cathy.md). ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01] ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]
 
 ---
 
 ## Timeline
 
 - **2026-10-10** | Zettel revealed Cathy as co-parent of Alice ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]
-- **2026-01-01** | Clipping revealed Bob is Alice's father ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+- **2026-01-01** | Clipping revealed Bob is Alice's biological father ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
 ```
 
 **DB state after compile:**
