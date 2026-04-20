@@ -66,14 +66,14 @@ Four operations. Three daily-use, one recovery.
 ### INGEST — content enters the raw zone
 
 **Input:** any content (URL, file, text, transcript, image, agent chat).
-**Output:** a file in `sources/ingested/`.
+**Output:** a file in the raw zone (exact path per K2_SCHEMA.md).
 
 Invariants:
 - Raw zone files are immutable after creation.
 - Ingest NEVER modifies existing raw zone files.
 - Content stored in original form with minimal normalization.
-- Ingest writes ONLY to `sources/ingested/`. Other raw zone structure
-  (`sources/imports/`, `sources/Clippings/`, `human/`) is human-managed.
+- Agent-ingested content goes to the agent ingest directory (per K2_SCHEMA.md).
+  Other raw zone structure is human-managed.
 
 ### COMPILE — raw zone → DB → rendered wiki
 
@@ -515,7 +515,7 @@ Obsidian is first-class. Not mandatory. Implementation choices:
 
 These are invisible to non-Obsidian readers.
 
-### Database: PGLite / Postgres
+### Database: Postgres
 
 | Primitive | Table |
 |---|---|
