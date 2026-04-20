@@ -212,47 +212,272 @@ or dismissed (user rejects).
 
 ## Example: Alice/Bob/Cathy
 
-Illustrative test case for cross-entity propagation. Shows how a single
-zettel triggers extraction, linking, inference, and re-rendering across
-multiple wiki pages.
+Detailed walkthrough of how a single zettel flows through the entire pipeline.
+Read this to understand how compile works in practice.
 
-**Starting state:**
-- `people/alice.md` — compiled truth mentions Bob as father.
-- `people/bob.md` — compiled truth mentions Alice as daughter.
-- Links: alice→bob (child_of), bob→alice (parent_of).
+### 1. Starting state
 
-**Input:** new zettel `human/zettel/2026-10-10-new-findings.md`:
-"Cathy is Alice's bio mum."
+The wiki already has two pages from earlier compilations:
 
-**Extract:**
+**people/alice.md** (rendered from DB):
+```markdown
+---
+title: Alice
+type: people
+tags: []
+created: 2026-01-01
+updated: 2026-01-01
+---
 
-| Step | Action |
-|------|--------|
-| 1 | Create page record `people/cathy` |
-| 2 | Timeline entry on cathy: `2026-10-10 \| Zettel revealed Cathy is Alice's biological mother` |
-| 3 | Timeline entry on alice: `2026-10-10 \| Zettel revealed Cathy is Alice's biological mother` |
-| 4 | Timeline entry on bob: `2026-10-10 \| Zettel revealed Cathy as Alice's mother` |
-| 5 | Links: alice→cathy (child_of), cathy→alice (parent_of) |
-| 6 | Inferred link: bob↔cathy (inferred_co_parent, "co-parents of Alice") |
-| 7 | Do NOT create evidence-based bob→cathy link (no source) |
-| 8 | Update source_paths on alice, bob, cathy |
+# Alice
 
-**Render:**
+Alice is Bob's daughter. ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
 
-| Step | Action |
-|------|--------|
-| 9 | struct_hash changed for cathy, alice, bob → render all three |
-| 10 | Synthesize cathy: "Cathy is Alice's biological mother." |
-| 11 | Re-synthesize alice: compiled truth now includes Cathy, contextual fact "born 1999 to Bob and Cathy" |
-| 12 | Re-synthesize bob: compiled truth includes Cathy context |
-| 13 | Write markdown files, chunk + embed |
+---
 
-**Verify:**
-- cathy.md exists with compiled truth + timeline.
-- alice.md updated: mentions Cathy, new timeline entry.
-- bob.md updated: Cathy context, new timeline entry.
-- Links: alice→cathy, cathy→alice (evidence-based), bob↔cathy (inferred).
-- All cite the zettel via `^[...]` footnotes.
+## Timeline
+
+- **2026-01-01** | Clipping revealed Bob is Alice's father ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+```
+
+**people/bob.md** (rendered from DB):
+```markdown
+---
+title: Bob
+type: people
+tags: []
+created: 2026-01-01
+updated: 2026-01-01
+---
+
+# Bob
+
+Bob is Alice's father. ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+
+---
+
+## Timeline
+
+- **2026-01-01** | Clipping revealed Bob is Alice's father ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+```
+
+**DB state:**
+- Pages: alice (people), bob (people)
+- Links: alice→bob (child_of), bob→alice (parent_of)
+- Timeline entries: one each, both citing alice-website.md
+
+### 2. Human writes a zettel
+
+The human creates `human/zettel/2026-10-10 new findings.md`:
+
+```
+I found out from talking to Alice that Cathy is her bio mum.
+Alice was born in 1999.
+```
+
+This is raw human writing. The agent does not touch this file.
+
+### 3. Human triggers compile
+
+The human runs compile (or a scheduled cron does). Compile detects the new
+zettel via checkpoint diff:
+
+```
+git diff <checkpoint>..HEAD -- human/ sources/
+A    human/zettel/2026-10-10 new findings.md
+```
+
+One new file. Compile reads it.
+
+### 4. Entity extraction
+
+Compile reads the zettel and identifies entities and facts:
+
+- **Cathy** — a person. Not in the DB. New entity.
+- **Alice** — a person. Already in the DB (slug: `alice`).
+- Facts extracted:
+  - Cathy is Alice's biological mother.
+  - Alice was born in 1999.
+
+How does compile know Cathy needs a new page? It searches the DB:
+- Exact match for "Cathy": no result.
+- Fuzzy match: no result.
+- Alias search: no result.
+- Conclusion: new entity. Create it.
+
+How does compile know Alice is the existing `alice` page? Same search:
+- Exact match for "Alice": found `alice` (type: people).
+- Confirmed: update existing page.
+
+Bob is not mentioned in the zettel text. But compile discovers Bob is
+affected through the graph: alice already has a `child_of` link to bob.
+The new fact (Alice born in 1999 to Cathy) changes what we know about
+Alice's birth, which also involves Bob. So bob needs updating too.
+
+### 5. Structured DB writes (extract phase)
+
+**New page: cathy**
+- Create page record: slug=cathy, type=people, title=Cathy.
+- Add source_paths: `["human/zettel/2026-10-10 new findings.md"]`.
+- Create timeline entry:
+  - date: 2026-10-10
+  - summary: "Zettel revealed Cathy is Alice's biological mother"
+  - source: human/zettel/2026-10-10 new findings.md
+
+**Update page: alice**
+- Append to source_paths: `"human/zettel/2026-10-10 new findings.md"`.
+- Create timeline entry:
+  - date: 2026-10-10
+  - summary: "Zettel revealed Cathy is Alice's biological mother, born 1999"
+  - source: human/zettel/2026-10-10 new findings.md
+
+**Update page: bob**
+- Append to source_paths: `"human/zettel/2026-10-10 new findings.md"`.
+- Create timeline entry:
+  - date: 2026-10-10
+  - summary: "Zettel revealed Cathy as co-parent of Alice"
+  - source: human/zettel/2026-10-10 new findings.md
+
+**New links (evidence-based):**
+- alice→cathy (child_of, context: "biological mother")
+- cathy→alice (parent_of, context: "biological daughter")
+
+**New link (inferred):**
+- bob↔cathy (inferred_co_parent, context: "co-parents of Alice")
+- Why inferred: both Bob and Cathy have `parent_of → alice`. Structural
+  necessity — two parents of the same child must have some relationship.
+- Why NOT evidence-based: no source says Bob and Cathy know each other,
+  are married, or have any direct relationship. We only know they are both
+  Alice's parents.
+
+**NOT created:**
+- No evidence-based bob→cathy link. The zettel doesn't mention Bob at all.
+  The zettel says "Cathy is Alice's bio mum." That's about Cathy and Alice,
+  not about Bob and Cathy.
+
+### 6. Render (synthesis phase)
+
+struct_hash changed for all three pages. Render runs for each:
+
+**Render cathy (new page):**
+The renderer reads cathy's structured data:
+- Timeline entries: 1 entry (2026-10-10, Cathy is Alice's mother).
+- Links: cathy→alice (parent_of). Inferred: cathy↔bob (co-parent).
+- Source_paths: 1 zettel.
+
+LLM synthesizes compiled truth:
+> "Cathy is Alice's biological mother."
+
+This is the entire compiled truth — we don't know anything else about Cathy.
+The LLM does NOT make up facts. If we only have one piece of evidence, the
+compiled truth reflects only that.
+
+**Render alice (updated page):**
+The renderer reads alice's full structured data:
+- Timeline entries: 2 entries now (original + new).
+- Links: alice→bob (child_of), alice→cathy (child_of).
+- All source_paths.
+
+LLM re-synthesizes compiled truth from ALL evidence:
+> "Alice is the daughter of [Bob](bob.md) and [Cathy](cathy.md).
+> Born in 1999. ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]
+> ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]"
+
+Notice: the old compiled truth ("Alice is Bob's daughter") is REPLACED, not
+appended to. Compiled truth is always the current synthesis of all evidence.
+
+**Render bob (updated page):**
+LLM re-synthesizes:
+> "Bob is [Alice](alice.md)'s father. Alice's mother is [Cathy](cathy.md).
+> ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+> ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]"
+
+Notice: bob's compiled truth mentions Cathy as context, but does NOT claim
+Bob and Cathy have a direct relationship. "Alice's mother is Cathy" is a
+fact about Alice, not about Bob-Cathy.
+
+### 7. Write markdown + embed
+
+For each rendered page, the deterministic formatter produces the final
+markdown (frontmatter + compiled truth + --- + timeline) and writes it to
+the wiki zone. Then chunks + embeds for search.
+
+### 8. Result
+
+Three files changed in the wiki zone:
+
+**people/cathy.md** (new):
+```markdown
+---
+title: Cathy
+type: people
+tags: []
+created: 2026-10-10
+updated: 2026-10-10
+---
+
+# Cathy
+
+Cathy is [Alice](alice.md)'s biological mother. ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]
+
+---
+
+## Timeline
+
+- **2026-10-10** | Zettel revealed Cathy is Alice's biological mother ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]
+```
+
+**people/alice.md** (updated):
+```markdown
+---
+title: Alice
+type: people
+tags: []
+created: 2026-01-01
+updated: 2026-10-10
+---
+
+# Alice
+
+Alice is the daughter of [Bob](bob.md) and [Cathy](cathy.md). Born in 1999. ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10] ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+
+---
+
+## Timeline
+
+- **2026-10-10** | Zettel revealed Cathy is Alice's biological mother, born 1999 ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]
+- **2026-01-01** | Clipping revealed Bob is Alice's father ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+```
+
+**people/bob.md** (updated):
+```markdown
+---
+title: Bob
+type: people
+tags: []
+created: 2026-01-01
+updated: 2026-10-10
+---
+
+# Bob
+
+Bob is [Alice](alice.md)'s father. Alice's mother is [Cathy](cathy.md). ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01] ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]
+
+---
+
+## Timeline
+
+- **2026-10-10** | Zettel revealed Cathy as co-parent of Alice ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]
+- **2026-01-01** | Clipping revealed Bob is Alice's father ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+```
+
+**DB state after compile:**
+- Pages: alice, bob, cathy (all with updated struct_hash)
+- Links: alice→bob (child_of), bob→alice (parent_of), alice→cathy (child_of),
+  cathy→alice (parent_of), bob↔cathy (inferred_co_parent)
+- Timeline entries: 2 on alice, 2 on bob, 1 on cathy
+- Raw zone: unchanged (human/zettel/ file untouched)
+- Checkpoint: advanced to current HEAD
 
 ---
 
