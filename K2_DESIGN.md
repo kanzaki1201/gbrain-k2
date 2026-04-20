@@ -234,6 +234,68 @@ or dismissed (user rejects).
 
 ---
 
+## The Four Primitives
+
+Any structured store supporting these four primitives satisfies the spec.
+The schema below is database-independent — implementable in Postgres,
+SQLite, or any relational store with vector search support.
+
+**Entity Registry** — canonical identity. Slug, type, title, aliases.
+Source of truth for "is this the same entity?"
+
+**Event Ledger** — evidence records. Entity, date learned, what learned,
+source. Maps to timeline section of rendered wiki markdown. Append-only.
+
+**Fact Store** — compiled truth. Current-state synthesis, cached for
+embedding and rendering. Re-synthesized when evidence changes.
+
+**Relationship Graph** — typed directed edges. FROM [verb] TO. Both
+evidence-based and inferred (flagged). Enables graph queries.
+
+### Logical schema
+
+| Table | Columns | Purpose |
+|-------|---------|---------|
+| `entities` | slug, type, title, compiled_truth, frontmatter, struct_hash, tags[] | One row per entity. 1:1 with a wiki markdown file. Slug is stable identity. |
+| `timeline_entries` | entity_id, date, summary, source_id, detail | Append-only evidence log. What the brain learned, when, from which source. |
+| `links` | from_entity_id, to_entity_id, link_type, context, inferred | Typed directed edges. `inferred` distinguishes structural inference from direct evidence. |
+| `sources` | path, content_hash, status | Raw zone files as first-class records. Status: active/deleted. |
+| `entity_sources` | entity_id, source_id | Junction: which sources contributed to each entity. |
+| `content_chunks` | entity_id, chunk_text, chunk_source, embedding | Chunks of compiled_truth + timeline text with vector embeddings. Raw zone files are not embedded directly. |
+
+Supporting tables: `entity_versions` (snapshot history), `raw_data`,
+`ingest_log`, `config`.
+
+### CLI operations per primitive
+
+| Primitive | CLI operations |
+|-----------|---------------|
+| Entity Registry | put_entity, get_entity, delete_entity, list_entities, search |
+| Event Ledger | add_timeline_entry, get_timeline |
+| Fact Store | (compiled_truth is a column on entities, updated via put_entity) |
+| Relationship Graph | add_link, get_links, get_graph |
+| Source Registry | register_source, update_source_path, set_source_status |
+| Source-Entity Map | link_entity_source, unlink_entity_source |
+| Search | query (hybrid: vector + keyword + RRF) |
+
+### Source tracking
+
+`sources` tracks raw zone files as first-class records. `entity_sources`
+maps which sources contributed to each entity. Source moves update
+`sources.path` only (entity_sources untouched). Source deletions cascade:
+entities with 0 remaining sources are auto-deleted by COMPILE. Entities
+with remaining sources are recompiled from active sources. Deleted entities
+generate timeline entries on affected entities.
+
+### Search
+
+Hybrid search combines vector similarity (embedding cosine distance) with
+keyword matching (trigram search), merged via Reciprocal Rank Fusion (RRF).
+Optional multi-query expansion generates alternative phrasings for broader
+recall.
+
+---
+
 ## Example: Alice/Bob/Cathy
 
 Detailed walkthrough of how a single zettel flows through the entire pipeline.
@@ -295,11 +357,12 @@ Bob is Alice's biological father. ^[[alice website](../sources/Clippings/alice-w
 The human creates `human/zettel/2026-10-10 new findings.md`:
 
 ```
-I found out from talking to Alice that Cathy is her bio mum.
-Alice was born in 1999.
+talked to alice today. cathy is her bio mum apparently.
+alice born 1999.
 ```
 
-This is raw human writing. The agent does not touch this file.
+This is raw human writing. Incomplete sentences, no capitalization, no "I."
+The agent does not touch this file.
 
 ### 3. Human triggers compile
 
@@ -319,9 +382,11 @@ Compile reads the zettel and identifies entities and facts:
 
 - **Cathy** — a person. Not in the DB. New entity.
 - **Alice** — a person. Already in the DB (slug: `alice`).
+- **User** — implied by "talked to alice." The zettel author met Alice.
 - Facts extracted:
   - Cathy is Alice's biological mother.
   - Alice was born in 1999.
+  - User talked to Alice on 2026-10-10 (inferred from zettel context).
 
 How does compile know Cathy needs a new page? It searches the DB:
 - Exact match for "Cathy": no result.
@@ -365,21 +430,20 @@ Alice's birth, which also involves Bob. So bob needs updating too.
 **New links (evidence-based):**
 - alice→cathy (child_of, context: "biological mother")
 - cathy→alice (parent_of, context: "biological daughter")
+- user→alice (talked_to, context: "talked to alice today", date: 2026-10-10)
 
-**New link (inferred):**
+**New links (inferred):**
 - bob↔cathy (inferred_co_parent, context: "co-parents of Alice")
-- Why inferred: both Bob and Cathy are biological parents of Alice.
-  Two biological parents of the same child must have had some connection.
-  If they were non-biological (adoptive) parents, this inference would
-  NOT hold — adoptive parents may have no relationship to each other.
-- Why NOT evidence-based: no source says Bob and Cathy know each other,
-  are married, or have any direct relationship beyond shared biological
-  parentage of Alice.
+  Why: both Bob and Cathy are biological parents of Alice. Two biological
+  parents of the same child must have had some connection. If they were
+  non-biological (adoptive) parents, this inference would NOT hold.
+- user→alice (met, context: "talked to" implies meeting)
+  Why: "talked to alice" implies the user met Alice. Not much info on the
+  relationship depth, but they spoke on 2026-10-10.
 
 **NOT created:**
 - No evidence-based bob→cathy link. The zettel doesn't mention Bob at all.
-  The zettel says "Cathy is Alice's bio mum." That's about Cathy and Alice,
-  not about Bob and Cathy.
+  "cathy is her bio mum" is about Cathy and Alice, not Bob and Cathy.
 
 ### 6. Render (synthesis phase)
 
@@ -498,62 +562,51 @@ Bob is [Alice](alice.md)'s biological father. Alice's mother is [Cathy](cathy.md
 ```
 
 **DB state after compile:**
-- Pages: alice, bob, cathy (all with updated struct_hash)
+- Entities: alice, bob, cathy (all with updated struct_hash)
 - Links: alice→bob (child_of), bob→alice (parent_of), alice→cathy (child_of),
-  cathy→alice (parent_of), bob↔cathy (inferred_co_parent)
+  cathy→alice (parent_of), bob↔cathy (inferred_co_parent), user→alice (talked_to)
 - Timeline entries: 2 on alice, 2 on bob, 1 on cathy
 - Raw zone: unchanged (human/zettel/ file untouched)
 - Checkpoint: advanced to current HEAD
 
----
+### 9. Conflicting evidence
 
-## The Four Primitives
+Later, the human creates `human/zettel/2026-11-11 after the talkshow.md`:
 
-Any structured store supporting these four primitives satisfies the spec.
-The schema below is database-independent — implementable in Postgres,
-SQLite, or any relational store with vector search support.
+```
+talkshow last night. ethan said on air he is alice's bio father.
+wtf? bob is the father per the website clipping.
+maybe ethan is lying, or maybe the website was wrong.
+```
 
-**Entity Registry** — canonical identity. Slug, type, title, aliases.
-Source of truth for "is this the same entity?"
+Compile runs. Entity extraction:
+- **Ethan** — new person entity.
+- **Alice** — existing entity.
+- Fact: Ethan claims to be Alice's biological father. This conflicts
+  with the existing evidence that Bob is Alice's biological father.
 
-**Event Ledger** — evidence records. Entity, date learned, what learned,
-source. Maps to timeline section of rendered wiki markdown. Append-only.
+Compile does NOT resolve the conflict. It records both:
 
-**Fact Store** — compiled truth. Current-state synthesis, cached for
-embedding and rendering. Re-synthesized when evidence changes.
+**New entity: ethan**
+- Timeline entry: "Ethan claimed on talkshow to be Alice's biological father"
 
-**Relationship Graph** — typed directed edges. FROM [verb] TO. Both
-evidence-based and inferred (flagged). Enables graph queries.
+**Update entity: alice**
+- Timeline entry: "Ethan claimed to be Alice's biological father (conflicts
+  with existing evidence: Bob is biological father per alice-website.md)"
+- New link: alice→ethan (child_of_claimed, context: "Ethan's claim, unverified")
 
-### Logical schema
+**Render alice (conflicting compiled truth):**
+> "Alice is the biological daughter of [Bob](bob.md) and [Cathy](cathy.md).
+> Born in 1999. [Ethan](ethan.md) has also claimed to be Alice's biological
+> father, which conflicts with earlier evidence.
+> ^[[alice website](../sources/Clippings/alice-website.md), 2026-01-01]
+> ^[[new findings](../human/zettel/2026-10-10-new-findings.md), 2026-10-10]
+> ^[[after the talkshow](../human/zettel/2026-11-11-after-the-talkshow.md), 2026-11-11]"
 
-| Table | Columns | Purpose |
-|-------|---------|---------|
-| `entities` | slug, type, title, compiled_truth, frontmatter, struct_hash, tags[] | One row per entity. 1:1 with a wiki markdown file. Slug is stable identity. |
-| `timeline_entries` | entity_id, date, summary, source_id, detail | Append-only evidence log. What the brain learned, when, from which source. |
-| `links` | from_entity_id, to_entity_id, link_type, context, inferred | Typed directed edges. `inferred` distinguishes structural inference from direct evidence. |
-| `sources` | path, content_hash, status | Raw zone files as first-class records. Status: active/deleted. |
-| `entity_sources` | entity_id, source_id | Junction: which sources contributed to each entity. |
-| `content_chunks` | entity_id, chunk_text, chunk_source, embedding | Chunks of compiled_truth + timeline text with vector embeddings. Raw zone files are not embedded directly. |
-
-Supporting tables: `entity_versions` (snapshot history), `raw_data`,
-`ingest_log`, `config`.
-
-### Source tracking
-
-`sources` tracks raw zone files as first-class records. `entity_sources`
-maps which sources contributed to each entity. Source moves update
-`sources.path` only (entity_sources untouched). Source deletions cascade:
-entities with 0 remaining sources are auto-deleted by COMPILE. Entities
-with remaining sources are recompiled from active sources. Deleted entities
-generate timeline entries on affected entities.
-
-### Search
-
-Hybrid search combines vector similarity (embedding cosine distance) with
-keyword matching (trigram search), merged via Reciprocal Rank Fusion (RRF).
-Optional multi-query expansion generates alternative phrasings for broader
-recall.
+The compiled truth presents both sides with citations. It does NOT silently
+pick one. The human reads the wiki page and sees the contradiction clearly.
+If the human later finds proof that resolves the conflict, they write a new
+zettel, and the next compile updates accordingly.
 
 ---
 
