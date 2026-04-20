@@ -128,10 +128,10 @@ For each entity with changed struct_hash:
 4. Write markdown file to the wiki zone (path determined by schema filing rules).
 5. Chunk compiled_truth + timeline text → embed → store embeddings.
 
-**Link format:** All markdown links use vault-root-relative paths.
+**Link format:** All markdown links use paths from vault root.
 `[Entity Name](category/slug.md)` — e.g., `[Alice](people/alice.md)`.
 Citation format: `^[[display](path/to/source.md), YYYY-MM-DD]` — also
-vault-root-relative. Never use `../` relative paths.
+from vault root. Never use `../` paths.
 
 #### Structural Hash
 
