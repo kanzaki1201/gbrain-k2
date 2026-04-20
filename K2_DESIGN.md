@@ -510,18 +510,51 @@ Bob is [Alice](alice.md)'s biological father. Alice's mother is [Cathy](cathy.md
 ## The Four Primitives
 
 Any structured store supporting these four primitives satisfies the spec.
+The schema below is database-independent — implementable in Postgres,
+SQLite, or any relational store with vector search support.
 
 **Entity Registry** — canonical identity. Slug, type, title, aliases.
 Source of truth for "is this the same entity?"
 
-**Event Ledger** — evidence records. Page, date learned, what learned,
-source path. Maps to timeline section of rendered markdown. Append-only.
+**Event Ledger** — evidence records. Entity, date learned, what learned,
+source. Maps to timeline section of rendered wiki markdown. Append-only.
 
 **Fact Store** — compiled truth. Current-state synthesis, cached for
 embedding and rendering. Re-synthesized when evidence changes.
 
 **Relationship Graph** — typed directed edges. FROM [verb] TO. Both
 evidence-based and inferred (flagged). Enables graph queries.
+
+### Logical schema
+
+| Table | Columns | Purpose |
+|-------|---------|---------|
+| `entities` | slug, type, title, compiled_truth, frontmatter, struct_hash | One row per entity. 1:1 with a wiki markdown file. Slug is stable identity. |
+| `timeline_entries` | entity_id, date, summary, source, detail | Append-only evidence log. What the brain learned, when, from where. |
+| `links` | from_entity_id, to_entity_id, link_type, context, inferred | Typed directed edges. `inferred` distinguishes structural inference from direct evidence. |
+| `sources` | path, content_hash, status | Raw zone files as first-class records. Status: active/deleted. |
+| `entity_sources` | entity_id, source_id | Junction: which sources contributed to each entity. |
+| `content_chunks` | entity_id, chunk_text, chunk_source, embedding | Chunked text with vector embeddings for semantic search. |
+| `tags` | entity_id, tag | Entity tags for filtering. |
+
+Supporting tables: `entity_versions` (snapshot history), `raw_data`,
+`ingest_log`, `config`.
+
+### Source tracking
+
+`sources` tracks raw zone files as first-class records. `entity_sources`
+maps which sources contributed to each entity. Source moves update
+`sources.path` only (entity_sources untouched). Source deletions cascade:
+entities with 0 remaining sources are auto-deleted by COMPILE. Entities
+with remaining sources are recompiled from active sources. Deleted entities
+generate timeline entries on affected entities.
+
+### Search
+
+Hybrid search combines vector similarity (embedding cosine distance) with
+keyword matching (trigram search), merged via Reciprocal Rank Fusion (RRF).
+Optional multi-query expansion generates alternative phrasings for broader
+recall.
 
 ---
 
@@ -541,25 +574,9 @@ These are invisible to non-Obsidian readers.
 
 ### Database: Postgres
 
-| Primitive | Table |
-|---|---|
-| Entity Registry | `entities` (slug, type, title, frontmatter, struct_hash) |
-| Event Ledger | `timeline_entries` (entity_id, date, summary, source, detail) |
-| Fact Store | `entities.compiled_truth` (cached LLM output) |
-| Relationship Graph | `links` (from_entity_id, to_entity_id, link_type, context, inferred) |
-| Source Registry | `sources` (path, content_hash, status) |
-| Source-Entity Map | `entity_sources` (entity_id, source_id) |
-
-Supporting: `content_chunks` (embeddings), `tags`, `entity_versions`, `raw_data`,
-`ingest_log`, `config`.
-
-Each entity is 1:1 with a wiki page. Slug is the stable identity.
-
-Source tracking: `sources` table tracks raw zone files as first-class records.
-`entity_sources` junction maps which sources contributed to each entity. Source
-moves update `sources.path` only. Source deletions cascade: entities with 0
-remaining sources are auto-deleted by COMPILE. Entities with remaining sources
-are recompiled. Deleted entities generate timeline entries on affected entities.
+Uses pgvector for embedding storage and cosine distance search.
+Uses pg_trgm for trigram keyword matching. See logical schema in
+"The Four Primitives" section for table definitions.
 
 ### Agent skills
 
