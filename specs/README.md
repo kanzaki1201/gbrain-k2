@@ -200,3 +200,4 @@ Listed here as each skill spec names its dependencies. No pre-enumeration.
 | `link_entity_source` | [link_entity_source.md](operations/link_entity_source.md) | compile, recover | drafted |
 | `update_source_path` | [update_source_path.md](operations/update_source_path.md) | compile | drafted |
 | `set_source_status` | [set_source_status.md](operations/set_source_status.md) | compile, recover | drafted |
+| `unlink_entity_source` | [unlink_entity_source.md](operations/unlink_entity_source.md) | compile, recover, maintain | drafted |
