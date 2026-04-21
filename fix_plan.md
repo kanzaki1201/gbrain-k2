@@ -26,7 +26,7 @@ pick the next `todo` that's not blocked, unless you have a stronger read.
 |---|----|-------------------|--------|--------|
 | 1 | `compile_put_page` | compile, recover | every downstream write | done (5040663) |
 | 2 | `add_timeline_entry` | compile, recover, maintain | timeline round-trip (recover) | done (2c7ee9a) |
-| 3 | `add_link` | compile, recover, maintain | render of `## Inferred Connections`, back-link create | todo |
+| 3 | `add_link` | compile, recover, maintain | render of `## Inferred Connections`, back-link create | done (this loop) |
 | 4 | `register_source` | compile, recover | source trail invariant | todo |
 | 5 | `link_entity_source` | compile, recover | source trail invariant | todo |
 | 6 | `update_source_path` | compile | git-rename handling (phase 2) | todo |

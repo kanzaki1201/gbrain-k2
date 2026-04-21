@@ -195,3 +195,4 @@ Listed here as each skill spec names its dependencies. No pre-enumeration.
 |----|------|---------|--------|
 | `compile_put_page` | [compile_put_page.md](operations/compile_put_page.md) | compile, recover | drafted |
 | `add_timeline_entry` | [add_timeline_entry.md](operations/add_timeline_entry.md) | compile, recover, maintain | drafted |
+| `add_link` | [add_link.md](operations/add_link.md) | compile, recover, maintain | drafted |
