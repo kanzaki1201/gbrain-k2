@@ -51,12 +51,15 @@ Testable invariants RECOVER guarantees.
    `render(DB[E]) → parse(markdown[E]) → DB'[E]` produces DB state
    equivalent to DB[E] under a defined equivalence relation. Equivalence
    covers: slug, type, title, aliases, tags, compiled_truth text,
-   timeline entries (dates + summaries + source citations), evidence-based
-   link set (from/to/verb/context), `entity_sources` set. Fields NOT
-   covered by equivalence (and thus lost in the round trip under the
-   current schema): the `inferred` flag on links, the `content_hash` of
-   sources, chunk-text byte-identity, embedding vectors. See Open
-   questions.
+   timeline entries (dates + summaries + source citations), the link set
+   (from/to/context) including the `inferred` flag (which round-trips
+   via the `## Inferred Connections` section — see
+   `docs/plans/2026-04-21-inferred-links-render-format.md`), and the
+   `entity_sources` set. Fields NOT covered by equivalence (and thus
+   lost in the round trip under the current schema): `link_type` on
+   inline evidence-based links (see Open questions on link-type
+   reconstruction), the `content_hash` of sources, chunk-text
+   byte-identity, embedding vectors.
 2. **No raw-zone reach.** RECOVER never opens a file under `human/**`
    or `sources/**`. Citation paths are recorded as strings; content is
    not fetched. This is what makes the wiki a self-contained backup.
@@ -161,7 +164,13 @@ Structure, filtered by the phase-1 scope.
   frontmatter.
 - `compiled_truth` — the body between the opening `---` block and the
   timeline separator.
-- `links` — every `[display](path.md)` match inside `compiled_truth`.
+- `links` — every `[display](path.md)` match inside `compiled_truth`
+  or within timeline entries. Parsed with `inferred=false`.
+- `inferred_links` — every entry in the `## Inferred Connections`
+  section (if present), parsed to `(target_path, link_type, reason)`.
+  Section format per
+  `docs/plans/2026-04-21-inferred-links-render-format.md`. Absent
+  section ⇒ empty list.
 - `citations` — every `^[[title](path), date]` match inside
   `compiled_truth` and within timeline entries.
 - `timeline` — ordered list of parsed `## Timeline` entries, each with
@@ -222,19 +231,29 @@ source row.
 
 ### 7. Insert links
 
-**Input:** the `links` list per parsed page, plus the link target's
-slug (derived from the path inside `[display](path.md)`).
-**Output:** one `links` row per parsed link, `inferred=false` under
-the current format.
+**Input:** the `links` list per parsed page (evidence-based, from
+`compiled_truth` and timeline entries) and the `inferred_links` list
+per parsed page (from the `## Inferred Connections` section).
+**Output:** one `links` row per parsed edge. Evidence-based edges get
+`inferred=false`; entries from the inferred-connections section get
+`inferred=true` with `context` set to the structural reason captured in
+the rendered line. Per
+`docs/plans/2026-04-21-inferred-links-render-format.md`.
 **Ops:** `add_link`.
 **State change:** `links` rows materialize.
 
-Link verbs: the current render format does not emit the verb as a
-distinct token. RECOVER cannot faithfully reconstruct `link_type` from
-a parse-only pass; see Open questions. V1 behaviour is to store the
-link with a generic `link_type='references'` and let MAINTAIN refine
-on a subsequent pass (itself an Open question, since MAINTAIN's
-auto-fix scope doesn't currently include link-type refinement).
+Link verbs for evidence-based links: the current render format does
+not emit the verb as a distinct token for inline `[display](path.md)`
+links. RECOVER cannot faithfully reconstruct `link_type` from an inline
+parse-only pass; see Open questions. V1 behaviour is to store the edge
+with a generic `link_type='references'` and let MAINTAIN refine on a
+subsequent pass (itself an Open question, since MAINTAIN's auto-fix
+scope doesn't currently include link-type refinement).
+
+Link verbs for inferred links: the `## Inferred Connections` format
+emits the verb in backticks on every line, so RECOVER reads it directly
+and the inferred edges keep their `link_type` value through the round
+trip.
 
 ### 8. Recompute struct_hash
 
@@ -343,22 +362,17 @@ caller.
 
 ## Open questions
 
-- **Inferred-link flag round-trip.** `links.inferred` distinguishes
-  structural inference from evidence-based edges in COMPILE, but the
-  current render format emits both as identical `[display](path.md)`
-  markdown. RECOVER thus cannot reconstruct the distinction. Options:
-  (a) render adds a marker (e.g., a trailing `{.inferred}` class or a
-  frontmatter `inferred_links` array) that RECOVER parses; (b) accept
-  the drift — all recovered links come back as `inferred=false`,
-  MAINTAIN's duplicate-detection and cascade rules absorb the cost;
-  (c) store inferred links in a side-channel file (e.g.,
-  `inferred_links.json` per entity) in the wiki zone. Blocks full
-  fidelity claim in invariant 1.
-- **Link-type reconstruction.** Link verbs (`child_of`, `parent_of`,
-  `uses`, etc.) are not encoded in the current markdown link syntax.
-  V1 falls back to `link_type='references'`; the render would need to
-  emit the verb (perhaps as `[display | child_of](path)` or in a
-  frontmatter `edges:` array) for RECOVER to reconstruct it faithfully.
+- **Link-type reconstruction for evidence-based links.** Link verbs
+  (`child_of`, `parent_of`, `uses`, etc.) are not encoded in the
+  current markdown link syntax for inline `[display](path.md)` links
+  inside `compiled_truth` or timeline entries. V1 falls back to
+  `link_type='references'`; the render would need to emit the verb
+  (perhaps as `[display | child_of](path)` or in a frontmatter
+  `edges:` array) for RECOVER to reconstruct it faithfully. Inferred
+  links already carry their verb in the `## Inferred Connections`
+  section (closed via
+  `docs/plans/2026-04-21-inferred-links-render-format.md`); this
+  question applies only to the inline evidence-based case.
 - **Citation date format variability.** `K2_SCHEMA.md` §Citation Format
   requires `YYYY-MM-DD`. What if an older rendered wiki carried
   different formats (ISO datetime, locale strings, `[[YYYY-MM-DD]]`

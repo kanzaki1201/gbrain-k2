@@ -194,6 +194,11 @@ struct_hash matches the pre-run value are excluded from phase 7 and 8.
 **Op:** `compile_render` once per changed entity.
 **State change:** wiki files created, rewritten, or moved on disk.
 
+Entities whose outbound link set includes `inferred=true` edges get an
+`## Inferred Connections` section below `## Timeline`, per the decision
+in `docs/plans/2026-04-21-inferred-links-render-format.md`. Entities
+with no inferred outbound edges omit the section entirely.
+
 ### 8. Embed
 
 **Input:** the same changed-hash set.

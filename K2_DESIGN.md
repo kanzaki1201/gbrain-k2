@@ -149,6 +149,13 @@ For each entity with changed struct_hash:
 3. Format as markdown file per K2_SCHEMA.md page format.
 4. Write markdown file to the wiki zone (path determined by schema filing rules).
 5. Chunk compiled_truth + timeline text → embed → store embeddings.
+6. If the entity has any outbound `links` rows with `inferred=true`,
+   append a `## Inferred Connections` section after `## Timeline`. Each
+   line follows the canonical shape
+   `` - [<display>](<path>) — `<link_type>` (<reason>) ``.
+   Entities with no inferred outbound edges omit the section entirely.
+   See `docs/plans/2026-04-21-inferred-links-render-format.md` for the
+   decision that produced this format.
 
 **Link format:** All markdown links use paths from vault root.
 `[Entity Name](category/slug.md)` — e.g., `[Alice](people/alice.md)`.
@@ -640,6 +647,12 @@ Bob is [Alice](people/alice.md)'s biological father. Alice's mother is [Cathy](p
 
 - **2026-10-10** | Zettel revealed Cathy as co-parent of Alice ^[[new findings](human/zettel/2026-10-10-new-findings.md), 2026-10-10]
 - **2026-01-01** | Clipping revealed Bob is Alice's biological father ^[[alice website](sources/Clippings/alice-website.md), 2026-01-01]
+
+---
+
+## Inferred Connections
+
+- [Cathy](people/cathy.md) — `co_parent` (both `parent_of` Alice)
 ```
 
 **DB state after compile:**
