@@ -1,16 +1,37 @@
-.18a49dfd730ff378-00000000.bun-build
-.18a49f9dfb996f70-00000000.bun-build
-bin/
-.claude/
-.DS_Store
+# === Secrets (CRITICAL — must not be committed) ===
 .env
 .env.*
 !.env.*.example
-.gstack/
-.idea
-*.log
+
+# === Build artifacts ===
+bin/
+.18a49dfd730ff378-00000000.bun-build
+.18a49f9dfb996f70-00000000.bun-build
 node_modules/
 __pycache__/
+*.pyc
+target/
+
+# === Tool + editor state ===
+.claude/
+.gstack/
+.idea
+.vscode/
+*.swp
+*.swo
+supabase/.temp/
+
+# === Reports ===
 reports/
 reports/hermes-skill-audits/
-supabase/.temp/
+
+# === OS + temp files ===
+.DS_Store
+Thumbs.db
+*.tmp
+.temp/
+*.log
+
+# === Ralph infrastructure (entire directory is agent-internal) ===
+.ralph/
+.ralph_backup_*
