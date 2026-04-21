@@ -185,7 +185,7 @@ Updated as specs land.
 | COMPILE | [compile.md](skills/compile.md) | drafted |
 | ASK | [ask.md](skills/ask.md) | drafted |
 | MAINTAIN | [maintain.md](skills/maintain.md) | drafted |
-| RECOVER | [recover.md](skills/recover.md) | pending |
+| RECOVER | [recover.md](skills/recover.md) | drafted |
 
 ### Operations
 
