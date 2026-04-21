@@ -198,3 +198,4 @@ Listed here as each skill spec names its dependencies. No pre-enumeration.
 | `add_link` | [add_link.md](operations/add_link.md) | compile, recover, maintain | drafted |
 | `register_source` | [register_source.md](operations/register_source.md) | compile, recover | drafted |
 | `link_entity_source` | [link_entity_source.md](operations/link_entity_source.md) | compile, recover | drafted |
+| `update_source_path` | [update_source_path.md](operations/update_source_path.md) | compile | drafted |
