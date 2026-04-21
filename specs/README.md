@@ -197,3 +197,4 @@ Listed here as each skill spec names its dependencies. No pre-enumeration.
 | `add_timeline_entry` | [add_timeline_entry.md](operations/add_timeline_entry.md) | compile, recover, maintain | drafted |
 | `add_link` | [add_link.md](operations/add_link.md) | compile, recover, maintain | drafted |
 | `register_source` | [register_source.md](operations/register_source.md) | compile, recover | drafted |
+| `link_entity_source` | [link_entity_source.md](operations/link_entity_source.md) | compile, recover | drafted |

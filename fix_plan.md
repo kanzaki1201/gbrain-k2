@@ -28,7 +28,7 @@ pick the next `todo` that's not blocked, unless you have a stronger read.
 | 2 | `add_timeline_entry` | compile, recover, maintain | timeline round-trip (recover) | done (2c7ee9a) |
 | 3 | `add_link` | compile, recover, maintain | render of `## Inferred Connections`, back-link create | done (b756aa8) |
 | 4 | `register_source` | compile, recover | source trail invariant | done (3c1ca1f) |
-| 5 | `link_entity_source` | compile, recover | source trail invariant | todo |
+| 5 | `link_entity_source` | compile, recover | source trail invariant | done (this loop) |
 | 6 | `update_source_path` | compile | git-rename handling (phase 2) | todo |
 | 7 | `set_source_status` | compile | soft-delete cascade | todo |
 | 8 | `unlink_entity_source` | compile, maintain | cascade bookkeeping | todo |
