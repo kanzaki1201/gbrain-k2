@@ -29,7 +29,7 @@ pick the next `todo` that's not blocked, unless you have a stronger read.
 | 3 | `add_link` | compile, recover, maintain | render of `## Inferred Connections`, back-link create | done (b756aa8) |
 | 4 | `register_source` | compile, recover | source trail invariant | done (3c1ca1f) |
 | 5 | `link_entity_source` | compile, recover | source trail invariant | done (6069ea7) |
-| 6 | `update_source_path` | compile | git-rename handling (phase 2) | done (this loop) |
+| 6 | `update_source_path` | compile | git-rename handling (phase 2) | done (c1e0303) |
 | 7 | `set_source_status` | compile | soft-delete cascade | todo |
 | 8 | `unlink_entity_source` | compile, maintain | cascade bookkeeping | todo |
 | 9 | `get_entity` | all | dedup + struct_hash read | todo |
