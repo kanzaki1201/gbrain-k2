@@ -25,7 +25,7 @@ pick the next `todo` that's not blocked, unless you have a stronger read.
 | # | Op | Primary caller(s) | Blocks | Status |
 |---|----|-------------------|--------|--------|
 | 1 | `compile_put_page` | compile, recover | every downstream write | done (this loop) |
-| 2 | `add_timeline_entry` | compile, recover, maintain | timeline round-trip (recover) | todo |
+| 2 | `add_timeline_entry` | compile, recover, maintain | timeline round-trip (recover) | done (this loop) |
 | 3 | `add_link` | compile, recover, maintain | render of `## Inferred Connections`, back-link create | todo |
 | 4 | `register_source` | compile, recover | source trail invariant | todo |
 | 5 | `link_entity_source` | compile, recover | source trail invariant | todo |
