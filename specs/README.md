@@ -190,3 +190,7 @@ Updated as specs land.
 ### Operations
 
 Listed here as each skill spec names its dependencies. No pre-enumeration.
+
+| Op | File | Callers | Status |
+|----|------|---------|--------|
+| `compile_put_page` | [compile_put_page.md](operations/compile_put_page.md) | compile, recover | drafted |
