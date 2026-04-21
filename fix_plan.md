@@ -32,7 +32,7 @@ pick the next `todo` that's not blocked, unless you have a stronger read.
 | 6 | `update_source_path` | compile | git-rename handling (phase 2) | done (c1e0303) |
 | 7 | `set_source_status` | compile | soft-delete cascade | done (102e6a3) |
 | 8 | `unlink_entity_source` | compile, maintain | cascade bookkeeping | done (1be8c5e) |
-| 9 | `get_entity` | all | dedup + struct_hash read | done (this loop) |
+| 9 | `get_entity` | all | dedup + struct_hash read | done (92a5e62) |
 | 10 | `get_links` | compile, ask, maintain | cross-entity propagation, back-link check | todo |
 | 11 | `get_timeline` | compile, ask, maintain | cascade accounting | todo |
 | 12 | `list_entities` | ask, maintain, recover (selective) | iteration surface | todo |
