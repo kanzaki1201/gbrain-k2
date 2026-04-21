@@ -184,7 +184,7 @@ Updated as specs land.
 | INGEST | [ingest.md](skills/ingest.md) | drafted |
 | COMPILE | [compile.md](skills/compile.md) | drafted |
 | ASK | [ask.md](skills/ask.md) | drafted |
-| MAINTAIN | [maintain.md](skills/maintain.md) | pending |
+| MAINTAIN | [maintain.md](skills/maintain.md) | drafted |
 | RECOVER | [recover.md](skills/recover.md) | pending |
 
 ### Operations
