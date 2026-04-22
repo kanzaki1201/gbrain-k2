@@ -37,7 +37,7 @@ pick the next `todo` that's not blocked, unless you have a stronger read.
 | 11 | `get_timeline` | compile, ask, maintain | cascade accounting | done (577a4b7) |
 | 12 | `list_entities` | ask, maintain, recover (selective) | iteration surface | done (b86203e) |
 | 13 | `search` | compile (dedup), ask, maintain | keyword lookup | done (444d7b2) |
-| 14 | `query` | compile (dedup), ask, maintain | hybrid lookup | done (this loop) |
+| 14 | `query` | compile (dedup), ask, maintain | hybrid lookup | done (fba7c30) |
 | 15 | `get_graph` | ask | multi-hop relational answers | todo |
 | 16 | `compile_render` | compile, maintain, recover | wiki-file writes | todo |
 | 17 | `compile_embed` | compile, maintain, recover | chunks + embeddings | todo |
