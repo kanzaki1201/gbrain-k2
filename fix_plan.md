@@ -60,18 +60,35 @@ Track here so downstream ops don't invent answers.
   Blocks the ASK internal-call path; needs resolution before `ask.md`'s
   dedup contract is finalised.
 
-## Phase 2b — schema + src plumbing (later)
+## Phase 2b — schema + src plumbing (active)
 
-Per [docs/plans/2026-04-20-k2-implementation.md](docs/plans/2026-04-20-k2-implementation.md)
-§Phase 2. Do NOT start until Phase 2a covers at least the "write" ops
-(1–8) — the schema change PR depends on knowing every column we need.
+Detailed plan: [docs/plans/2026-04-21-phase-2b-schema-plumbing.md](docs/plans/2026-04-21-phase-2b-schema-plumbing.md).
+Phase 2a closed all 19 op contracts; Phase 2b turns them into code. One
+commit per step where possible; the plan's §Execution sequence is the
+per-loop ordering.
 
-- Add `entities.struct_hash TEXT`
-- Add `links.inferred BOOLEAN DEFAULT false`
-- Add `sources` table
-- Add `entity_sources` junction
-- Deprecate `pages.timeline` (stop writing, keep column)
-- Remove `pages.source_paths TEXT[]`
+| # | Task | Step | Status |
+|---|------|------|--------|
+| 20 | Phase 2b plan | 1 | done (this loop) |
+| 21 | Rewrite `src/schema.sql` | 2 | todo |
+| 22 | Update `src/core/pglite-schema.ts` | 3 | todo |
+| 23 | Update `src/core/types.ts` | 4 | todo |
+| 24 | Update `src/core/engine.ts` interface | 5 | todo |
+| 25 | Port `pglite-engine.ts` to K2 | 6 | todo |
+| 26 | Port `postgres-engine.ts` to K2 | 7 | todo |
+| 27 | Register K2 ops in `operations.ts` | 8 | todo |
+| 28 | Reset `migrate.ts` for K2 init | 9 | todo |
+| 29 | Audit CLI + MCP op exposure | 10 | todo |
+| 30 | Prune legacy commands | 11 | todo |
+| 31 | Unit tests per op | 12 | todo |
+| 32 | E2E Tier 1 sweep | 13 | todo |
+
+Major decisions resolved in the plan:
+- `pages` table renamed to `entities` (schema + all TypeScript types).
+- `PageType` replaced by `EntityType` with K2 categories.
+- `tags` join table retired; `entities.tags TEXT[]` takes over.
+- Links uniqueness changes from `(from, to)` to `(from, to, link_type)`.
+- No migration path for existing DBs — destructive reset, no shipped users.
 
 ## Phase 3 — test vault
 
