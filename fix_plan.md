@@ -74,7 +74,7 @@ per-loop ordering.
 | 22 | Update `src/core/pglite-schema.ts` | 3 | done (dc9bd3a) |
 | 23 | Update `src/core/types.ts` | 4 | done (a6a7306) |
 | 24 | Update `src/core/engine.ts` interface | 5 | done (852159e) |
-| 25 | Port `pglite-engine.ts` to K2 | 6 | todo |
+| 25 | Port `pglite-engine.ts` to K2 | 6 | done (340e604) |
 | 26 | Port `postgres-engine.ts` to K2 | 7 | todo |
 | 27 | Register K2 ops in `operations.ts` | 8 | todo |
 | 28 | Reset `migrate.ts` for K2 init | 9 | todo |
