@@ -39,7 +39,7 @@ pick the next `todo` that's not blocked, unless you have a stronger read.
 | 13 | `search` | compile (dedup), ask, maintain | keyword lookup | done (444d7b2) |
 | 14 | `query` | compile (dedup), ask, maintain | hybrid lookup | done (fba7c30) |
 | 15 | `get_graph` | ask | multi-hop relational answers | done (f3399bd) |
-| 16 | `compile_render` | compile, maintain, recover | wiki-file writes | todo |
+| 16 | `compile_render` | compile, maintain, recover | wiki-file writes | done (this loop) |
 | 17 | `compile_embed` | compile, maintain, recover | chunks + embeddings | todo |
 | 18 | `delete_entity` | compile (cascade), maintain | cascade termination | todo |
 | 19 | `delete_link` | maintain | dead-link auto-fix (MAINTAIN §Auto fixes) | todo — op NOT YET listed in COMPILE's deps; spec should resolve whether it lives in MAINTAIN alone |
