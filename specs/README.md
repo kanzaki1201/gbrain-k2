@@ -204,3 +204,4 @@ Listed here as each skill spec names its dependencies. No pre-enumeration.
 | `get_entity` | [get_entity.md](operations/get_entity.md) | ask, compile, maintain, recover | drafted |
 | `get_links` | [get_links.md](operations/get_links.md) | ask, compile, maintain | drafted |
 | `get_timeline` | [get_timeline.md](operations/get_timeline.md) | ask, compile, maintain | drafted |
+| `list_entities` | [list_entities.md](operations/list_entities.md) | ask, maintain, recover | drafted |
