@@ -69,7 +69,7 @@ per-loop ordering.
 
 | # | Task | Step | Status |
 |---|------|------|--------|
-| 20 | Phase 2b plan | 1 | done (this loop) |
+| 20 | Phase 2b plan | 1 | done (3789c9b) |
 | 21 | Rewrite `src/schema.sql` | 2 | todo |
 | 22 | Update `src/core/pglite-schema.ts` | 3 | todo |
 | 23 | Update `src/core/types.ts` | 4 | todo |
