@@ -42,7 +42,7 @@ pick the next `todo` that's not blocked, unless you have a stronger read.
 | 16 | `compile_render` | compile, maintain, recover | wiki-file writes | done (43f27d2) |
 | 17 | `compile_embed` | compile, maintain, recover | chunks + embeddings | done (e6ea135) |
 | 18 | `delete_entity` | compile (cascade), maintain | cascade termination | done (8d28b64) |
-| 19 | `delete_link` | maintain | dead-link auto-fix (MAINTAIN §Auto fixes) | done (this loop — scope resolved as MAINTAIN-only primitive per option (a)) |
+| 19 | `delete_link` | maintain | dead-link auto-fix (MAINTAIN §Auto fixes) | done (6b0486e — scope resolved as MAINTAIN-only primitive per option (a)) |
 
 ## Open questions inherited from skill specs
 
