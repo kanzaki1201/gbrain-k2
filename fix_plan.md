@@ -71,7 +71,7 @@ per-loop ordering.
 |---|------|------|--------|
 | 20 | Phase 2b plan | 1 | done (3789c9b) |
 | 21 | Rewrite `src/schema.sql` | 2 | done (016a276) |
-| 22 | Update `src/core/pglite-schema.ts` | 3 | todo |
+| 22 | Update `src/core/pglite-schema.ts` | 3 | done (pending SHA) |
 | 23 | Update `src/core/types.ts` | 4 | todo |
 | 24 | Update `src/core/engine.ts` interface | 5 | todo |
 | 25 | Port `pglite-engine.ts` to K2 | 6 | todo |
