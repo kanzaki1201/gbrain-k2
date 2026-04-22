@@ -211,3 +211,4 @@ Listed here as each skill spec names its dependencies. No pre-enumeration.
 | `compile_render` | [compile_render.md](operations/compile_render.md) | compile, maintain, recover | drafted |
 | `compile_embed` | [compile_embed.md](operations/compile_embed.md) | compile, maintain, recover | drafted |
 | `delete_entity` | [delete_entity.md](operations/delete_entity.md) | compile, maintain, recover | drafted |
+| `delete_link` | [delete_link.md](operations/delete_link.md) | maintain | drafted |
