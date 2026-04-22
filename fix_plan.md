@@ -70,7 +70,7 @@ per-loop ordering.
 | # | Task | Step | Status |
 |---|------|------|--------|
 | 20 | Phase 2b plan | 1 | done (3789c9b) |
-| 21 | Rewrite `src/schema.sql` | 2 | todo |
+| 21 | Rewrite `src/schema.sql` | 2 | done (016a276) |
 | 22 | Update `src/core/pglite-schema.ts` | 3 | todo |
 | 23 | Update `src/core/types.ts` | 4 | todo |
 | 24 | Update `src/core/engine.ts` interface | 5 | todo |
