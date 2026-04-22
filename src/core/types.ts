@@ -1,181 +1,451 @@
-// Page types
-export type PageType = 'person' | 'company' | 'deal' | 'yc' | 'civic' | 'project' | 'concept' | 'source' | 'media';
+// K2 TypeScript types. Shape contract: specs/operations/*.md + K2_SCHEMA.md.
+// Phase 2b Step 4 — renames Page→Entity, adds op-return shapes. See
+// docs/plans/2026-04-21-phase-2b-schema-plumbing.md §D1–D6.
 
-export interface Page {
-  id: number;
+// ============================================================
+// Entities
+// ============================================================
+
+/** K2 page categories per K2_SCHEMA.md §Filing Rules. */
+export type EntityType =
+  | 'people'
+  | 'places'
+  | 'projects'
+  | 'companies'
+  | 'ideas'
+  | 'originals'
+  | 'concepts'
+  | 'how-to'
+  | 'media'
+  | 'tools'
+  | 'meetings'
+  | 'decisions'
+  | 'household'
+  | 'personal'
+  | 'org'
+  | 'writing';
+
+export const ENTITY_TYPES: readonly EntityType[] = [
+  'people', 'places', 'projects', 'companies', 'ideas', 'originals',
+  'concepts', 'how-to', 'media', 'tools', 'meetings', 'decisions',
+  'household', 'personal', 'org', 'writing',
+] as const;
+
+/** Full entity row returned by `get_entity`. Timestamps are ISO-8601 UTC. */
+export interface Entity {
   slug: string;
-  type: PageType;
+  type: EntityType;
   title: string;
   compiled_truth: string;
-  timeline: string;
+  struct_hash: string | null;
+  tags: string[];
+  aliases: string[];
   frontmatter: Record<string, unknown>;
-  content_hash?: string;
-  created_at: Date;
-  updated_at: Date;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface PageInput {
-  type: PageType;
+/** Compact summary for `list_entities`; no `compiled_truth`, no `frontmatter`. */
+export interface EntitySummary {
+  slug: string;
+  type: EntityType;
+  title: string;
+  tags: string[];
+  aliases: string[];
+  struct_hash: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Input shape for `compile_put_page`. `struct_hash` is caller-computed. */
+export interface EntityInput {
+  slug: string;
+  type: EntityType;
   title: string;
   compiled_truth: string;
-  timeline?: string;
+  struct_hash: string;
+  tags?: string[];
+  aliases?: string[];
   frontmatter?: Record<string, unknown>;
-  content_hash?: string;
 }
 
-export interface PageFilters {
-  type?: PageType;
+export interface EntityFilters {
+  type?: EntityType;
   tag?: string;
   limit?: number;
   offset?: number;
 }
 
-// Chunks
+export interface EntityVersion {
+  id: number;
+  entity_id: number;
+  compiled_truth: string;
+  frontmatter: Record<string, unknown>;
+  snapshot_at: string;
+}
+
+// ============================================================
+// Sources + entity_sources junction
+// ============================================================
+
+export type SourceStatus = 'active' | 'deleted';
+
+export interface Source {
+  id: number;
+  path: string;
+  content_hash: string | null;
+  status: SourceStatus;
+  created_at: string;
+}
+
+export interface EntitySource {
+  entity_id: number;
+  source_id: number;
+  created_at: string;
+}
+
+// ============================================================
+// Chunks (content_chunks)
+// ============================================================
+
+export type ChunkSource = 'compiled_truth' | 'timeline';
+
 export interface Chunk {
   id: number;
-  page_id: number;
+  entity_id: number;
   chunk_index: number;
   chunk_text: string;
-  chunk_source: 'compiled_truth' | 'timeline';
+  chunk_source: ChunkSource;
   embedding: Float32Array | null;
   model: string;
   token_count: number | null;
-  embedded_at: Date | null;
+  embedded_at: string | null;
 }
 
 export interface ChunkInput {
   chunk_index: number;
   chunk_text: string;
-  chunk_source: 'compiled_truth' | 'timeline';
+  chunk_source: ChunkSource;
   embedding?: Float32Array;
   model?: string;
   token_count?: number;
 }
 
-// Search
-export interface SearchResult {
-  slug: string;
-  page_id: number;
-  title: string;
-  type: PageType;
-  chunk_text: string;
-  chunk_source: 'compiled_truth' | 'timeline';
-  chunk_id: number;
-  chunk_index: number;
-  score: number;
-  stale: boolean;
-}
-
-export interface SearchOpts {
-  limit?: number;
-  offset?: number;
-  type?: PageType;
-  exclude_slugs?: string[];
-  detail?: 'low' | 'medium' | 'high';
-}
-
+// ============================================================
 // Links
+// ============================================================
+
+export type LinkDirection = 'outbound' | 'inbound' | 'both';
+
 export interface Link {
   from_slug: string;
   to_slug: string;
   link_type: string;
+  inferred: boolean;
   context: string;
+  created_at: string;
 }
 
-export interface GraphNode {
-  slug: string;
-  title: string;
-  type: PageType;
-  depth: number;
-  links: { to_slug: string; link_type: string }[];
+export interface LinkInput {
+  from_slug: string;
+  to_slug: string;
+  link_type: string;
+  inferred: boolean;
+  context?: string;
 }
 
+export interface LinkFilters {
+  entity_slug: string;
+  direction: LinkDirection;
+  link_type?: string;
+  inferred?: boolean;
+}
+
+// ============================================================
 // Timeline
+// ============================================================
+
 export interface TimelineEntry {
-  id: number;
-  page_id: number;
-  date: string;
-  source: string;
+  entry_id: number;
+  date: string;        // YYYY-MM-DD
   summary: string;
   detail: string;
-  created_at: Date;
+  source_path: string; // resolved from sources.id on read
+  created_at: string;
 }
 
 export interface TimelineInput {
+  entity_slug: string;
   date: string;
-  source?: string;
   summary: string;
+  source_path: string;
   detail?: string;
 }
 
-export interface TimelineOpts {
-  limit?: number;
-  after?: string;
-  before?: string;
+export interface TimelineFilters {
+  entity_slug: string;
+  since?: string;
+  until?: string;
 }
 
-// Raw data
+// ============================================================
+// Search (identity fields: title + aliases + tags)
+// ============================================================
+
+export type SearchMatchedField = 'title' | 'alias' | 'tag' | 'mixed';
+
+export interface SearchResult {
+  slug: string;
+  type: EntityType;
+  title: string;
+  tags: string[];
+  aliases: string[];
+  score: number;
+  matched_field: SearchMatchedField;
+}
+
+export interface SearchOpts {
+  type?: EntityType;
+  tag?: string;
+  min_score?: number;
+  limit?: number;
+  offset?: number;
+}
+
+export interface SearchEnvelope {
+  items: SearchResult[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
+// ============================================================
+// Query (hybrid content-chunk retrieval)
+// ============================================================
+
+export interface QueryResult {
+  entity_slug: string;
+  entity_title: string;
+  entity_type: EntityType;
+  chunk_text: string;
+  chunk_source: ChunkSource;
+  score: number;
+  vector_score: number | null;
+  keyword_score: number | null;
+}
+
+export interface QueryOpts {
+  type?: EntityType;
+  tag?: string;
+  chunk_source?: ChunkSource;
+  min_score?: number;
+  limit?: number;
+  offset?: number;
+}
+
+export interface QueryEnvelope {
+  items: QueryResult[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
+// ============================================================
+// Graph traversal (get_graph)
+// ============================================================
+
+export type GraphDirection = LinkDirection;
+
+export interface GraphNode {
+  slug: string;
+  type: EntityType;
+  title: string;
+  min_depth: number;
+}
+
+export interface GraphEdge {
+  from_slug: string;
+  to_slug: string;
+  link_type: string;
+  inferred: boolean;
+  context: string;
+}
+
+export interface GraphResult {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  truncated: boolean;
+  depth_reached: number;
+}
+
+export interface GraphOpts {
+  entity_slug: string;
+  direction: GraphDirection;
+  depth: number;
+  link_type?: string;
+  inferred?: boolean;
+  max_nodes?: number;
+}
+
+// ============================================================
+// Op return shapes (per specs/operations/*.md)
+// ============================================================
+
+export interface PutEntityResult {
+  slug: string;
+  status: 'created' | 'updated' | 'noop';
+  prior_struct_hash: string | null;
+}
+
+export interface AddLinkResult {
+  link_id: number;
+  status: 'created' | 'updated' | 'noop';
+  prior: {
+    inferred: boolean;
+    context: string;
+  } | null;
+}
+
+export interface DeleteLinkResult {
+  link_id: number;
+  action: 'deleted' | 'noop';
+  prior: {
+    from_slug: string | null;
+    to_slug: string | null;
+    link_type: string;
+    inferred: boolean;
+    context: string;
+  } | null;
+}
+
+export interface AddTimelineEntryResult {
+  entry_id: number;
+  entity_slug: string;
+  date: string;
+}
+
+export interface RegisterSourceResult {
+  source_id: number;
+  path: string;
+  status: 'active';
+}
+
+export interface UpdateSourcePathResult {
+  source_id: number;
+  old_path: string;
+  new_path: string;
+}
+
+export interface SetSourceStatusResult {
+  source_id: number;
+  path: string;
+  prior_status: SourceStatus;
+  new_status: SourceStatus;
+  action: 'updated' | 'noop';
+}
+
+export interface LinkEntitySourceResult {
+  entity_slug: string;
+  source_path: string;
+  status: 'created' | 'noop';
+}
+
+export interface UnlinkEntitySourceResult {
+  entity_slug: string;
+  source_path: string;
+  action: 'deleted' | 'noop';
+}
+
+export interface DeleteEntityResult {
+  entity_slug: string;
+  action: 'deleted' | 'noop';
+  rows_removed: {
+    entities: number;
+    links: number;
+    timeline_entries: number;
+    entity_sources: number;
+    content_chunks: number;
+  };
+  wiki_file_status: 'removed' | 'not_found' | 'delete_failed' | 'preserved';
+}
+
+export interface CompileRenderResult {
+  path: string;
+  action: 'created' | 'overwritten' | 'unchanged' | 'dry_run';
+  content?: string;
+}
+
+export interface CompileEmbedResult {
+  entity_slug: string;
+  chunks_written: number;
+  chunks_removed: number;
+  tokens_encoded: number;
+  model: string;
+}
+
+export interface ListEntitiesResult {
+  items: EntitySummary[];
+  total: number;
+  offset: number;
+  limit: number | null;
+}
+
+// ============================================================
+// Sidecar / ancillary types
+// ============================================================
+
 export interface RawData {
   source: string;
   data: Record<string, unknown>;
-  fetched_at: Date;
+  fetched_at: string;
 }
 
-// Versions
-export interface PageVersion {
-  id: number;
-  page_id: number;
-  compiled_truth: string;
-  frontmatter: Record<string, unknown>;
-  snapshot_at: Date;
-}
-
-// Stats + Health
 export interface BrainStats {
-  page_count: number;
+  entity_count: number;
   chunk_count: number;
   embedded_count: number;
   link_count: number;
   tag_count: number;
   timeline_entry_count: number;
-  pages_by_type: Record<string, number>;
+  entities_by_type: Record<string, number>;
 }
 
 export interface BrainHealth {
-  page_count: number;
+  entity_count: number;
   embed_coverage: number;
-  stale_pages: number;
-  orphan_pages: number;
+  stale_entities: number;
+  orphan_entities: number;
   dead_links: number;
   missing_embeddings: number;
   brain_score: number;
 }
 
-// Ingest log
 export interface IngestLogEntry {
   id: number;
   source_type: string;
   source_ref: string;
-  pages_updated: string[];
+  entities_updated: string[];
   summary: string;
-  created_at: Date;
+  created_at: string;
 }
 
 export interface IngestLogInput {
   source_type: string;
   source_ref: string;
-  pages_updated: string[];
+  entities_updated: string[];
   summary: string;
 }
 
-// Config
+// ============================================================
+// Engine config + errors
+// ============================================================
+
 export interface EngineConfig {
   database_url?: string;
   database_path?: string;
   engine?: 'postgres' | 'pglite';
 }
 
-// Errors
 export class GBrainError extends Error {
   constructor(
     public problem: string,
